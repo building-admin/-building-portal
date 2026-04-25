@@ -1193,6 +1193,7 @@ function goBack() {
   document.getElementById('dept-badge').classList.remove('show');
   currentDept = null;
   try { localStorage.removeItem('bp_dept'); } catch(e) {}
+  renderDeptGrid();
   showScreen('dept');
 }
 
