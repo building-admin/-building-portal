@@ -378,13 +378,50 @@
   .dot-gray { background: var(--text-muted); }
 
   /* ─── FORM PAGE ─── */
+  .form-page-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+    align-items: start;
+  }
   .form-card {
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 28px;
-    max-width: 760px;
+    padding: 24px 28px;
+    width: 100%;
   }
+  .form-side {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: sticky;
+    top: 76px; /* topbar height */
+  }
+  .form-side-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .form-side-title {
+    font-size: 11px; font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-label);
+  }
+  .leave-summary-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 0;
+    border-bottom: 1px solid rgba(44,74,114,0.3);
+    font-size: 13px;
+  }
+  .leave-summary-row:last-child { border-bottom: none; }
+  .leave-summary-label { color: var(--muted); font-size: 12px; }
+  .leave-summary-value { font-weight: 500; color: var(--white); }
   .form-section-title {
     font-size: 11px; font-weight: 700;
     color: var(--text-secondary);
@@ -773,6 +810,9 @@
     .leave-type-btn .ltype-icon { font-size: 24px; }
 
     /* Form */
+    /* Form 2-col → single col on mobile */
+    .form-page-layout { grid-template-columns: 1fr; }
+    .form-side { position: static; }
     .form-card { padding: 16px; border-radius: 10px; }
     .form-row { grid-template-columns: 1fr; gap: 12px; }
     .form-row.three { grid-template-columns: 1fr; }
@@ -998,105 +1038,124 @@
 
       <!-- LEAVE FORM -->
       <div class="page-section" id="section-leave-form">
-        <div class="form-card">
-          <div class="form-section-title">ข้อมูลพนักงาน (Auto-fill)</div>
-          <div class="form-row three">
-            <div>
-              <label class="field-label">รหัสพนักงาน</label>
-              <input class="field-input" readonly value="EMP001">
-            </div>
-            <div>
-              <label class="field-label">ชื่อ-นามสกุล</label>
-              <input class="field-input" readonly value="สมชาย ใจดี" id="emp-name">
-            </div>
-            <div>
-              <label class="field-label">ตำแหน่ง</label>
-              <input class="field-input" readonly value="ช่างซ่อมบำรุง">
-            </div>
-          </div>
-          <div class="form-row">
-            <div>
-              <label class="field-label">แผนก</label>
-              <input class="field-input" readonly value="ฝ่ายอาคารและสถานที่">
-            </div>
-            <div>
-              <label class="field-label">วันที่ยื่นใบลา</label>
-              <input class="field-input" readonly id="today-date">
-            </div>
-          </div>
+        <div class="form-page-layout">
 
-          <div class="form-section-title">ประเภทการลา<span class="field-required">*</span></div>
-          <div class="leave-type-grid">
-            <button class="leave-type-btn selected" onclick="selectType(this,'ลาป่วย')"><span class="ltype-icon">🤒</span>ลาป่วย</button>
-            <button class="leave-type-btn" onclick="selectType(this,'ลากิจ')"><span class="ltype-icon">📌</span>ลากิจ</button>
-            <button class="leave-type-btn" onclick="selectType(this,'ลาพักร้อน')"><span class="ltype-icon">🏖️</span>ลาพักร้อน</button>
-            <button class="leave-type-btn" onclick="selectType(this,'ลานักขัตฤกษ์')"><span class="ltype-icon">🎉</span>ลานักขัตฤกษ์</button>
-            <button class="leave-type-btn" onclick="selectType(this,'เปลี่ยนวันหยุด')"><span class="ltype-icon">🔄</span>เปลี่ยนวันหยุด</button>
-            <button class="leave-type-btn" onclick="selectType(this,'เปลี่ยนรอบ')"><span class="ltype-icon">🔃</span>เปลี่ยนรอบ</button>
-          </div>
-
-          <div class="form-section-title">วันที่ลา<span class="field-required">*</span></div>
-          <div class="form-row three">
-            <div>
-              <label class="field-label">วันเริ่มต้น</label>
-              <input type="date" class="field-input" id="date-start" onchange="calcDays()">
-            </div>
-            <div>
-              <label class="field-label">วันสิ้นสุด</label>
-              <input type="date" class="field-input" id="date-end" onchange="calcDays()">
-            </div>
-            <div>
-              <div class="days-display">
-                <div class="days-number" id="days-count">0</div>
-                <div class="days-label">จำนวนวันลา</div>
+          <!-- ── คอลัมน์ซ้าย: กรอกข้อมูล ── -->
+          <div class="form-card">
+            <div class="form-section-title" style="margin-top:0;">ข้อมูลพนักงาน</div>
+            <div class="form-row three">
+              <div>
+                <label class="field-label">รหัสพนักงาน</label>
+                <input class="field-input" id="emp-id" readonly value="EMP001">
+              </div>
+              <div>
+                <label class="field-label">ชื่อ-นามสกุล</label>
+                <input class="field-input" readonly id="emp-name" value="สมชาย ใจดี">
+              </div>
+              <div>
+                <label class="field-label">ตำแหน่ง</label>
+                <input class="field-input" readonly id="emp-position" value="ช่างซ่อมบำรุง">
               </div>
             </div>
-          </div>
-
-          <div class="form-section-title">รายละเอียด</div>
-          <div class="form-row full">
-            <div>
-              <label class="field-label">เหตุผลการลา<span class="field-required">*</span></label>
-              <textarea class="field-textarea" placeholder="ระบุเหตุผลการลา..."></textarea>
+            <div class="form-row">
+              <div>
+                <label class="field-label">แผนก</label>
+                <input class="field-input" readonly id="emp-dept" value="ฝ่ายอาคารและสถานที่">
+              </div>
+              <div>
+                <label class="field-label">วันที่ยื่นใบลา</label>
+                <input class="field-input" readonly id="today-date">
+              </div>
             </div>
-          </div>
-          <div class="form-row full">
+
+            <div class="form-section-title">ประเภทการลา<span class="field-required">*</span></div>
+            <div class="leave-type-grid">
+              <button class="leave-type-btn selected" onclick="selectType(this,'ลาป่วย')"><span class="ltype-icon">🤒</span>ลาป่วย</button>
+              <button class="leave-type-btn" onclick="selectType(this,'ลากิจ')"><span class="ltype-icon">📌</span>ลากิจ</button>
+              <button class="leave-type-btn" onclick="selectType(this,'ลาพักร้อน')"><span class="ltype-icon">🏖️</span>ลาพักร้อน</button>
+              <button class="leave-type-btn" onclick="selectType(this,'ลานักขัตฤกษ์')"><span class="ltype-icon">🎉</span>ลานักขัตฤกษ์</button>
+              <button class="leave-type-btn" onclick="selectType(this,'เปลี่ยนวันหยุด')"><span class="ltype-icon">🔄</span>เปลี่ยนวันหยุด</button>
+              <button class="leave-type-btn" onclick="selectType(this,'เปลี่ยนรอบ')"><span class="ltype-icon">🔃</span>เปลี่ยนรอบ</button>
+            </div>
+
+            <div class="form-section-title">วันที่ลา<span class="field-required">*</span></div>
+            <div class="form-row">
+              <div>
+                <label class="field-label">วันเริ่มต้น</label>
+                <input type="date" class="field-input" id="date-start" onchange="calcDays()">
+              </div>
+              <div>
+                <label class="field-label">วันสิ้นสุด</label>
+                <input type="date" class="field-input" id="date-end" onchange="calcDays()">
+              </div>
+            </div>
+
+            <div class="form-section-title">รายละเอียด</div>
+            <div style="margin-bottom:14px;">
+              <label class="field-label">เหตุผลการลา<span class="field-required">*</span></label>
+              <textarea class="field-textarea" id="leave-reason" placeholder="ระบุเหตุผลการลา..."></textarea>
+            </div>
             <div>
               <label class="field-label">หมายเหตุเพิ่มเติม (ไม่บังคับ)</label>
-              <textarea class="field-textarea" style="min-height:60px" placeholder="เช่น กรณีเปลี่ยนรอบ ระบุชื่อผู้ที่สลับด้วย..."></textarea>
+              <textarea class="field-textarea" id="leave-remark" style="min-height:60px" placeholder="เช่น กรณีเปลี่ยนรอบ ระบุชื่อผู้ที่สลับด้วย..."></textarea>
+            </div>
+
+            <div class="form-section-title">เอกสารแนบ (ถ้ามี)</div>
+            <div class="upload-area" onclick="document.getElementById('file-upload').click()">
+              <input type="file" id="file-upload" style="display:none" multiple accept="image/*,.pdf">
+              <div class="upload-icon">📎</div>
+              <div class="upload-text">ลากไฟล์มาวางที่นี่ หรือ <span>คลิกเพื่อเลือกไฟล์</span></div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px;">รองรับ JPG, PNG, PDF ขนาดไม่เกิน 10MB</div>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn-cancel" onclick="showPage('dashboard')">ยกเลิก</button>
+              <button class="btn-submit" onclick="submitLeave()">📤 ส่งใบลา</button>
             </div>
           </div>
 
-          <div class="form-section-title">เอกสารแนบ (ถ้ามี)</div>
-          <div class="upload-area" onclick="document.getElementById('file-upload').click()">
-            <input type="file" id="file-upload" style="display:none" multiple accept="image/*,.pdf">
-            <div class="upload-icon">📎</div>
-            <div class="upload-text">ลากไฟล์มาวางที่นี่ หรือ <span>คลิกเพื่อเลือกไฟล์</span></div>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">รองรับ JPG, PNG, PDF ขนาดไม่เกิน 10MB</div>
-          </div>
+          <!-- ── คอลัมน์ขวา: สรุป + อนุมัติ ── -->
+          <div class="form-side">
 
-          <div class="form-section-title">สายอนุมัติ</div>
-          <div class="approvers-section">
-            <div class="approvers-title">ผู้มีสิทธิ์อนุมัติ (ต้องครบทั้ง 2 ท่าน)</div>
-            <div class="approver-item">
-              <div class="approver-name-role">
-                <div class="approver-name">นายอภิชาต วงศ์ไพบูลย์</div>
-                <div class="approver-role">ที่ปรึกษาฝ่ายอาคาร</div>
+            <!-- สรุปใบลา -->
+            <div class="form-side-card">
+              <div class="form-side-title">สรุปใบลา</div>
+              <div style="text-align:center;padding:16px 0 20px;">
+                <div class="days-number" id="days-count" style="font-size:52px;">0</div>
+                <div class="days-label">วันลา</div>
               </div>
-              <span class="badge badge-pending">⏳ รออนุมัติ</span>
-            </div>
-            <div class="approver-item">
-              <div class="approver-name-role">
-                <div class="approver-name">นางสาวมนัสนันท์ ศรีสวัสดิ์</div>
-                <div class="approver-role">HR Manager</div>
+              <div class="leave-summary-row">
+                <span class="leave-summary-label">ประเภท</span>
+                <span class="leave-summary-value" id="summary-type">ลาป่วย</span>
               </div>
-              <span class="badge badge-pending">⏳ รออนุมัติ</span>
+              <div class="leave-summary-row">
+                <span class="leave-summary-label">เริ่มต้น</span>
+                <span class="leave-summary-value" id="summary-start">—</span>
+              </div>
+              <div class="leave-summary-row">
+                <span class="leave-summary-label">สิ้นสุด</span>
+                <span class="leave-summary-value" id="summary-end">—</span>
+              </div>
             </div>
-          </div>
 
-          <div class="form-actions">
-            <button class="btn-cancel" onclick="showPage('dashboard')">ยกเลิก</button>
-            <button class="btn-submit" onclick="submitLeave()">📤 ส่งใบลา</button>
+            <!-- สายอนุมัติ -->
+            <div class="form-side-card">
+              <div class="form-side-title">สายอนุมัติ</div>
+              <div id="approvers-list">
+                <div style="text-align:center;padding:12px;color:var(--muted);font-size:13px;">⏳ กำลังโหลด...</div>
+              </div>
+            </div>
+
+            <!-- คู่มือ -->
+            <div class="form-side-card" style="background:var(--gold-glow);border-color:rgba(200,145,42,0.25);">
+              <div class="form-side-title" style="color:var(--gold-light);border-color:rgba(200,145,42,0.25);">หมายเหตุ</div>
+              <ul style="font-size:12px;color:var(--silver);line-height:1.8;padding-left:16px;">
+                <li>ต้องได้รับอนุมัติ <strong style="color:var(--gold-light);">ครบ 2 ท่าน</strong> จึงจะถือว่าสำเร็จ</li>
+                <li>ลาป่วย &gt; 3 วัน ต้องแนบใบรับรองแพทย์</li>
+                <li>ยื่นล่วงหน้าอย่างน้อย 3 วันทำการ</li>
+              </ul>
+            </div>
+
           </div>
         </div>
       </div>
@@ -1111,7 +1170,7 @@
         </div>
         <div class="table-card">
           <div class="table-header">
-            <div class="table-title">ประวัติการลา — สมชาย ใจดี</div>
+            <div class="table-title" id="my-leaves-title">ประวัติการลา</div>
             <button class="btn-print" onclick="window.print()">🖨️ พิมพ์</button>
           </div>
           <div class="table-wrap">
@@ -1119,58 +1178,31 @@
               <thead><tr>
                 <th>รหัสใบลา</th><th>ประเภท</th><th>วันเริ่ม</th><th>วันสิ้นสุด</th><th>จำนวน</th><th>สถานะ</th><th>ผู้อนุมัติ</th>
               </tr></thead>
-              <tbody>
-                <tr>
-                  <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-018</td>
-                  <td><span class="badge badge-type">ลาป่วย</span></td>
-                  <td>15 พ.ค. 68</td><td>16 พ.ค. 68</td><td>2 วัน</td>
-                  <td><span class="badge badge-approved">✓ อนุมัติ</span></td>
-                  <td><div class="approver-status"><div class="approver-row"><div class="dot dot-green"></div><span>อภิชาต ✓</span></div><div class="approver-row"><div class="dot dot-green"></div><span>มนัสนันท์ ✓</span></div></div></td>
-                </tr>
-                <tr>
-                  <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-012</td>
-                  <td><span class="badge badge-type">ลากิจ</span></td>
-                  <td>2 พ.ค. 68</td><td>2 พ.ค. 68</td><td>1 วัน</td>
-                  <td><span class="badge badge-approved">✓ อนุมัติ</span></td>
-                  <td><div class="approver-status"><div class="approver-row"><div class="dot dot-green"></div><span>อภิชาต ✓</span></div><div class="approver-row"><div class="dot dot-green"></div><span>มนัสนันท์ ✓</span></div></div></td>
-                </tr>
-                <tr>
-                  <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-005</td>
-                  <td><span class="badge badge-type">พักร้อน</span></td>
-                  <td>10 เม.ย. 68</td><td>14 เม.ย. 68</td><td>5 วัน</td>
-                  <td><span class="badge badge-approved">✓ อนุมัติ</span></td>
-                  <td><div class="approver-status"><div class="approver-row"><div class="dot dot-green"></div><span>อภิชาต ✓</span></div><div class="approver-row"><div class="dot dot-green"></div><span>มนัสนันท์ ✓</span></div></div></td>
-                </tr>
-                <tr>
-                  <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-001</td>
-                  <td><span class="badge badge-type">ลาป่วย</span></td>
-                  <td>3 ม.ค. 68</td><td>3 ม.ค. 68</td><td>1 วัน</td>
-                  <td><span class="badge badge-rejected">✗ ไม่อนุมัติ</span></td>
-                  <td><div class="approver-status"><div class="approver-row"><div class="dot dot-green"></div><span>อภิชาต ✓</span></div><div class="approver-row"><div class="dot" style="background:#E74C3C;"></div><span>มนัสนันท์ ✗</span></div></div></td>
-                </tr>
+              <tbody id="my-leaves-tbody">
+                <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:28px;">⏳ กำลังโหลด...</td></tr>
               </tbody>
             </table>
           </div>
         </div>
-        <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
+        <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;" id="my-leave-summary">
           <div class="stat-card" style="flex:1;min-width:120px;padding:14px 16px;">
             <div class="stat-label">ลาป่วยสะสม</div>
-            <div class="stat-value" style="font-size:24px;color:var(--accent-light)">3</div>
+            <div class="stat-value" id="sum-sick" style="font-size:24px;color:var(--danger)">—</div>
             <div class="stat-change">วัน</div>
           </div>
           <div class="stat-card" style="flex:1;min-width:120px;padding:14px 16px;">
             <div class="stat-label">ลากิจสะสม</div>
-            <div class="stat-value" style="font-size:24px;color:var(--gold-light)">1</div>
+            <div class="stat-value" id="sum-personal" style="font-size:24px;color:var(--gold-light)">—</div>
             <div class="stat-change">วัน</div>
           </div>
           <div class="stat-card" style="flex:1;min-width:120px;padding:14px 16px;">
             <div class="stat-label">พักร้อนสะสม</div>
-            <div class="stat-value" style="font-size:24px;color:#2ECC71">5</div>
+            <div class="stat-value" id="sum-vacation" style="font-size:24px;color:var(--success)">—</div>
             <div class="stat-change">วัน</div>
           </div>
           <div class="stat-card" style="flex:1;min-width:120px;padding:14px 16px;">
             <div class="stat-label">รวมทั้งหมด</div>
-            <div class="stat-value" style="font-size:24px;">9</div>
+            <div class="stat-value" id="sum-total" style="font-size:24px;">—</div>
             <div class="stat-change">วัน</div>
           </div>
         </div>
@@ -1179,12 +1211,101 @@
       <!-- APPROVAL -->
       <div class="page-section" id="section-approval">
         <div class="approval-filters no-print">
-          <button class="filter-btn active" onclick="setFilter(this)">รออนุมัติ (3)</button>
-          <button class="filter-btn" onclick="setFilter(this)">อนุมัติแล้ว</button>
+          <button class="filter-btn active" onclick="setFilter(this)">รออนุมัติ</button>
           <button class="filter-btn" onclick="setFilter(this)">ทั้งหมด</button>
         </div>
+        <div id="approval-container">
+          <div class="empty-state">
+            <div class="empty-icon">⏳</div>
+            <div class="empty-text">กำลังโหลด...</div>
+          </div>
+        </div>
+      </div>
 
-        <div class="leave-detail-card">
+      <!-- ALL LEAVES -->
+      <div class="page-section" id="section-all-leaves">
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;" class="no-print">
+          <button class="filter-btn active" onclick="setFilter(this)">ทั้งหมด</button>
+          <button class="filter-btn" onclick="setFilter(this)">รออนุมัติ</button>
+          <div style="flex:1;min-width:160px;">
+            <input class="field-input" style="padding:7px 12px;font-size:12px;" placeholder="🔍 ค้นหาชื่อพนักงาน...">
+          </div>
+          <button class="btn-print" onclick="window.print()">🖨️ พิมพ์</button>
+        </div>
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title" id="all-leaves-title">ใบลาทั้งหมด</div>
+            <span style="font-size:12px;color:var(--muted)" id="all-leaves-count">—</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>รหัสใบลา</th><th>พนักงาน</th><th>ตำแหน่ง</th><th>ประเภท</th>
+                <th>วันเริ่ม</th><th>วันสิ้นสุด</th><th>จำนวน</th>
+                <th>ท่านที่ 1</th><th>ท่านที่ 2</th><th>สถานะรวม</th>
+              </tr></thead>
+              <tbody id="all-leaves-tbody">
+                <tr><td colspan="10" style="text-align:center;color:var(--muted);padding:28px;">⏳ กำลังโหลด...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- REPORT -->
+      <div class="page-section" id="section-report">
+        <div class="report-header no-print">
+          <div class="report-period">
+            <select class="period-select" id="report-month-select" onchange="loadReportData()">
+            </select>
+          </div>
+          <button class="btn-print" onclick="window.print()">🖨️ พิมพ์รายงาน</button>
+        </div>
+
+        <div style="margin-bottom:20px;padding:20px;background:var(--card-bg);border:1px solid var(--border);border-radius:12px;">
+          <div style="font-size:11px;color:var(--muted);letter-spacing:0.07em;text-transform:uppercase;margin-bottom:4px;font-family:var(--font-label);">รายงานสรุปการลา</div>
+          <div style="font-size:22px;font-weight:700;margin-bottom:2px;">ฝ่ายอาคารและสถานที่</div>
+          <div style="font-size:13px;color:var(--silver)" id="report-subtitle">ประจำเดือน — | จัดทำ: ระบบ BFS Leave Management</div>
+        </div>
+
+        <div class="stats-grid stagger" style="margin-bottom:20px;">
+          <div class="stat-card blue"><div class="stat-icon">👥</div><div class="stat-label">ใบลาทั้งหมด</div><div class="stat-value blue" id="rpt-total">—</div><div class="stat-change">ใบ</div></div>
+          <div class="stat-card gold"><div class="stat-icon">✅</div><div class="stat-label">อนุมัติแล้ว</div><div class="stat-value gold" id="rpt-approved">—</div><div class="stat-change">ใบ</div></div>
+          <div class="stat-card green"><div class="stat-icon">📅</div><div class="stat-label">วันลารวม</div><div class="stat-value green" id="rpt-days">—</div><div class="stat-change">วัน</div></div>
+          <div class="stat-card red"><div class="stat-icon">⏳</div><div class="stat-label">รออนุมัติ</div><div class="stat-value red" id="rpt-pending">—</div><div class="stat-change">ใบ</div></div>
+        </div>
+
+        <div class="report-grid">
+          <div class="chart-card">
+            <div class="chart-title">วันลาตามประเภท</div>
+            <div class="chart-sub">สะสมเดือนนี้</div>
+            <canvas id="reportTypeChart" height="200"></canvas>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">แนวโน้มการลา 12 เดือน</div>
+            <div class="chart-sub">ย้อนหลัง 1 ปี</div>
+            <canvas id="reportTrendChart" height="200"></canvas>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">สรุปวันลารายบุคคล</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>ชื่อพนักงาน</th><th>ตำแหน่ง</th>
+                <th>ลาป่วย</th><th>ลากิจ</th><th>พักร้อน</th>
+                <th>นักขัตฤกษ์</th><th>เปลี่ยนวัน</th><th>รวม</th>
+              </tr></thead>
+              <tbody id="report-summary-tbody">
+                <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px;">⏳ กำลังโหลด...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
           <div class="leave-card-header" onclick="toggleCard('card1')">
             <div class="leave-card-left">
               <div class="leave-card-avatar av-blue">นต</div>
@@ -1678,18 +1799,36 @@ function formatDateShort(d) {
 //  LOAD MY LEAVES
 // ════════════════════════════════════════════════════
 async function loadMyLeaves() {
-  const tbody = document.querySelector('#section-my-leaves .table-wrap tbody');
+  const tbody = document.getElementById('my-leaves-tbody');
+  const title = document.getElementById('my-leaves-title');
   if (!tbody) return;
-  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">⏳ กำลังโหลด...</td></tr>`;
+  if (title) title.textContent = `ประวัติการลา — ${currentUser.name}`;
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px;">⏳ กำลังโหลด...</td></tr>`;
 
   const res = await callAPI({ action: 'getMyLeaves', employeeId: currentUser.id });
   if (!res.success || !res.data?.length) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">ไม่พบประวัติการลา</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px;">ยังไม่มีประวัติการลา</td></tr>`;
+    ['sum-sick','sum-personal','sum-vacation','sum-total'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.textContent = '0';
+    });
     return;
   }
 
+  // คำนวณสะสม
+  let sick=0, personal=0, vacation=0, total=0;
+  res.data.filter(r => r['สถานะ'] === 'อนุมัติ').forEach(r => {
+    const d = parseFloat(r['จำนวนวัน']) || 0;
+    if (r['ประเภทลา'] === 'ลาป่วย') sick += d;
+    else if (r['ประเภทลา'] === 'ลากิจ') personal += d;
+    else if (r['ประเภทลา'] === 'ลาพักร้อน') vacation += d;
+    total += d;
+  });
+  const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  setVal('sum-sick', sick); setVal('sum-personal', personal);
+  setVal('sum-vacation', vacation); setVal('sum-total', total);
+
   tbody.innerHTML = res.data.map(r => {
-    const s1 = r['ผู้อนุมัติ1-สถานะ'] === 'อนุมัติ' ? 'dot-green' : 'dot-gray';
+    const s1 = r['ผู้อนุมัติ1-สถานะ'] === 'อนุมัติ' ? 'dot-green' : r['ผู้อนุมัติ1-สถานะ'] === 'ไม่อนุมัติ' ? 'dot-red' : 'dot-gray';
     const s2 = r['ผู้อนุมัติ2-สถานะ'] === 'อนุมัติ' ? 'dot-green' : r['ผู้อนุมัติ2-สถานะ'] === 'ไม่อนุมัติ' ? 'dot-red' : 'dot-gray';
     const statusBadge = r['สถานะ'] === 'อนุมัติ'
       ? `<span class="badge badge-approved">✓ อนุมัติ</span>`
@@ -1697,7 +1836,7 @@ async function loadMyLeaves() {
       ? `<span class="badge badge-rejected">✗ ไม่อนุมัติ</span>`
       : `<span class="badge badge-pending">⏳ รออนุมัติ</span>`;
     return `<tr>
-      <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">${r['รหัสใบลา']}</td>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--muted)">${r['รหัสใบลา']}</td>
       <td><span class="badge badge-type">${r['ประเภทลา']}</span></td>
       <td>${formatDateShort(r['วันเริ่มลา'])}</td>
       <td>${formatDateShort(r['วันสิ้นสุด'])}</td>
@@ -1757,26 +1896,18 @@ async function loadAllLeaves() {
 //  LOAD PENDING APPROVAL
 // ════════════════════════════════════════════════════
 async function loadPendingApproval() {
-  const container = document.getElementById('section-approval');
-  const cards = container.querySelectorAll('.leave-detail-card');
-  cards.forEach(c => c.remove());
-
-  const loadingEl = document.createElement('div');
-  loadingEl.className = 'empty-state';
-  loadingEl.innerHTML = '<div class="empty-icon">⏳</div><div class="empty-text">กำลังโหลด...</div>';
-  container.appendChild(loadingEl);
+  const container = document.getElementById('approval-container');
+  if (!container) return;
+  container.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-text">กำลังโหลด...</div></div>`;
 
   const res = await callAPI({ action: 'getPendingLeaves' });
-  loadingEl.remove();
 
   if (!res.success || !res.data?.length) {
-    const empty = document.createElement('div');
-    empty.className = 'empty-state';
-    empty.innerHTML = '<div class="empty-icon">✅</div><div class="empty-text">ไม่มีใบลารออนุมัติ</div>';
-    container.appendChild(empty);
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">ไม่มีใบลารออนุมัติ</div><div class="empty-sub">ทุกใบลาได้รับการพิจารณาครบแล้ว</div></div>`;
     return;
   }
 
+  container.innerHTML = '';
   res.data.forEach((r, i) => {
     const cardId = 'api-card-' + i;
     const card = document.createElement('div');
@@ -1966,7 +2097,8 @@ function showPage(page) {
   if (page === 'my-leaves')  loadMyLeaves();
   if (page === 'all-leaves') loadAllLeaves();
   if (page === 'approval')   loadPendingApproval();
-  if (page === 'report')     setTimeout(initReportCharts, 100);
+  if (page === 'leave-form') loadApprovers();
+  if (page === 'report')     { initReportPeriod(); setTimeout(initReportCharts, 100); }
 }
 
 function openSidebar() {
@@ -1981,6 +2113,8 @@ function closeSidebar() {
 function selectType(btn, type) {
   document.querySelectorAll('.leave-type-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
+  const el = document.getElementById('summary-type');
+  if (el) el.textContent = type;
 }
 
 function calcDays() {
@@ -1989,7 +2123,34 @@ function calcDays() {
   if (s && e) {
     const diff = Math.max(0, Math.round((new Date(e) - new Date(s)) / 86400000) + 1);
     document.getElementById('days-count').textContent = diff;
+    // sync summary
+    const fmt = d => new Date(d).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'});
+    const start = document.getElementById('summary-start');
+    const end   = document.getElementById('summary-end');
+    if (start) start.textContent = fmt(s);
+    if (end)   end.textContent   = e ? fmt(e) : fmt(s);
   }
+}
+
+async function loadApprovers() {
+  const container = document.getElementById('approvers-list');
+  if (!container) return;
+  const res = await callAPI({ action: 'getApprovers' });
+  if (!res.success || !res.data?.length) {
+    container.innerHTML = `<div style="font-size:12px;color:var(--muted);text-align:center;padding:8px;">ไม่พบข้อมูลผู้อนุมัติ</div>`;
+    return;
+  }
+  container.innerHTML = res.data
+    .filter(a => String(a['สถานะ']).toLowerCase() === 'active')
+    .map((a, i) => `
+      <div class="approver-item" style="padding:8px 0;">
+        <div class="approver-name-role">
+          <div class="approver-name" style="font-size:13px;">${a['ชื่อ']}</div>
+          <div class="approver-role">${a['ตำแหน่ง']}</div>
+        </div>
+        <span class="badge badge-pending" style="font-size:10px;">⏳ รอ</span>
+      </div>
+    `).join('');
 }
 
 async function submitLeave() {
@@ -1997,8 +2158,8 @@ async function submitLeave() {
   const startDate = document.getElementById('date-start').value;
   const endDate   = document.getElementById('date-end').value;
   const days      = parseInt(document.getElementById('days-count').textContent) || 0;
-  const reason    = document.querySelector('.field-textarea')?.value || '';
-  const remark    = document.querySelectorAll('.field-textarea')[1]?.value || '';
+  const reason    = document.getElementById('leave-reason')?.value || '';
+  const remark    = document.getElementById('leave-remark')?.value || '';
 
   if (!leaveType) { showToast('กรุณาเลือกประเภทการลา'); return; }
   if (!startDate)  { showToast('กรุณาระบุวันที่ลา'); return; }
@@ -2079,6 +2240,67 @@ document.addEventListener('DOMContentLoaded', () => {
   backBtn.onclick = () => window.location.href = './index.html';
   topActions.prepend(backBtn);
 });
+
+function initReportPeriod() {
+  const sel = document.getElementById('report-month-select');
+  if (!sel || sel.options.length > 0) return;
+  const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const now = new Date();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const opt = document.createElement('option');
+    opt.value = `${d.getMonth()+1}|${d.getFullYear()}`;
+    opt.textContent = `${months[d.getMonth()]} ${d.getFullYear()+543}`;
+    sel.appendChild(opt);
+  }
+  loadReportData();
+}
+
+async function loadReportData() {
+  const sel = document.getElementById('report-month-select');
+  const [month, year] = (sel?.value || `${new Date().getMonth()+1}|${new Date().getFullYear()}`).split('|');
+  const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const sub = document.getElementById('report-subtitle');
+  if (sub) sub.textContent = `ประจำเดือน ${months[parseInt(month)-1]} ${parseInt(year)+543} | จัดทำ: BFS Leave Management`;
+
+  const tbody = document.getElementById('report-summary-tbody');
+  if (tbody) tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px;">⏳ กำลังโหลด...</td></tr>`;
+
+  const res = await callAPI({ action: 'getAllLeaves', month, year });
+  if (!res.success) return;
+  const all = res.data || [];
+
+  // stats
+  const approved = all.filter(r => r['สถานะ'] === 'อนุมัติ');
+  const totalDays = approved.reduce((s, r) => s + (parseFloat(r['จำนวนวัน'])||0), 0);
+  const pending   = all.filter(r => r['สถานะ'] === 'รออนุมัติ').length;
+  ['rpt-total','rpt-approved','rpt-days','rpt-pending'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = [all.length, approved.length, totalDays, pending][i];
+  });
+
+  // summary table
+  const empMap = {};
+  all.forEach(r => {
+    const k = r['รหัสพนักงาน'];
+    if (!empMap[k]) empMap[k] = { name: r['ชื่อพนักงาน'], pos: r['ตำแหน่ง'], ลาป่วย:0, ลากิจ:0, ลาพักร้อน:0, ลานักขัตฤกษ์:0, เปลี่ยนวันหยุด:0, เปลี่ยนรอบ:0 };
+    if (r['สถานะ'] === 'อนุมัติ') empMap[k][r['ประเภทลา']] = (empMap[k][r['ประเภทลา']]||0) + (parseFloat(r['จำนวนวัน'])||0);
+  });
+  const rows = Object.values(empMap);
+  if (tbody) {
+    if (!rows.length) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px;">ไม่มีข้อมูลในเดือนนี้</td></tr>`;
+    } else {
+      tbody.innerHTML = rows.map(e => {
+        const t = (e['ลาป่วย']||0)+(e['ลากิจ']||0)+(e['ลาพักร้อน']||0)+(e['ลานักขัตฤกษ์']||0)+(e['เปลี่ยนวันหยุด']||0)+(e['เปลี่ยนรอบ']||0);
+        return `<tr><td>${e.name}</td><td style="color:var(--muted)">${e.pos}</td>
+          <td>${e['ลาป่วย']||0}</td><td>${e['ลากิจ']||0}</td><td>${e['ลาพักร้อน']||0}</td>
+          <td>${e['ลานักขัตฤกษ์']||0}</td><td>${e['เปลี่ยนวันหยุด']||0}</td>
+          <td style="font-weight:600;color:var(--gold-light)">${t}</td></tr>`;
+      }).join('');
+    }
+  }
+}
 
 let chartsInit = false;
 function initCharts() {
