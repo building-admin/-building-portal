@@ -171,6 +171,8 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
 .btn-save{background:linear-gradient(135deg,var(--gold),var(--gold-lt));border:none;border-radius:8px;padding:10px 24px;color:var(--navy);font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s}
 .btn-save:hover{opacity:.85}
 .btn-save:disabled{opacity:.5;cursor:not-allowed}
+.btn-danger{background:linear-gradient(135deg,var(--danger),#c03030);border:none;border-radius:8px;padding:10px 24px;color:var(--white);font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.btn-danger:hover{opacity:.85}
 .rand-pw{background:transparent;border:1px solid var(--border);color:var(--silver);padding:8px 12px;border-radius:7px;font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap;align-self:flex-end}
 .rand-pw:hover{border-color:var(--gold);color:var(--gold-lt)}
 .pw-row{display:flex;gap:8px;align-items:flex-end}
@@ -690,6 +692,19 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
   </div>
 </div>
 
+<!-- MODAL: CONFIRM -->
+<div class="modal-overlay" id="modal-confirm">
+  <div class="modal-box" style="max-width:380px;text-align:center">
+    <div id="confirm-icon" style="font-size:44px;margin-bottom:14px">⚠️</div>
+    <h3 id="confirm-title">ยืนยัน</h3>
+    <p class="modal-sub" id="confirm-msg" style="margin-bottom:28px;font-size:14px;line-height:1.6"></p>
+    <div class="modal-footer" style="justify-content:center;gap:14px">
+      <button class="btn-cancel" id="confirm-cancel-btn" onclick="closeModal('modal-confirm')">ยกเลิก</button>
+      <button class="btn-save" id="confirm-ok-btn">ยืนยัน</button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL: SETUP -->
 <div class="modal-overlay setup-modal" id="setup-modal">
   <div class="modal-box" style="max-width:420px">
@@ -1191,16 +1206,24 @@ function goAdmin() {
 }
 
 function doLogout() {
-  if (!confirm('ต้องการออกจากระบบหรือไม่?')) return;
-  clearSession();
-  currentUser = null; userPermissions = null; currentDept = null;
-  allUsers = []; allDepts = []; allMenus = [];
-  ['user-info','logout-btn','admin-btn'].forEach(id => document.getElementById(id).classList.remove('show'));
-  document.getElementById('dept-badge').classList.remove('show');
-  document.getElementById('inp-user').value = '';
-  document.getElementById('inp-pass').value = '';
-  document.getElementById('login-error').classList.remove('show');
-  showScreen('login');
+  showConfirm({
+    icon: '🔓',
+    title: 'ออกจากระบบ',
+    msg: 'ต้องการออกจากระบบหรือไม่?',
+    okText: 'ออกจากระบบ',
+    okClass: 'btn-save' ,
+    onOk: () => {
+      clearSession();
+      currentUser = null; userPermissions = null; currentDept = null;
+      allUsers = []; allDepts = []; allMenus = [];
+      ['user-info','logout-btn','admin-btn'].forEach(id => document.getElementById(id).classList.remove('show'));
+      document.getElementById('dept-badge').classList.remove('show');
+      document.getElementById('inp-user').value = '';
+      document.getElementById('inp-pass').value = '';
+      document.getElementById('login-error').classList.remove('show');
+      showScreen('login');
+    }
+  });
 }
 
 function showScreen(id) {
@@ -1845,8 +1868,21 @@ document.getElementById('inp-user').addEventListener('keydown',e=>{if(e.key==='E
 })();
 
 // ════════════════════════════════════════════════════
-//  SESSION — localStorage
+//  CUSTOM CONFIRM DIALOG
 // ════════════════════════════════════════════════════
+function showConfirm({ icon='⚠️', title='ยืนยัน', msg='', okText='ยืนยัน', okClass='btn-save', cancelText='ยกเลิก', onOk=()=>{} }) {
+  document.getElementById('confirm-icon').textContent = icon;
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent = msg;
+  const okBtn = document.getElementById('confirm-ok-btn');
+  okBtn.textContent = okText;
+  okBtn.className = okClass;
+  document.getElementById('confirm-cancel-btn').textContent = cancelText;
+  okBtn.onclick = () => { closeModal('modal-confirm'); onOk(); };
+  openModal('modal-confirm');
+}
+
+
 function saveSession() {
   try {
     localStorage.setItem('bp_user', JSON.stringify(currentUser));
