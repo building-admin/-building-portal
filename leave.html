@@ -1880,7 +1880,6 @@ async function apiApprove(leaveId, approverIndex, action, rowId) {
 let currentUser = null;
 
 function loadUserFromPortal() {
-  // รับข้อมูล user จาก URL param (ส่งมาจาก portal.html)
   const params = new URLSearchParams(window.location.search);
   const uid   = params.get('uid');
   const name  = params.get('name');
@@ -1888,33 +1887,39 @@ function loadUserFromPortal() {
   const pos   = params.get('position');
   const dept  = params.get('dept');
 
-  // fallback: ถ้าเปิดตรงโดยไม่ผ่าน portal ใช้ค่าเริ่มต้น
-  const defaults = {
-    id: uid || 'EMP001',
-    name: name || 'สมชาย ใจดี',
-    type: role || 'employee',
-    role: (role === 'approver') ? 'ที่ปรึกษา / ผู้อนุมัติ'
-        : (role === 'staff')    ? 'เจ้าหน้าที่ฝ่ายอาคาร'
-        : 'พนักงานทั่วไป',
-    position: pos  || 'ช่างซ่อมบำรุง',
-    dept: dept || 'ฝ่ายอาคารและสถานที่',
-    initials: name ? name.substring(0,2) : 'สม'
+  const roleLabel = (role === 'approver') ? 'ที่ปรึกษา / ผู้อนุมัติ'
+                  : (role === 'hr')       ? 'HR / ผู้อนุมัติ'
+                  : (role === 'staff')    ? 'เจ้าหน้าที่ฝ่ายอาคาร'
+                  : 'พนักงานทั่วไป';
+
+  const deptLabel = (dept === 'bm') ? 'แผนกบริหารอาคาร'
+                  : (dept === 'bs') ? 'แผนกบริการงานอาคาร'
+                  : dept || 'ฝ่ายอาคารและสถานที่';
+
+  currentUser = {
+    id:       uid      || 'EMP001',
+    name:     name     || 'พนักงาน',
+    type:     role     || 'employee',
+    role:     roleLabel,
+    position: pos      || 'เจ้าหน้าที่',
+    dept:     deptLabel,
+    initials: name     ? name.substring(0,2) : 'พน'
   };
-  currentUser = defaults;
 
-  document.getElementById('sidebar-name').textContent = currentUser.name;
-  document.getElementById('sidebar-role').textContent = currentUser.role;
+  document.getElementById('sidebar-name').textContent   = currentUser.name;
+  document.getElementById('sidebar-role').textContent   = currentUser.role;
   document.getElementById('sidebar-avatar').textContent = currentUser.initials;
-  document.getElementById('emp-name').value = currentUser.name;
+  document.getElementById('emp-name').value             = currentUser.name;
 
-  if (currentUser.type !== 'approver' && currentUser.type !== 'staff') {
+  const canApprove = ['approver','hr','staff'].includes(currentUser.type);
+  if (!canApprove) {
     document.getElementById('nav-approval-section').style.display = 'none';
   } else {
     const bnavApproval = document.getElementById('bnav-approval');
     if (bnavApproval) bnavApproval.style.display = 'flex';
   }
 
-  document.getElementById('app').style.display = 'flex';
+  document.getElementById('app').style.display       = 'flex';
   document.getElementById('app').style.flexDirection = 'row';
 
   const d = new Date();
@@ -1926,7 +1931,7 @@ function loadUserFromPortal() {
 
 function doLogout() {
   // กลับไป portal
-  window.location.href = 'portal.html';
+  window.location.href = window.location.pathname.replace('leave.html','') + 'index.html';
 }
 
 const pageConfig = {
@@ -2071,7 +2076,7 @@ document.addEventListener('DOMContentLoaded', () => {
   backBtn.className = 'btn-cancel no-print';
   backBtn.style.cssText = 'font-size:12px;padding:7px 13px;';
   backBtn.textContent = '← Portal';
-  backBtn.onclick = () => window.location.href = 'portal.html';
+  backBtn.onclick = () => window.location.href = window.location.pathname.replace('leave.html','') + 'index.html';
   topActions.prepend(backBtn);
 });
 
