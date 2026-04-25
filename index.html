@@ -755,6 +755,7 @@ async function doLogin() {
     if (r.success) {
       currentUser = r.user;
       userPermissions = r.permissions;
+      saveSession();
       setupTopbar();
       if (r.firstLogin) showScreen('changepw');
       else goToDept();
@@ -1189,6 +1190,7 @@ function goAdmin() {
 
 function doLogout() {
   if (!confirm('ต้องการออกจากระบบหรือไม่?')) return;
+  clearSession();
   currentUser = null; userPermissions = null; currentDept = null;
   allUsers = []; allDepts = []; allMenus = [];
   ['user-info','logout-btn','admin-btn'].forEach(id => document.getElementById(id).classList.remove('show'));
@@ -1840,7 +1842,35 @@ document.getElementById('inp-user').addEventListener('keydown',e=>{if(e.key==='E
   draw();
 })();
 
+// ════════════════════════════════════════════════════
+//  SESSION — localStorage
+// ════════════════════════════════════════════════════
+function saveSession() {
+  try {
+    localStorage.setItem('bp_user', JSON.stringify(currentUser));
+    localStorage.setItem('bp_perms', JSON.stringify(userPermissions));
+  } catch(e) {}
+}
+function clearSession() {
+  try { localStorage.removeItem('bp_user'); localStorage.removeItem('bp_perms'); } catch(e) {}
+}
+function restoreSession() {
+  try {
+    const u = localStorage.getItem('bp_user');
+    const p = localStorage.getItem('bp_perms');
+    if (u && p) {
+      currentUser = JSON.parse(u);
+      userPermissions = JSON.parse(p);
+      setupTopbar();
+      goToDept();
+      return true;
+    }
+  } catch(e) { clearSession(); }
+  return false;
+}
+
 pingAPI();
+if (!restoreSession()) showScreen('login');
 </script>
 </body>
 </html>
