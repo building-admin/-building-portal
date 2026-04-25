@@ -1931,7 +1931,7 @@ function loadUserFromPortal() {
 
 function doLogout() {
   // กลับไป portal
-  window.location.href = window.location.pathname.replace('leave.html','') + 'index.html';
+  window.location.href = './index.html';
 }
 
 const pageConfig = {
@@ -2076,7 +2076,7 @@ document.addEventListener('DOMContentLoaded', () => {
   backBtn.className = 'btn-cancel no-print';
   backBtn.style.cssText = 'font-size:12px;padding:7px 13px;';
   backBtn.textContent = '← Portal';
-  backBtn.onclick = () => window.location.href = window.location.pathname.replace('leave.html','') + 'index.html';
+  backBtn.onclick = () => window.location.href = './index.html';
   topActions.prepend(backBtn);
 });
 
