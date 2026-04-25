@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#0a1628">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Building & Facilities Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0a1628;--navy-mid:#0f2044;--navy-lt:#1a3460;--steel:#2c4a72;--gold:#c8912a;--gold-lt:#e8b84b;--gold-glow:rgba(200,145,42,.35);--silver:#a8bbd4;--white:#f0f4fa;--muted:#6b849f;--danger:#e05252;--success:#3dba7a;--warn:#f0a030;--card-bg:rgba(15,32,68,.88);--border:rgba(168,187,212,.18)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);min-height:100vh;overflow-x:hidden}
+#bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+.screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10;opacity:0;pointer-events:none;transition:opacity .45s,transform .45s;transform:translateY(14px)}
+.screen.active{opacity:1;pointer-events:all;transform:translateY(0)}
+/* TOP BAR */
+#top-bar{position:fixed;top:0;left:0;right:0;height:62px;background:rgba(10,22,40,.93);border-bottom:1px solid var(--border);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:space-between;padding:0 28px;z-index:100}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--gold-lt));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.brand-text .org{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600;letter-spacing:.1em;color:var(--silver);text-transform:uppercase}
+.brand-text .dept{font-family:'Sarabun',sans-serif;font-size:17px;font-weight:700}
+.topbar-right{display:flex;align-items:center;gap:10px}
+#api-status{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);font-family:'Barlow Condensed',sans-serif;letter-spacing:.06em}
+.api-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background .3s}
+.api-dot.ok{background:var(--success);animation:pulse2 2s infinite}
+.api-dot.error{background:var(--danger)}
+.api-dot.loading{background:var(--gold-lt);animation:blink .8s infinite}
+@keyframes pulse2{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+#user-info{display:none;align-items:center;gap:10px}
+#user-info.show{display:flex}
+#current-user{font-size:13px;color:var(--silver)}
+#current-user strong{color:var(--gold-lt)}
+.emp-id-tag{color:var(--muted);font-size:11px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.06em}
+#dept-badge{background:var(--steel);border:1px solid var(--gold);color:var(--gold-lt);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.07em;text-transform:uppercase;display:none}
+#dept-badge.show{display:block}
+.tb-btn{background:transparent;border:1px solid var(--border);color:var(--silver);padding:5px 14px;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;transition:all .2s;display:none;align-items:center;gap:6px;white-space:nowrap}
+.tb-btn.show{display:flex}
+#admin-btn{border-color:rgba(200,145,42,.4);color:var(--gold-lt)}
+#admin-btn:hover{border-color:var(--gold);background:rgba(200,145,42,.1)}
+#logout-btn:hover{border-color:var(--danger);color:var(--danger)}
+#setup-btn{display:flex!important}
+/* CARD */
+.card{background:var(--card-bg);border:1px solid var(--border);border-radius:18px;backdrop-filter:blur(20px);box-shadow:0 28px 70px rgba(0,0,0,.55);position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),var(--gold-lt),var(--gold),transparent)}
+/* FORMS */
+.form-group{margin-bottom:18px}
+.form-group label{display:block;font-size:12px;font-weight:600;color:var(--silver);margin-bottom:7px;letter-spacing:.05em;text-transform:uppercase}
+.req{color:var(--danger)}
+.input-wrap{position:relative}
+.input-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--muted);pointer-events:none}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:rgba(10,22,40,.6);border:1px solid var(--border);border-radius:9px;padding:12px 12px 12px 42px;color:var(--white);font-family:'Sarabun',sans-serif;font-size:14px;outline:none;transition:border-color .25s,box-shadow .25s;-webkit-appearance:none;appearance:none}
+.form-group textarea{padding:12px;min-height:80px;resize:vertical}
+.form-group input::placeholder,.form-group textarea::placeholder{color:var(--muted)}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-glow)}
+.toggle-pw{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:0}
+.alert-box{font-size:13px;padding:10px 14px;border-radius:8px;margin-bottom:14px;display:none;align-items:center;gap:8px;line-height:1.4}
+.alert-box.show{display:flex}
+.alert-error{background:rgba(224,82,82,.12);border:1px solid rgba(224,82,82,.35);color:#f08080}
+.alert-success{background:rgba(61,186,122,.12);border:1px solid rgba(61,186,122,.35);color:#6fe0a8}
+.alert-warn{background:rgba(240,160,48,.12);border:1px solid rgba(240,160,48,.35);color:#f0c060}
+.btn-primary{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-lt));border:none;border-radius:9px;padding:13px;color:var(--navy);font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;letter-spacing:.04em;cursor:pointer;transition:transform .15s,box-shadow .25s,opacity .2s;box-shadow:0 4px 18px rgba(200,145,42,.35);margin-top:6px}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 26px rgba(200,145,42,.5)}
+.btn-primary:disabled{opacity:.55;cursor:not-allowed;transform:none}
+/* LOGIN */
+.login-wrap{width:400px;margin-top:62px}
+.login-wrap .card{padding:44px 40px}
+.login-icon{width:68px;height:68px;background:linear-gradient(135deg,var(--navy-mid),var(--navy-lt));border:2px solid var(--gold);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 20px;box-shadow:0 0 22px var(--gold-glow)}
+.card h2{font-family:'Sarabun',sans-serif;font-size:24px;font-weight:700;text-align:center;margin-bottom:4px}
+.card .subtitle{color:var(--muted);font-size:13px;text-align:center;margin-bottom:32px}
+.login-footer{text-align:center;margin-top:18px;font-size:11px;color:var(--muted)}
+.live-dot{display:inline-block;width:7px;height:7px;background:var(--success);border-radius:50%;margin-right:5px;animation:pulse2 2s infinite}
+/* CHANGE PW */
+.changepw-wrap{width:420px;margin-top:62px}
+.changepw-wrap .card{padding:44px 40px}
+.warn-banner{background:rgba(240,160,48,.15);border:1px solid rgba(240,160,48,.4);border-radius:10px;padding:14px 16px;margin-bottom:24px;display:flex;align-items:flex-start;gap:10px}
+.warn-banner p{font-size:13px;color:#f0c060;line-height:1.5}
+.pw-strength{height:4px;border-radius:4px;margin-top:6px;background:var(--border);overflow:hidden}
+.pw-strength-bar{height:100%;border-radius:4px;transition:width .3s,background .3s;width:0%}
+.input-hint{font-size:11px;color:var(--muted);margin-top:5px}
+/* DEPT SELECT — Dynamic */
+.dept-wrap{width:860px;margin-top:62px;padding:20px;max-height:calc(100vh - 62px);overflow-y:auto}
+.dept-header{text-align:center;margin-bottom:36px}
+.dept-header .greeting{font-size:14px;color:var(--gold-lt);font-weight:500;margin-bottom:5px}
+.dept-header h2{font-family:'Sarabun',sans-serif;font-size:28px;font-weight:700;margin-bottom:6px}
+.dept-header p{color:var(--muted);font-size:14px}
+.dept-grid{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;align-items:stretch}
+.dept-card{background:var(--card-bg);border:1px solid var(--border);border-radius:18px;padding:32px 26px;cursor:pointer;transition:transform .25s,border-color .25s,box-shadow .25s;backdrop-filter:blur(16px);position:relative;overflow:hidden;text-align:center;width:280px;flex-shrink:0}
+.dept-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--gold-glow),transparent);opacity:0;transition:opacity .3s;border-radius:18px}
+.dept-card:hover{transform:translateY(-5px);border-color:var(--gold);box-shadow:0 18px 55px rgba(0,0,0,.5)}
+.dept-card:hover::after{opacity:1}
+.dept-card-icon{width:72px;height:72px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 16px;position:relative;z-index:1;transition:transform .25s;background:linear-gradient(135deg,#1a3460,#0f2044);border:2px solid var(--gold);box-shadow:0 0 18px var(--gold-glow)}
+.dept-card:hover .dept-card-icon{transform:scale(1.08)}
+.dept-card h3{font-family:'Sarabun',sans-serif;font-size:18px;font-weight:700;margin-bottom:4px;position:relative;z-index:1}
+.dept-card .dept-name-en{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.1em;color:var(--gold-lt);text-transform:uppercase;margin-bottom:8px;position:relative;z-index:1}
+.dept-card .dept-desc{font-size:12px;color:var(--muted);line-height:1.5;position:relative;z-index:1}
+.dept-arrow{margin-top:14px;color:var(--gold-lt);font-size:20px;position:relative;z-index:1;opacity:0;transform:translateX(-8px);transition:opacity .25s,transform .25s}
+.dept-card:hover .dept-arrow{opacity:1;transform:translateX(0)}
+.no-access{text-align:center;padding:48px;color:var(--muted)}
+.no-access .na-icon{font-size:48px;margin-bottom:16px}
+/* DASHBOARD — Dynamic */
+.dashboard-wrap{width:100%;max-width:1200px;padding:22px 28px;margin-top:62px;max-height:calc(100vh - 62px);overflow-y:auto}
+.dash-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:14px}
+.dash-title h2{font-family:'Sarabun',sans-serif;font-size:26px;font-weight:800;margin-bottom:3px}
+.dash-title .en-sub{font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gold-lt);letter-spacing:.12em;text-transform:uppercase}
+.back-btn{background:rgba(15,32,68,.8);border:1px solid var(--border);color:var(--silver);padding:7px 16px;border-radius:7px;font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:7px}
+.back-btn:hover{border-color:var(--silver);color:var(--white)}
+.section-title{font-family:'Barlow',sans-serif;font-size:14px;font-weight:700;color:var(--silver);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.section-title::after{content:'';flex:1;height:1px;background:var(--border)}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+.menu-tile{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:22px 16px;cursor:pointer;transition:transform .2s,border-color .25s,box-shadow .25s;text-align:center;backdrop-filter:blur(12px)}
+.menu-tile:hover{transform:translateY(-4px);border-color:var(--gold);box-shadow:0 10px 36px rgba(0,0,0,.4)}
+.menu-tile .tile-icon{font-size:28px;margin-bottom:10px;line-height:1}
+.menu-tile .tile-name{font-size:13px;font-weight:600;line-height:1.3;color:var(--white)}
+.no-menu{text-align:center;padding:36px;color:var(--muted);font-size:14px;background:var(--card-bg);border:1px solid var(--border);border-radius:12px}
+/* ADMIN PANEL */
+.admin-wrap{width:100%;max-width:1160px;padding:22px 28px;margin-top:62px;max-height:calc(100vh - 62px);overflow-y:auto}
+.admin-tabs{display:flex;gap:4px;margin-bottom:24px;background:rgba(10,22,40,.5);padding:4px;border-radius:10px;border:1px solid var(--border);flex-wrap:wrap}
+.admin-tab{padding:9px 14px;border-radius:7px;border:none;background:transparent;color:var(--muted);font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.admin-tab.active{background:var(--navy-lt);color:var(--white);border:1px solid var(--border)}
+.admin-tab:hover:not(.active){color:var(--silver)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.table-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap}
+.search-wrap{position:relative}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--muted)}
+.search-input{background:rgba(10,22,40,.6);border:1px solid var(--border);border-radius:8px;padding:9px 14px 9px 36px;color:var(--white);font-family:'Sarabun',sans-serif;font-size:13px;outline:none;transition:border-color .25s;width:280px}
+.search-input:focus{border-color:var(--gold)}
+.btn-add{background:linear-gradient(135deg,var(--gold),var(--gold-lt));border:none;border-radius:8px;padding:9px 18px;color:var(--navy);font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:opacity .2s,transform .15s;white-space:nowrap}
+.btn-add:hover{opacity:.85;transform:translateY(-1px)}
+.table-card{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;overflow:hidden;backdrop-filter:blur(12px)}
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table th{background:rgba(10,22,40,.6);color:var(--silver);font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border)}
+.data-table td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle}
+.data-table tr:hover td{background:rgba(255,255,255,.03)}
+.data-table tr:last-child td{border-bottom:none}
+.badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;font-family:'Barlow Condensed',sans-serif;letter-spacing:.06em}
+.badge-admin{background:rgba(200,145,42,.18);color:var(--gold-lt);border:1px solid rgba(200,145,42,.35)}
+.badge-user{background:rgba(74,144,217,.15);color:#7ab8f5;border:1px solid rgba(74,144,217,.3)}
+.badge-active{background:rgba(61,186,122,.15);color:#6fe0a8;border:1px solid rgba(61,186,122,.3)}
+.badge-inactive{background:rgba(224,82,82,.12);color:#f08080;border:1px solid rgba(224,82,82,.3)}
+.badge-firstlogin{background:rgba(240,160,48,.15);color:#f0c060;border:1px solid rgba(240,160,48,.3)}
+.action-btns{display:flex;gap:5px;flex-wrap:wrap}
+.btn-sm{padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;transition:all .2s;font-family:'Sarabun',sans-serif;white-space:nowrap}
+.btn-edit{background:transparent;border-color:rgba(74,144,217,.4);color:#7ab8f5}
+.btn-edit:hover{background:rgba(74,144,217,.15)}
+.btn-perm{background:transparent;border-color:rgba(200,145,42,.4);color:var(--gold-lt)}
+.btn-perm:hover{background:rgba(200,145,42,.12)}
+.btn-reset{background:transparent;border-color:rgba(240,160,48,.4);color:#f0c060}
+.btn-reset:hover{background:rgba(240,160,48,.12)}
+.btn-del{background:transparent;border-color:rgba(224,82,82,.4);color:#f08080}
+.btn-del:hover{background:rgba(224,82,82,.12)}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(5px);z-index:200;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal-box{background:var(--navy-mid);border:1px solid var(--border);border-radius:18px;padding:32px;width:92%;max-width:520px;max-height:90vh;overflow-y:auto;position:relative}
+.modal-box.modal-lg{max-width:700px}
+.modal-box h3{font-family:'Sarabun',sans-serif;font-size:20px;font-weight:700;margin-bottom:4px}
+.modal-sub{color:var(--muted);font-size:13px;margin-bottom:22px}
+.close-modal{position:absolute;top:14px;right:18px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;transition:color .2s}
+.close-modal:hover{color:var(--white)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.modal-footer{display:flex;gap:10px;margin-top:22px;justify-content:flex-end}
+.btn-cancel{background:transparent;border:1px solid var(--border);color:var(--silver);padding:10px 20px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;cursor:pointer;transition:all .2s}
+.btn-cancel:hover{border-color:var(--silver)}
+.btn-save{background:linear-gradient(135deg,var(--gold),var(--gold-lt));border:none;border-radius:8px;padding:10px 24px;color:var(--navy);font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.btn-save:hover{opacity:.85}
+.btn-save:disabled{opacity:.5;cursor:not-allowed}
+.rand-pw{background:transparent;border:1px solid var(--border);color:var(--silver);padding:8px 12px;border-radius:7px;font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap;align-self:flex-end}
+.rand-pw:hover{border-color:var(--gold);color:var(--gold-lt)}
+.pw-row{display:flex;gap:8px;align-items:flex-end}
+.pw-row .form-group{flex:1;margin-bottom:0}
+/* PERMISSIONS UI */
+.perm-section{margin-bottom:20px}
+.perm-section-title{font-family:'Barlow',sans-serif;font-size:13px;font-weight:700;color:var(--silver);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.perm-dept-block{background:rgba(10,22,40,.4);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px}
+.perm-dept-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.perm-dept-header input[type=checkbox]{width:18px;height:18px;cursor:pointer;accent-color:var(--gold)}
+.perm-dept-label{font-size:14px;font-weight:600;cursor:pointer}
+.perm-dept-icon{font-size:18px}
+.perm-menus{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;padding-left:28px}
+.perm-menu-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(255,255,255,.04);border-radius:7px;border:1px solid var(--border)}
+.perm-menu-item input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--gold-lt)}
+.perm-menu-item label{font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px}
+.perm-all-badge{font-size:10px;background:rgba(200,145,42,.15);color:var(--gold-lt);padding:1px 6px;border-radius:8px;font-family:'Barlow Condensed';letter-spacing:.05em}
+/* LOG */
+.log-card{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:18px 20px;backdrop-filter:blur(12px);max-height:500px;overflow-y:auto}
+.log-item{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);align-items:flex-start}
+.log-item:last-child{border-bottom:none}
+.log-time{font-size:11px;color:var(--muted);white-space:nowrap;min-width:130px;font-family:'Barlow Condensed',sans-serif}
+.log-action{font-size:12px;font-weight:600}
+.log-detail{font-size:12px;color:var(--muted)}
+/* SETUP */
+.setup-modal .modal-box{max-width:420px}
+.step-item{display:flex;gap:12px;margin-bottom:14px}
+.step-num{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-lt));color:var(--navy);font-family:'Barlow',sans-serif;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px}
+.step-body strong{font-size:13px;font-weight:600;display:block;margin-bottom:3px}
+.step-body p{font-size:12px;color:var(--muted);line-height:1.5}
+.url-row{display:flex;gap:8px;margin-top:7px}
+.url-row input{flex:1;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:7px;padding:9px 11px;color:var(--white);font-family:monospace;font-size:11px;outline:none;transition:border-color .25s}
+.url-row input:focus{border-color:var(--gold)}
+.url-row input::placeholder{color:var(--muted)}
+.url-row button{background:linear-gradient(135deg,var(--gold),var(--gold-lt));border:none;border-radius:7px;padding:9px 14px;color:var(--navy);font-family:'Barlow',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+/* TOGGLE */
+.toggle-wrap{display:flex;align-items:center;gap:10px;margin-top:8px}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:rgba(168,187,212,.2);border:1px solid var(--border);border-radius:24px;cursor:pointer;transition:background .25s}
+.toggle-slider::before{content:'';position:absolute;height:18px;width:18px;left:3px;top:2px;background:var(--muted);border-radius:50%;transition:transform .25s,background .25s}
+.toggle input:checked+.toggle-slider{background:rgba(200,145,42,.25);border-color:var(--gold)}
+.toggle input:checked+.toggle-slider::before{transform:translateX(20px);background:var(--gold-lt)}
+.toggle-label{font-size:13px;color:var(--silver)}
+/* ════ RESPONSIVE ════ */
+/* Tablet: 481–900px */
+@media(max-width:900px){
+  .dept-wrap{width:100%;padding:16px}
+  .dept-grid{gap:10px}
+  .dept-card{width:calc(50% - 5px);padding:20px 14px;border-radius:14px;flex-shrink:0}
+  .dashboard-wrap,.admin-wrap,.jobs-wrap{padding:16px}
+  .form-row{grid-template-columns:1fr}
+  .admin-tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .job-stats{grid-template-columns:repeat(3,1fr)}
+  .job-toolbar{flex-wrap:wrap}
+  .job-toolbar .search-wrap{width:100%;flex:unset}
+  /* Table horizontal scroll */
+  .table-card{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .data-table{min-width:600px}
+  #jobs-table{min-width:700px}
+}
+
+/* Mobile: ≤480px */
+@media(max-width:480px){
+  /* Top Bar */
+  #top-bar{padding:0 14px;height:56px}
+  .brand-text .dept{font-size:14px}
+  .brand-text .org{display:none}
+  .brand-icon{width:30px;height:30px;font-size:15px}
+  #api-status{display:none}
+  #current-user .emp-id-tag{display:none}
+  #current-user{font-size:12px}
+  #dept-badge{display:none!important}
+  .tb-btn{padding:4px 9px;font-size:11px}
+  #admin-btn span:not(:first-child){display:none}
+
+  /* Screens offset */
+  .screen{align-items:flex-start;overflow-y:auto}
+  .login-wrap{width:100%;padding:12px;margin-top:56px}
+  .login-wrap .card{padding:28px 20px;border-radius:14px}
+  .login-icon{width:54px;height:54px;font-size:26px}
+  .card h2{font-size:20px}
+
+  .changepw-wrap{width:100%;padding:12px;margin-top:56px}
+  .changepw-wrap .card{padding:24px 18px}
+
+  /* Dept Grid */
+  .dept-wrap{width:100%;padding:12px;margin-top:56px;max-height:calc(100vh - 56px)}
+  .dept-header h2{font-size:20px}
+  .dept-header p{font-size:12px}
+  .dept-grid{grid-template-columns:1fr 1fr;gap:10px}
+  .dept-card{padding:20px 14px;border-radius:14px}
+  .dept-card-icon{width:52px;height:52px;font-size:26px;border-radius:12px}
+  .dept-card h3{font-size:14px}
+
+  /* Dashboard */
+  .dashboard-wrap{padding:12px;margin-top:56px;max-height:calc(100vh - 56px)}
+  .menu-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .menu-tile{padding:16px 10px}
+  .menu-tile .tile-icon{font-size:24px}
+  .menu-tile .tile-name{font-size:12px}
+  .dash-title h2{font-size:18px}
+  .back-btn{font-size:12px;padding:6px 12px}
+
+  /* Jobs Panel */
+  .jobs-wrap{padding:12px;margin-top:56px;max-height:calc(100vh - 56px)}
+  .job-stats{grid-template-columns:repeat(3,1fr);gap:8px}
+  .stat-card{padding:12px 10px;border-radius:10px}
+  .stat-card .sc-num{font-size:22px}
+  .stat-card .sc-label{font-size:9px}
+  .job-toolbar{gap:7px}
+  .job-toolbar .search-wrap{width:100%;flex:unset}
+  .filter-select{width:100%}
+  .btn-add{width:100%;justify-content:center}
+  /* Jobs table → card mode on mobile */
+  .table-card{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  #jobs-table{min-width:620px;font-size:12px}
+  .jobs-thead th,.jobs-tbody td{padding:8px 10px}
+
+  /* Admin Panel */
+  .admin-wrap{padding:12px;margin-top:56px;max-height:calc(100vh - 56px)}
+  .admin-tabs{gap:2px;padding:3px}
+  .admin-tab{padding:7px 9px;font-size:11px}
+  .table-toolbar{flex-direction:column;align-items:stretch}
+  .search-input{width:100%}
+  .btn-add{width:100%;justify-content:center}
+  .table-card{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .data-table{min-width:560px;font-size:12px}
+  .data-table th,.data-table td{padding:8px 10px}
+  /* Hide less important columns on mobile */
+  .data-table .hide-mobile{display:none}
+
+  /* Modal */
+  .modal-overlay{align-items:flex-end}
+  .modal-box{width:100%;max-width:100%!important;border-radius:20px 20px 0 0;padding:24px 18px;max-height:90vh}
+  .form-row{grid-template-columns:1fr}
+
+  /* Misc */
+  .section-title{font-size:12px}
+}
+
+/* ════ JOBS PANEL ════ */
+.jobs-wrap{width:100%;max-width:1280px;padding:22px 28px;margin-top:62px;max-height:calc(100vh - 62px);overflow-y:auto}
+.job-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.stat-card{background:var(--card-bg);border:1px solid var(--border);border-radius:12px;padding:16px 20px;backdrop-filter:blur(12px);cursor:pointer;transition:border-color .2s,transform .2s,box-shadow .2s;position:relative;overflow:hidden}
+.stat-card:hover,.stat-card.sc-active{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.4)}
+.stat-card .sc-num{font-family:'Barlow',sans-serif;font-size:30px;font-weight:800;line-height:1}
+.stat-card .sc-label{font-size:11px;color:var(--muted);margin-top:5px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.06em;text-transform:uppercase}
+.sc-all.sc-active,.sc-all:hover{border-color:var(--silver)}
+.sc-wait .sc-num{color:#f0c060}.sc-wait.sc-active,.sc-wait:hover{border-color:var(--warn)}
+.sc-prog .sc-num{color:#7ab8f5}.sc-prog.sc-active,.sc-prog:hover{border-color:#4a90d9}
+.sc-done .sc-num{color:#6fe0a8}.sc-done.sc-active,.sc-done:hover{border-color:var(--success)}
+.sc-cancel .sc-num{color:#f08080}.sc-cancel.sc-active,.sc-cancel:hover{border-color:var(--danger)}
+.job-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+.job-toolbar .search-wrap{flex:1;min-width:180px}
+.filter-select{background:rgba(10,22,40,.6);border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:var(--white);font-family:'Sarabun',sans-serif;font-size:13px;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;transition:border-color .2s;min-width:130px}
+.filter-select:focus{border-color:var(--gold)}
+.badge-wait{background:rgba(240,160,48,.15);color:#f0c060;border:1px solid rgba(240,160,48,.3)}
+.badge-prog{background:rgba(74,144,217,.15);color:#7ab8f5;border:1px solid rgba(74,144,217,.3)}
+.badge-done{background:rgba(61,186,122,.15);color:#6fe0a8;border:1px solid rgba(61,186,122,.3)}
+.badge-cancel{background:rgba(224,82,82,.12);color:#f08080;border:1px solid rgba(224,82,82,.3)}
+.badge-high{background:rgba(224,82,82,.12);color:#f08080;border:1px solid rgba(224,82,82,.3)}
+.badge-mid{background:rgba(240,160,48,.15);color:#f0c060;border:1px solid rgba(240,160,48,.3)}
+.badge-low{background:rgba(61,186,122,.12);color:#6fe0a8;border:1px solid rgba(61,186,122,.3)}
+.job-id{font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gold-lt);letter-spacing:.05em}
+.job-title-cell .jtitle{font-size:13px;font-weight:600}
+.job-title-cell .jsub{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.status-sel{background:rgba(10,22,40,.8);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--white);font-family:'Sarabun',sans-serif;font-size:11px;cursor:pointer;outline:none;-webkit-appearance:none;appearance:none;transition:border-color .2s}
+.status-sel:focus{border-color:var(--gold)}
+.empty-jobs{text-align:center;padding:48px;color:var(--muted)}
+.empty-jobs .ej-icon{font-size:44px;margin-bottom:14px}
+</style>
+</head>
+<body>
+<canvas id="bg-canvas"></canvas>
+
+<!-- TOP BAR -->
+<header id="top-bar">
+  <div class="brand">
+    <div class="brand-icon">🏢</div>
+    <div class="brand-text">
+      <div class="org">Facilities Portal</div>
+      <div class="dept">ฝ่ายอาคารและสถานที่</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div id="api-status"><div class="api-dot" id="api-dot"></div><span id="api-label">ไม่ได้เชื่อมต่อ</span></div>
+    <button id="setup-btn" class="tb-btn" onclick="showSetup()">⚙️</button>
+    <div id="user-info">
+      <div id="current-user"></div>
+      <div id="dept-badge"></div>
+      <button id="admin-btn" class="tb-btn" onclick="goAdmin()">🛡️ Admin</button>
+      <button id="logout-btn" class="tb-btn" onclick="doLogout()">⎋ ออกจากระบบ</button>
+    </div>
+  </div>
+</header>
+
+<!-- LOGIN -->
+<section class="screen active" id="screen-login">
+  <div class="login-wrap">
+    <div class="card" style="padding:44px 40px">
+      <div class="login-icon">🔐</div>
+      <h2>เข้าสู่ระบบ</h2>
+      <p class="subtitle">Building & Facilities Management System</p>
+      <div id="login-error" class="alert-box alert-error"><span>⚠️</span><span id="error-msg"></span></div>
+      <div class="form-group"><label>Username</label><div class="input-wrap"><span class="input-icon">👤</span><input type="text" id="inp-user" placeholder="กรอก Username" autocomplete="username"></div></div>
+      <div class="form-group"><label>Password</label><div class="input-wrap"><span class="input-icon">🔑</span><input type="password" id="inp-pass" placeholder="กรอก Password" autocomplete="current-password"><button class="toggle-pw" onclick="togglePw('inp-pass','eye1')" id="eye1">👁️</button></div></div>
+      <button class="btn-primary" id="login-btn" onclick="doLogin()">เข้าสู่ระบบ →</button>
+      <div class="login-footer"><span class="live-dot"></span>ระบบพร้อมใช้งาน &nbsp;|&nbsp; v3.0.0</div>
+    </div>
+  </div>
+</section>
+
+<!-- CHANGE PASSWORD -->
+<section class="screen" id="screen-changepw">
+  <div class="changepw-wrap">
+    <div class="card" style="padding:44px 40px">
+      <div class="warn-banner"><span style="font-size:20px;flex-shrink:0">🔒</span><p>คุณยังไม่ได้เปลี่ยนรหัสผ่านเริ่มต้น<br>กรุณาตั้งรหัสผ่านใหม่ก่อนเข้าใช้งาน</p></div>
+      <h2 style="text-align:center;margin-bottom:4px">ตั้งรหัสผ่านใหม่</h2>
+      <p class="subtitle">Change Password</p>
+      <div id="cpw-error" class="alert-box alert-error"><span>⚠️</span><span id="cpw-error-msg"></span></div>
+      <div id="cpw-success" class="alert-box alert-success"><span>✅</span><span>เปลี่ยนรหัสผ่านสำเร็จ กำลังเข้าสู่ระบบ...</span></div>
+      <div class="form-group"><label>รหัสผ่านปัจจุบัน</label><div class="input-wrap"><span class="input-icon">🔑</span><input type="password" id="cpw-old" placeholder="รหัสผ่านเดิม"><button class="toggle-pw" onclick="togglePw('cpw-old','eye2')" id="eye2">👁️</button></div></div>
+      <div class="form-group">
+        <label>รหัสผ่านใหม่ (อย่างน้อย 8 ตัว)</label>
+        <div class="input-wrap"><span class="input-icon">🛡️</span><input type="password" id="cpw-new" placeholder="รหัสผ่านใหม่" oninput="checkStrength()"><button class="toggle-pw" onclick="togglePw('cpw-new','eye3')" id="eye3">👁️</button></div>
+        <div class="pw-strength"><div class="pw-strength-bar" id="strength-bar"></div></div>
+        <div class="input-hint" id="strength-label"></div>
+      </div>
+      <div class="form-group"><label>ยืนยันรหัสผ่านใหม่</label><div class="input-wrap"><span class="input-icon">✅</span><input type="password" id="cpw-confirm" placeholder="ยืนยันรหัสผ่านใหม่"><button class="toggle-pw" onclick="togglePw('cpw-confirm','eye4')" id="eye4">👁️</button></div></div>
+      <button class="btn-primary" id="cpw-btn" onclick="doChangePassword()">บันทึกรหัสผ่านใหม่</button>
+    </div>
+  </div>
+</section>
+
+<!-- DEPT SELECT — Dynamic -->
+<section class="screen" id="screen-dept">
+  <div class="dept-wrap">
+    <div class="dept-header">
+      <div class="greeting" id="dept-greeting">ยินดีต้อนรับ</div>
+      <h2>เลือกแผนกที่ต้องการเข้าใช้งาน</h2>
+      <p>Select Department to Continue</p>
+    </div>
+    <div class="dept-grid" id="dept-grid-container">
+      <!-- Rendered dynamically from permissions -->
+    </div>
+  </div>
+</section>
+
+<!-- DASHBOARD — Dynamic -->
+<section class="screen" id="screen-dash">
+  <div class="dashboard-wrap">
+    <div class="dash-header">
+      <div class="dash-title">
+        <h2 id="dash-title-text">แผนก</h2>
+        <div class="en-sub" id="dash-title-sub"></div>
+      </div>
+      <button class="back-btn" onclick="goBack()">← เลือกแผนกอื่น</button>
+    </div>
+    <div class="section-title">เมนูหลัก</div>
+    <div class="menu-grid" id="menu-grid-container">
+      <!-- Rendered dynamically -->
+    </div>
+  </div>
+</section>
+
+<!-- JOBS PANEL -->
+<section class="screen" id="screen-jobs">
+  <div class="jobs-wrap">
+    <div class="dash-header">
+      <div class="dash-title">
+        <h2 id="jobs-title-text">งาน</h2>
+        <div class="en-sub" id="jobs-title-sub">JOB MANAGEMENT</div>
+      </div>
+      <button class="back-btn" onclick="backToDash()">← กลับเมนูแผนก</button>
+    </div>
+    <!-- STAT CARDS -->
+    <div class="job-stats" id="job-stats-row"></div>
+    <!-- TOOLBAR -->
+    <div class="job-toolbar">
+      <div class="search-wrap"><span class="search-icon">🔍</span><input class="search-input" id="job-search" placeholder="ค้นหา ID / หัวข้อ / ผู้รับผิดชอบ..." oninput="renderFilteredJobs()"></div>
+      <select class="filter-select" id="job-filter-priority" onchange="renderFilteredJobs()">
+        <option value="">ทุกความสำคัญ</option>
+        <option value="สูง">🔴 สูง</option>
+        <option value="กลาง">🟡 กลาง</option>
+        <option value="ต่ำ">🟢 ต่ำ</option>
+      </select>
+      <button class="btn-add" id="jobs-add-btn" onclick="openAddJob()">＋ เพิ่มงานใหม่</button>
+    </div>
+    <!-- TABLE -->
+    <div class="table-card">
+      <table class="data-table" id="jobs-table">
+        <thead id="jobs-thead"></thead>
+        <tbody id="jobs-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ADMIN PANEL -->
+<section class="screen" id="screen-admin">
+  <div class="admin-wrap">
+    <div class="dash-header">
+      <div class="dash-title"><h2>🛡️ Admin Panel</h2><div class="en-sub">System Management</div></div>
+      <button class="back-btn" onclick="goBack()">← กลับหน้าหลัก</button>
+    </div>
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="switchTab('tab-users',this)">👥 ผู้ใช้งาน</button>
+      <button class="admin-tab" onclick="switchTab('tab-depts',this)">🏢 แผนก</button>
+      <button class="admin-tab" onclick="switchTab('tab-menus',this)">📋 เมนู</button>
+      <button class="admin-tab" onclick="switchTab('tab-logs',this)">📋 Audit Log</button>
+    </div>
+
+    <!-- TAB: USERS -->
+    <div class="tab-content active" id="tab-users">
+      <div class="table-toolbar">
+        <div class="search-wrap"><span class="search-icon">🔍</span><input class="search-input" id="user-search" placeholder="ค้นหา รหัส / Username / ชื่อ..." oninput="filterUsers()"></div>
+        <button class="btn-add" onclick="openAddUser()">＋ เพิ่มผู้ใช้</button>
+      </div>
+      <div class="table-card">
+        <table class="data-table">
+          <thead><tr><th>รหัสพนักงาน</th><th>Username</th><th>ชื่อ-สกุล</th><th>Role</th><th>สถานะ</th><th>รหัสผ่าน</th><th>Action</th></tr></thead>
+          <tbody id="user-table-body"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:28px">กำลังโหลด...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: DEPARTMENTS -->
+    <div class="tab-content" id="tab-depts">
+      <div class="table-toolbar">
+        <span style="font-size:13px;color:var(--muted)">แผนก/หน่วยงานทั้งหมดในระบบ</span>
+        <button class="btn-add" onclick="openAddDept()">＋ เพิ่มแผนก</button>
+      </div>
+      <div class="table-card">
+        <table class="data-table">
+          <thead><tr><th>ID</th><th>ชื่อแผนก</th><th>ไอคอน</th><th>สถานะ</th><th>ลำดับ</th><th>Action</th></tr></thead>
+          <tbody id="dept-table-body"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">กำลังโหลด...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: MENUS -->
+    <div class="tab-content" id="tab-menus">
+      <div class="table-toolbar">
+        <div class="search-wrap"><span class="search-icon">🔍</span><input class="search-input" id="menu-search" placeholder="ค้นหาเมนู..." oninput="filterMenus()"></div>
+        <button class="btn-add" onclick="openAddMenu()">＋ เพิ่มเมนู</button>
+      </div>
+      <div class="table-card">
+        <table class="data-table">
+          <thead><tr><th>Menu ID</th><th>ชื่อเมนู</th><th>ไอคอน</th><th>แผนก</th><th>Default</th><th>สถานะ</th><th>Action</th></tr></thead>
+          <tbody id="menu-table-body"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:28px">กำลังโหลด...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB: LOGS -->
+    <div class="tab-content" id="tab-logs">
+      <div class="table-toolbar">
+        <span style="font-size:13px;color:var(--muted)">100 รายการล่าสุด</span>
+        <button class="btn-add" onclick="loadLogs()">🔄 รีเฟรช</button>
+      </div>
+      <div class="log-card" id="log-container"><div style="text-align:center;color:var(--muted);padding:28px">กำลังโหลด...</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- MODAL: ADD/EDIT USER -->
+<div class="modal-overlay" id="modal-user">
+  <div class="modal-box">
+    <button class="close-modal" onclick="closeModal('modal-user')">✕</button>
+    <h3 id="modal-user-title">เพิ่มผู้ใช้ใหม่</h3>
+    <p class="modal-sub" id="modal-user-sub">กรอกข้อมูลผู้ใช้งาน</p>
+    <div id="modal-user-alert" class="alert-box alert-error"><span>⚠️</span><span id="modal-user-alert-msg"></span></div>
+    <div class="form-row">
+      <div class="form-group"><label>รหัสพนักงาน <span class="req">*</span></label><div class="input-wrap"><span class="input-icon">🪪</span><input type="text" id="u-employeeId" placeholder="เช่น EMP001"></div></div>
+      <div class="form-group"><label>Username <span class="req">*</span></label><div class="input-wrap"><span class="input-icon">👤</span><input type="text" id="u-username" placeholder="เช่น bm_somchai"></div></div>
+    </div>
+    <div class="form-group"><label>ชื่อ-สกุล <span class="req">*</span></label><div class="input-wrap"><span class="input-icon">📝</span><input type="text" id="u-name" placeholder="ชื่อ นามสกุล"></div></div>
+    <div class="form-row">
+      <div class="form-group"><label>Role</label><div class="input-wrap"><span class="input-icon">🎭</span><select id="u-role"><option value="user">User</option><option value="admin">Admin</option></select></div></div>
+      <div class="form-group"><label>สถานะ</label><div class="input-wrap"><span class="input-icon">🔘</span><select id="u-active"><option value="true">Active</option><option value="false">Inactive</option></select></div></div>
+    </div>
+    <div id="pw-section">
+      <label style="display:block;font-size:12px;font-weight:600;color:var(--silver);letter-spacing:.05em;text-transform:uppercase;margin-bottom:7px">รหัสผ่านเริ่มต้น <span class="req">*</span></label>
+      <div class="pw-row">
+        <div class="form-group"><div class="input-wrap"><span class="input-icon">🔑</span><input type="text" id="u-password" placeholder="อย่างน้อย 8 ตัวอักษร"></div><div class="input-hint">User จะถูกบังคับเปลี่ยนรหัสเมื่อ Login ครั้งแรก</div></div>
+        <button class="rand-pw" onclick="genPassword()">🎲 สุ่มรหัส</button>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-user')">ยกเลิก</button><button class="btn-save" id="modal-user-save" onclick="saveUser()">บันทึก</button></div>
+  </div>
+</div>
+
+<!-- MODAL: RESET PASSWORD -->
+<div class="modal-overlay" id="modal-reset">
+  <div class="modal-box">
+    <button class="close-modal" onclick="closeModal('modal-reset')">✕</button>
+    <h3>🔑 รีเซ็ตรหัสผ่าน</h3>
+    <p class="modal-sub" id="reset-sub">ตั้งรหัสผ่านใหม่ให้ผู้ใช้</p>
+    <div id="modal-reset-alert" class="alert-box alert-error"><span>⚠️</span><span id="modal-reset-alert-msg"></span></div>
+    <div id="modal-reset-success" class="alert-box alert-success" style="display:none"><span>✅</span><span>รีเซ็ตรหัสผ่านสำเร็จ!</span></div>
+    <div class="pw-row">
+      <div class="form-group" style="flex:1;margin-bottom:0"><label>รหัสผ่านใหม่ (อย่างน้อย 8 ตัว)</label><div class="input-wrap"><span class="input-icon">🔑</span><input type="text" id="reset-pw" placeholder="รหัสผ่านใหม่"></div></div>
+      <button class="rand-pw" onclick="genResetPw()">🎲 สุ่ม</button>
+    </div>
+    <div class="input-hint" style="margin-top:6px">หลังรีเซ็ต ผู้ใช้จะถูกบังคับเปลี่ยนรหัสเมื่อ Login ครั้งถัดไป</div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-reset')">ปิด</button><button class="btn-save" onclick="doResetPassword()">รีเซ็ตรหัส</button></div>
+  </div>
+</div>
+
+<!-- MODAL: PERMISSIONS -->
+<div class="modal-overlay" id="modal-perm">
+  <div class="modal-box modal-lg">
+    <button class="close-modal" onclick="closeModal('modal-perm')">✕</button>
+    <h3>🔐 จัดการสิทธิ์การเข้าถึง</h3>
+    <p class="modal-sub" id="perm-sub">กำหนดแผนกและเมนูที่ผู้ใช้เข้าถึงได้</p>
+    <div id="modal-perm-alert" class="alert-box alert-error"><span>⚠️</span><span id="modal-perm-alert-msg"></span></div>
+    <div id="modal-perm-success" class="alert-box alert-success" style="display:none"><span>✅</span><span>บันทึกสิทธิ์สำเร็จ!</span></div>
+    <div id="perm-container">
+      <div style="text-align:center;color:var(--muted);padding:28px">กำลังโหลด...</div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-perm')">ปิด</button><button class="btn-save" id="perm-save-btn" onclick="savePermissions()">💾 บันทึกสิทธิ์</button></div>
+  </div>
+</div>
+
+<!-- MODAL: ADD/EDIT DEPT -->
+<div class="modal-overlay" id="modal-dept">
+  <div class="modal-box">
+    <button class="close-modal" onclick="closeModal('modal-dept')">✕</button>
+    <h3 id="modal-dept-title">เพิ่มแผนกใหม่</h3>
+    <p class="modal-sub">กำหนดแผนก/หน่วยงานในระบบ</p>
+    <div id="modal-dept-alert" class="alert-box alert-error"><span>⚠️</span><span id="modal-dept-alert-msg"></span></div>
+    <div class="form-row">
+      <div class="form-group"><label>Dept ID <span class="req">*</span></label><div class="input-wrap"><span class="input-icon">🔤</span><input type="text" id="d-deptId" placeholder="เช่น security, it, hr"></div></div>
+      <div class="form-group"><label>ไอคอน (Emoji)</label><div class="input-wrap"><span class="input-icon">🎨</span><input type="text" id="d-icon" placeholder="เช่น 🔒 👮 💻"></div></div>
+    </div>
+    <div class="form-group"><label>ชื่อแผนก <span class="req">*</span></label><div class="input-wrap"><span class="input-icon">🏢</span><input type="text" id="d-deptName" placeholder="ชื่อแผนก/หน่วยงาน"></div></div>
+    <div class="form-row">
+      <div class="form-group"><label>ลำดับแสดงผล</label><div class="input-wrap"><span class="input-icon">#</span><input type="number" id="d-order" placeholder="1, 2, 3..."></div></div>
+      <div class="form-group"><label>สถานะ</label><div class="input-wrap"><span class="input-icon">🔘</span><select id="d-active"><option value="true">Active</option><option value="false">Inactive</option></select></div></div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-dept')">ยกเลิก</button><button class="btn-save" id="modal-dept-save" onclick="saveDept()">บันทึก</button></div>
+  </div>
+</div>
+
+<!-- MODAL: ADD/EDIT MENU -->
+<div class="modal-overlay" id="modal-menu">
+  <div class="modal-box">
+    <button class="close-modal" onclick="closeModal('modal-menu')">✕</button>
+    <h3 id="modal-menu-title">เพิ่มเมนูใหม่</h3>
+    <p class="modal-sub">กำหนดเมนูและแผนกที่เมนูนี้สังกัด</p>
+    <div id="modal-menu-alert" class="alert-box alert-error"><span>⚠️</span><span id="modal-menu-alert-msg"></span></div>
+    <div class="form-row">
+      <div class="form-group"><label>Menu ID <span class="req">*</span></label><div class="input-wrap"><span class="input-icon">🔤</span><input type="text" id="m-menuId" placeholder="เช่น bm_patrol, bs_clean"></div></div>
+      <div class="form-group"><label>ไอคอน (Emoji)</label><div class="input-wrap"><span class="input-icon">🎨</span><input type="text" id="m-icon" placeholder="เช่น 🔍 📋 🧹"></div></div>
+    </div>
+    <div class="form-group"><label>ชื่อเมนู <span class="req">*</span></label><div class="input-wrap"><span class="input-icon">📝</span><input type="text" id="m-menuName" placeholder="ชื่อที่แสดงในระบบ"></div></div>
+    <div class="form-row">
+      <div class="form-group"><label>สังกัดแผนก <span class="req">*</span></label><div class="input-wrap"><span class="input-icon">🏢</span><select id="m-deptId"><option value="">-- เลือกแผนก --</option></select></div></div>
+      <div class="form-group"><label>ลำดับแสดงผล</label><div class="input-wrap"><span class="input-icon">#</span><input type="number" id="m-order" placeholder="1, 2, 3..."></div></div>
+    </div>
+    <div class="form-group"><label>URL / Link (ถ้ามี)</label><div class="input-wrap"><span class="input-icon">🔗</span><input type="text" id="m-url" placeholder="https://... หรือเว้นว่างไว้ก่อน"></div></div>
+    <div class="form-row">
+      <div>
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--silver);letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px">สถานะ</label>
+        <div class="toggle-wrap"><label class="toggle"><input type="checkbox" id="m-active" checked><span class="toggle-slider"></span></label><span class="toggle-label">Active — แสดงในระบบ</span></div>
+      </div>
+      <div>
+        <label style="display:block;font-size:12px;font-weight:600;color:var(--silver);letter-spacing:.05em;text-transform:uppercase;margin-bottom:10px">สิทธิ์เริ่มต้น</label>
+        <div class="toggle-wrap"><label class="toggle"><input type="checkbox" id="m-defaultForAll"><span class="toggle-slider"></span></label><span class="toggle-label">เปิดให้ทุกคนในแผนก</span></div>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-menu')">ยกเลิก</button><button class="btn-save" id="modal-menu-save" onclick="saveMenu()">บันทึก</button></div>
+  </div>
+</div>
+
+<!-- MODAL: ADD/EDIT JOB -->
+<div class="modal-overlay" id="modal-job">
+  <div class="modal-box modal-lg">
+    <button class="close-modal" onclick="closeModal('modal-job')">✕</button>
+    <h3 id="modal-job-title">เพิ่มงานใหม่</h3>
+    <p class="modal-sub" id="modal-job-sub">กรอกข้อมูลงาน</p>
+    <div id="modal-job-alert" class="alert-box alert-error"><span>⚠️</span><span id="modal-job-alert-msg"></span></div>
+    <!-- BM Fields -->
+    <div id="job-fields-bm">
+      <div class="form-row">
+        <div class="form-group"><label>หัวข้องาน <span class="req">*</span></label><div class="input-wrap"><span class="input-icon">📝</span><input type="text" id="j-title" placeholder="เช่น ซ่อมปั๊มน้ำ อาคาร A"></div></div>
+        <div class="form-group"><label>หมวดหมู่</label><div class="input-wrap"><span class="input-icon">🗂️</span><select id="j-category"><option>งานไฟฟ้า</option><option>งานประปา</option><option>งานโครงสร้าง</option><option>งานระบบปรับอากาศ</option><option>งานบำรุงรักษา</option><option>อื่นๆ</option></select></div></div>
+      </div>
+      <div class="form-group"><label>รายละเอียด</label><textarea id="j-description" placeholder="อธิบายรายละเอียดงาน..."></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>สถานที่</label><div class="input-wrap"><span class="input-icon">📍</span><input type="text" id="j-location" placeholder="เช่น ชั้น 3 อาคาร B"></div></div>
+        <div class="form-group"><label>ผู้รับผิดชอบ</label><div class="input-wrap"><span class="input-icon">👷</span><input type="text" id="j-assignedTo" placeholder="ชื่อช่างหรือทีมงาน"></div></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>ความสำคัญ</label><div class="input-wrap"><span class="input-icon">🎯</span><select id="j-priority"><option value="กลาง">กลาง</option><option value="สูง">สูง</option><option value="ต่ำ">ต่ำ</option></select></div></div>
+        <div class="form-group"><label>สถานะ</label><div class="input-wrap"><span class="input-icon">🔘</span><select id="j-status"><option value="รอดำเนินการ">รอดำเนินการ</option><option value="กำลังดำเนินการ">กำลังดำเนินการ</option><option value="เสร็จสิ้น">เสร็จสิ้น</option><option value="ยกเลิก">ยกเลิก</option></select></div></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>วันกำหนดเสร็จ</label><div class="input-wrap"><span class="input-icon">📅</span><input type="date" id="j-dueDate"></div></div>
+        <div class="form-group" id="j-bs-extra-fields" style="display:none"></div>
+      </div>
+      <!-- BS Extra fields -->
+      <div id="j-bs-block" style="display:none">
+        <div class="form-row">
+          <div class="form-group"><label>ชื่อผู้แจ้ง <span class="req">*</span></label><div class="input-wrap"><span class="input-icon">👤</span><input type="text" id="j-requester" placeholder="ชื่อผู้แจ้งซ่อม"></div></div>
+          <div class="form-group"><label>เบอร์โทร</label><div class="input-wrap"><span class="input-icon">📞</span><input type="text" id="j-phone" placeholder="เบอร์โทรผู้แจ้ง"></div></div>
+        </div>
+      </div>
+      <div class="form-group"><label>หมายเหตุ</label><textarea id="j-remark" placeholder="หมายเหตุเพิ่มเติม..." style="min-height:60px"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('modal-job')">ยกเลิก</button>
+      <button class="btn-save" id="modal-job-save" onclick="saveJob()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: SETUP -->
+<div class="modal-overlay setup-modal" id="setup-modal">
+  <div class="modal-box" style="max-width:420px">
+    <button class="close-modal" onclick="closeModal('setup-modal')">✕</button>
+    <h3>⚙️ ตั้งค่า API</h3>
+    <p class="modal-sub">วาง Web App URL จาก Google Apps Script</p>
+    <div class="step-item"><div class="step-num">1</div><div class="step-body"><strong>วาง Code.gs + รัน setupSheets()</strong><p>Apps Script → วางโค้ด → Save → รัน setupSheets → อนุมัติ</p></div></div>
+    <div class="step-item"><div class="step-num">2</div><div class="step-body"><strong>Deploy Web App</strong><p>Deploy → New deployment → Execute as: Me · Anyone → Copy URL</p></div></div>
+    <div class="step-item"><div class="step-num">3</div><div class="step-body"><strong>วาง URL ด้านล่าง</strong><div class="url-row"><input type="text" id="api-url-input" placeholder="https://script.google.com/macros/s/.../exec"><button onclick="saveApiUrl()">บันทึก & ทดสอบ</button></div></div></div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+//  CONFIG & STATE
+// ════════════════════════════════════════════════════
+const API_KEY = 'portal_api_url_v2';
+const DEFAULT_API = 'https://script.google.com/macros/s/AKfycbxiE7m_8DUMSw_8wTw1FqoS1OpD1_01-9WJEW0RGo-n5Gzk9NVsi4C3cMhr5bQEagSh/exec';
+const getApiUrl = () => localStorage.getItem(API_KEY) || DEFAULT_API;
+
+let currentUser = null;
+let userPermissions = null; // { depts:[], menus:[], raw:{} }
+let currentDept = null;
+let allUsers = [], allDepts = [], allMenus = [];
+let editUserTarget = null, editDeptTarget = null, editMenuTarget = null, permTarget = null;
+
+// ════════════════════════════════════════════════════
+//  API
+// ════════════════════════════════════════════════════
+async function callAPI(payload) {
+  const qs = new URLSearchParams({ payload: JSON.stringify(payload) }).toString();
+  const res = await fetch(`${getApiUrl()}?${qs}`, { redirect: 'follow' });
+  if (!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+
+async function pingAPI() {
+  setApiStatus('loading');
+  try {
+    const r = await callAPI({ action: 'ping' });
+    if (r.success) { setApiStatus('ok'); return true; }
+    setApiStatus('error'); return false;
+  } catch { setApiStatus('error'); return false; }
+}
+
+function setApiStatus(s) {
+  document.getElementById('api-dot').className = 'api-dot ' + s;
+  document.getElementById('api-label').textContent = s==='ok'?'เชื่อมต่อแล้ว':s==='loading'?'กำลังเชื่อมต่อ...':s==='error'?'เชื่อมต่อล้มเหลว':'ไม่ได้เชื่อมต่อ';
+}
+
+// ════════════════════════════════════════════════════
+//  LOGIN
+// ════════════════════════════════════════════════════
+async function doLogin() {
+  const u = document.getElementById('inp-user').value.trim();
+  const p = document.getElementById('inp-pass').value;
+  const btn = document.getElementById('login-btn');
+  document.getElementById('login-error').classList.remove('show');
+  if (!u || !p) { showLoginErr('กรุณากรอก Username และ Password'); return; }
+  btn.disabled = true; btn.textContent = 'กำลังตรวจสอบ...';
+  try {
+    const r = await callAPI({ action: 'login', username: u, password: p });
+    if (r.success) {
+      currentUser = r.user;
+      userPermissions = r.permissions;
+      setupTopbar();
+      if (r.firstLogin) showScreen('changepw');
+      else goToDept();
+    } else showLoginErr(r.message || 'เกิดข้อผิดพลาด');
+  } catch(e) { showLoginErr('เชื่อมต่อระบบไม่ได้ กรุณาลองใหม่'); }
+  finally { btn.disabled = false; btn.textContent = 'เข้าสู่ระบบ →'; }
+}
+
+function showLoginErr(m) {
+  document.getElementById('error-msg').textContent = m;
+  document.getElementById('login-error').classList.add('show');
+  document.getElementById('inp-pass').value = '';
+  document.getElementById('inp-pass').focus();
+}
+
+// ════════════════════════════════════════════════════
+//  CHANGE PASSWORD
+// ════════════════════════════════════════════════════
+async function doChangePassword() {
+  const o = document.getElementById('cpw-old').value;
+  const n = document.getElementById('cpw-new').value;
+  const c = document.getElementById('cpw-confirm').value;
+  document.getElementById('cpw-error').classList.remove('show');
+  document.getElementById('cpw-success').classList.remove('show');
+  if (!o||!n||!c) { showCpwErr('กรุณากรอกข้อมูลให้ครบ'); return; }
+  if (n.length < 8) { showCpwErr('รหัสผ่านใหม่ต้องมีอย่างน้อย 8 ตัวอักษร'); return; }
+  if (n !== c) { showCpwErr('รหัสผ่านใหม่ไม่ตรงกัน'); return; }
+  if (n === o) { showCpwErr('รหัสผ่านใหม่ต้องไม่เหมือนรหัสเดิม'); return; }
+  const btn = document.getElementById('cpw-btn');
+  btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+  try {
+    const r = await callAPI({ action: 'changePassword', username: currentUser.username, oldPassword: o, newPassword: n });
+    if (r.success) {
+      document.getElementById('cpw-success').classList.add('show');
+      setTimeout(() => goToDept(), 1400);
+    } else showCpwErr(r.message || 'เกิดข้อผิดพลาด');
+  } catch { showCpwErr('เชื่อมต่อไม่ได้'); }
+  finally { btn.disabled = false; btn.textContent = 'บันทึกรหัสผ่านใหม่'; }
+}
+function showCpwErr(m) { document.getElementById('cpw-error-msg').textContent=m; document.getElementById('cpw-error').classList.add('show'); }
+
+function checkStrength() {
+  const pw = document.getElementById('cpw-new').value;
+  let s = 0;
+  if (pw.length>=8) s++; if (/[A-Z]/.test(pw)) s++; if (/[0-9]/.test(pw)) s++; if (/[^A-Za-z0-9]/.test(pw)) s++;
+  const m = [{w:'0%',bg:'transparent',t:''},{w:'25%',bg:'var(--danger)',t:'อ่อนมาก'},{w:'50%',bg:'var(--warn)',t:'พอใช้'},{w:'75%',bg:'var(--gold-lt)',t:'ดี'},{w:'100%',bg:'var(--success)',t:'แข็งแกร่ง'}];
+  document.getElementById('strength-bar').style.cssText = `width:${m[s].w};background:${m[s].bg}`;
+  const lbl = document.getElementById('strength-label'); lbl.textContent = m[s].t; lbl.style.color = m[s].bg;
+}
+
+// ════════════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════════════
+function setupTopbar() {
+  const empId = currentUser.employeeId ? ` <span class="emp-id-tag">[${currentUser.employeeId}]</span>` : '';
+  document.getElementById('current-user').innerHTML = `สวัสดี, <strong>${currentUser.name}</strong>${empId}`;
+  document.getElementById('user-info').classList.add('show');
+  document.getElementById('logout-btn').classList.add('show');
+  if (currentUser.role === 'admin') document.getElementById('admin-btn').classList.add('show');
+}
+
+function goToDept() {
+  renderDeptGrid();
+  showScreen('dept');
+}
+
+function renderDeptGrid() {
+  const greeting = document.getElementById('dept-greeting');
+  greeting.textContent = `สวัสดี, ${currentUser.name} 👋`;
+  const container = document.getElementById('dept-grid-container');
+  const depts = userPermissions?.depts || [];
+
+  // English name mapping (fallback สำหรับ deptId มาตรฐาน)
+  const deptEnNames = {
+    'bm': 'Building Management',
+    'bs': 'Building Services',
+    'hr': 'Human Resources',
+    'it': 'Information Technology',
+    'security': 'Security',
+    'cleaning': 'Cleaning Services',
+  };
+
+  if (!depts.length) {
+    container.innerHTML = `<div class="no-access" style="width:100%;text-align:center"><div class="na-icon">🚫</div><p>ยังไม่มีสิทธิ์เข้าถึงแผนกใด<br>กรุณาติดต่อ Admin</p></div>`;
+    return;
+  }
+
+  container.innerHTML = depts
+    .sort((a,b) => (a.order||99) - (b.order||99))
+    .map(d => {
+      const enName = d.deptNameEn || deptEnNames[d.deptId] || '';
+      return `
+      <div class="dept-card" onclick="selectDept('${d.deptId}','${d.deptName}','${d.icon||'🏢'}')">
+        <div class="dept-card-icon">${d.icon || '🏢'}</div>
+        <h3>${d.deptName}</h3>
+        ${enName ? `<div class="dept-name-en">${enName}</div>` : ''}
+        <div class="dept-arrow">→</div>
+      </div>`;
+    }).join('');
+}
+
+function selectDept(deptId, deptName, icon) {
+  currentDept = { deptId, deptName, icon };
+  document.getElementById('dept-badge').textContent = deptName;
+  document.getElementById('dept-badge').classList.add('show');
+  document.getElementById('dash-title-text').textContent = `${icon} ${deptName}`;
+  document.getElementById('dash-title-sub').textContent = deptId.toUpperCase();
+  renderMenuGrid(deptId);
+  showScreen('dash');
+}
+
+function renderMenuGrid(deptId) {
+  const container = document.getElementById('menu-grid-container');
+  const menus = (userPermissions?.menus || [])
+    .filter(m => m.deptId === deptId)
+    .sort((a,b) => (a.order||99)-(b.order||99));
+
+  if (!menus.length) {
+    container.innerHTML = `<div class="no-menu">ยังไม่มีเมนูที่เข้าถึงได้<br>กรุณาติดต่อ Admin</div>`;
+    return;
+  }
+
+  container.innerHTML = menus.map(m => `
+    <div class="menu-tile" onclick="openMenu('${m.menuId}','${m.url || ''}')">
+      <div class="tile-icon">${m.icon || '📋'}</div>
+      <div class="tile-name">${m.menuName}</div>
+    </div>
+  `).join('');
+}
+
+function openMenu(menuId, url) {
+  if (url && url.startsWith('http')) { window.open(url, '_blank'); return; }
+  // Router
+  const jobMenus = {
+    'bm_maintenance': 'BM', 'bm_utilities': 'BM', 'bm_annual': 'BM',
+    'bs_workorder': 'BS', 'bs_assign': 'BS', 'bs_cleaning': 'BS',
+  };
+  const reportMenus = ['bm_report','bs_report'];
+  if (jobMenus[menuId]) { openJobPanel(jobMenus[menuId], menuId); return; }
+  if (reportMenus.includes(menuId)) { alert('📊 หน้ารายงานอยู่ระหว่างพัฒนาครับ'); return; }
+  alert(`เมนู: ${menuId}\n\nยังอยู่ระหว่างการพัฒนาครับ`);
+}
+
+// ════════════════════════════════════════════════════
+//  JOBS PANEL
+// ════════════════════════════════════════════════════
+let currentJobType = 'BM'; // 'BM' | 'BS'
+let allJobs = [];
+let jobFilterStatus = '';
+let editJobTarget = null;
+
+function backToDash() { showScreen('dash'); }
+
+async function openJobPanel(type, menuId) {
+  currentJobType = type;
+  editJobTarget = null;
+  jobFilterStatus = '';
+
+  // Title
+  const titles = {
+    'bm_maintenance': { th:'งานซ่อมบำรุง', en:'MAINTENANCE JOBS' },
+    'bm_utilities':   { th:'ระบบสาธารณูปโภค', en:'UTILITIES JOBS' },
+    'bm_annual':      { th:'แผนงานประจำปี', en:'ANNUAL PLAN JOBS' },
+    'bs_workorder':   { th:'รับแจ้งซ่อม', en:'WORK ORDERS' },
+    'bs_assign':      { th:'มอบหมายงาน', en:'JOB ASSIGNMENTS' },
+    'bs_cleaning':    { th:'งานทำความสะอาด', en:'CLEANING JOBS' },
+  };
+  const t = titles[menuId] || { th: type+' Jobs', en: 'JOB MANAGEMENT' };
+  document.getElementById('jobs-title-text').textContent = (type==='BM'?'🏗️ ':'🛠️ ') + t.th;
+  document.getElementById('jobs-title-sub').textContent = t.en;
+
+  // Table headers
+  const thead = document.getElementById('jobs-thead');
+  if (type === 'BS') {
+    thead.innerHTML = `<tr><th>รหัส</th><th>หัวข้อ</th><th>ผู้แจ้ง</th><th>ผู้รับผิดชอบ</th><th>ความสำคัญ</th><th>สถานะ</th><th>วันกำหนด</th><th>Action</th></tr>`;
+  } else {
+    thead.innerHTML = `<tr><th>รหัส</th><th>หัวข้อ</th><th>สถานที่</th><th>ผู้รับผิดชอบ</th><th>ความสำคัญ</th><th>สถานะ</th><th>วันกำหนด</th><th>Action</th></tr>`;
+  }
+
+  showScreen('jobs');
+  await loadJobs();
+}
+
+async function loadJobs() {
+  const tbody = document.getElementById('jobs-tbody');
+  tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:32px">⏳ กำลังโหลด...</td></tr>`;
+  document.getElementById('job-stats-row').innerHTML = '';
+  try {
+    const action = currentJobType === 'BM' ? 'getBMJobs' : 'getBSJobs';
+    const r = await callAPI({ action });
+    if (r.success) {
+      allJobs = r.data || [];
+      renderStatCards();
+      renderFilteredJobs();
+    } else {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--danger);padding:32px">${r.message}</td></tr>`;
+    }
+  } catch(e) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--danger);padding:32px">เชื่อมต่อไม่ได้</td></tr>`;
+  }
+}
+
+function renderStatCards() {
+  const counts = {
+    all: allJobs.length,
+    wait: allJobs.filter(j=>j.status==='รอดำเนินการ').length,
+    prog: allJobs.filter(j=>j.status==='กำลังดำเนินการ').length,
+    done: allJobs.filter(j=>j.status==='เสร็จสิ้น').length,
+    cancel: allJobs.filter(j=>j.status==='ยกเลิก').length,
+  };
+  document.getElementById('job-stats-row').innerHTML = `
+    <div class="stat-card sc-all ${jobFilterStatus===''?'sc-active':''}" onclick="setStatFilter('')">
+      <div class="sc-num">${counts.all}</div><div class="sc-label">ทั้งหมด</div>
+    </div>
+    <div class="stat-card sc-wait ${jobFilterStatus==='รอดำเนินการ'?'sc-active':''}" onclick="setStatFilter('รอดำเนินการ')">
+      <div class="sc-num">${counts.wait}</div><div class="sc-label">รอดำเนินการ</div>
+    </div>
+    <div class="stat-card sc-prog ${jobFilterStatus==='กำลังดำเนินการ'?'sc-active':''}" onclick="setStatFilter('กำลังดำเนินการ')">
+      <div class="sc-num">${counts.prog}</div><div class="sc-label">กำลังดำเนินการ</div>
+    </div>
+    <div class="stat-card sc-done ${jobFilterStatus==='เสร็จสิ้น'?'sc-active':''}" onclick="setStatFilter('เสร็จสิ้น')">
+      <div class="sc-num">${counts.done}</div><div class="sc-label">เสร็จสิ้น</div>
+    </div>
+    <div class="stat-card sc-cancel ${jobFilterStatus==='ยกเลิก'?'sc-active':''}" onclick="setStatFilter('ยกเลิก')">
+      <div class="sc-num">${counts.cancel}</div><div class="sc-label">ยกเลิก</div>
+    </div>
+  `;
+}
+
+function setStatFilter(status) {
+  jobFilterStatus = status;
+  renderStatCards();
+  renderFilteredJobs();
+}
+
+function renderFilteredJobs() {
+  const q = (document.getElementById('job-search')?.value || '').toLowerCase();
+  const pri = document.getElementById('job-filter-priority')?.value || '';
+  let jobs = allJobs;
+  if (jobFilterStatus) jobs = jobs.filter(j => j.status === jobFilterStatus);
+  if (pri) jobs = jobs.filter(j => j.priority === pri);
+  if (q) jobs = jobs.filter(j =>
+    (j.id||'').toLowerCase().includes(q) ||
+    (j.title||'').toLowerCase().includes(q) ||
+    (j.assignedTo||'').toLowerCase().includes(q) ||
+    (j.requester||'').toLowerCase().includes(q) ||
+    (j.location||'').toLowerCase().includes(q)
+  );
+  renderJobTable(jobs);
+}
+
+function statusBadgeClass(s) {
+  if (s==='รอดำเนินการ') return 'badge-wait';
+  if (s==='กำลังดำเนินการ') return 'badge-prog';
+  if (s==='เสร็จสิ้น') return 'badge-done';
+  if (s==='ยกเลิก') return 'badge-cancel';
+  return '';
+}
+function priorityClass(p) {
+  if (p==='สูง') return 'badge-high';
+  if (p==='กลาง') return 'badge-mid';
+  if (p==='ต่ำ') return 'badge-low';
+  return '';
+}
+
+function renderJobTable(jobs) {
+  const tbody = document.getElementById('jobs-tbody');
+  if (!jobs.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty-jobs"><div class="ej-icon">📭</div><p>ไม่พบรายการงาน</p></div></td></tr>`;
+    return;
+  }
+  const isBs = currentJobType === 'BS';
+  tbody.innerHTML = jobs.map(j => `
+    <tr>
+      <td><span class="job-id">${j.id||'—'}</span></td>
+      <td><div class="job-title-cell">
+        <div class="jtitle">${j.title||'—'}</div>
+        <div class="jsub">${j.description||''}</div>
+      </div></td>
+      <td style="font-size:12px;color:var(--silver)">${isBs ? (j.requester||'—') : (j.location||'—')}</td>
+      <td style="font-size:12px">${j.assignedTo||'<span style="color:var(--muted)">ยังไม่มอบหมาย</span>'}</td>
+      <td><span class="badge ${priorityClass(j.priority)}">${j.priority||'—'}</span></td>
+      <td>
+        <select class="status-sel" onchange="quickUpdateStatus('${j.id}',this.value)" style="border-color:transparent">
+          ${['รอดำเนินการ','กำลังดำเนินการ','เสร็จสิ้น','ยกเลิก'].map(s=>`<option value="${s}" ${j.status===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </td>
+      <td style="font-size:12px;color:var(--muted)">${formatDate(j.dueDate)}</td>
+      <td><div class="action-btns">
+        <button class="btn-sm btn-edit" onclick="openEditJob('${j.id}')">✏️ แก้ไข</button>
+      </div></td>
+    </tr>
+  `).join('');
+}
+
+function formatDate(d) {
+  if (!d) return '—';
+  const s = String(d).split('T')[0];
+  if (!s || s === 'undefined') return '—';
+  return s;
+}
+
+async function quickUpdateStatus(id, newStatus) {
+  try {
+    const action = currentJobType === 'BM' ? 'updateBMJob' : 'updateBSJob';
+    await callAPI({ action, id, data: { status: newStatus }, updatedBy: currentUser.username });
+    // อัปเดต local array แทนโหลดใหม่ทั้งหมด
+    const job = allJobs.find(j => j.id === id);
+    if (job) job.status = newStatus;
+    renderStatCards();
+  } catch(e) { alert('อัปเดตสถานะไม่สำเร็จ'); }
+}
+
+function openAddJob() {
+  editJobTarget = null;
+  document.getElementById('modal-job-title').textContent = '➕ เพิ่มงานใหม่';
+  document.getElementById('modal-job-sub').textContent = currentJobType === 'BM' ? 'แผนกบริหารอาคาร (BM)' : 'แผนกบริการงานอาคาร (BS)';
+  document.getElementById('modal-job-alert').classList.remove('show');
+  // clear fields
+  ['j-title','j-description','j-location','j-assignedTo','j-remark','j-requester','j-phone'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('j-priority').value = 'กลาง';
+  document.getElementById('j-status').value = 'รอดำเนินการ';
+  document.getElementById('j-dueDate').value = '';
+  // BS extra
+  const bsBlock = document.getElementById('j-bs-block');
+  bsBlock.style.display = currentJobType === 'BS' ? 'block' : 'none';
+  openModal('modal-job');
+}
+
+function openEditJob(id) {
+  const j = allJobs.find(x => x.id === id); if (!j) return;
+  editJobTarget = id;
+  document.getElementById('modal-job-title').textContent = '✏️ แก้ไขงาน';
+  document.getElementById('modal-job-sub').textContent = j.id;
+  document.getElementById('modal-job-alert').classList.remove('show');
+  document.getElementById('j-title').value = j.title||'';
+  document.getElementById('j-description').value = j.description||'';
+  document.getElementById('j-location').value = j.location||'';
+  document.getElementById('j-assignedTo').value = j.assignedTo||'';
+  document.getElementById('j-priority').value = j.priority||'กลาง';
+  document.getElementById('j-status').value = j.status||'รอดำเนินการ';
+  document.getElementById('j-dueDate').value = formatDate(j.dueDate);
+  document.getElementById('j-remark').value = j.remark||'';
+  // category
+  const catEl = document.getElementById('j-category');
+  if(catEl && j.category) catEl.value = j.category;
+  // BS extra
+  const bsBlock = document.getElementById('j-bs-block');
+  bsBlock.style.display = currentJobType === 'BS' ? 'block' : 'none';
+  if (currentJobType === 'BS') {
+    document.getElementById('j-requester').value = j.requester||'';
+    document.getElementById('j-phone').value = j.phone||'';
+  }
+  openModal('modal-job');
+}
+
+async function saveJob() {
+  const btn = document.getElementById('modal-job-save');
+  const errEl = document.getElementById('modal-job-alert');
+  errEl.classList.remove('show');
+  const title = document.getElementById('j-title').value.trim();
+  if (!title) { document.getElementById('modal-job-alert-msg').textContent='กรุณากรอกหัวข้องาน'; errEl.classList.add('show'); return; }
+  if (currentJobType === 'BS' && !editJobTarget) {
+    const req = document.getElementById('j-requester').value.trim();
+    if (!req) { document.getElementById('modal-job-alert-msg').textContent='กรุณากรอกชื่อผู้แจ้ง'; errEl.classList.add('show'); return; }
+  }
+  const data = {
+    title,
+    description: document.getElementById('j-description').value.trim(),
+    category: document.getElementById('j-category').value,
+    priority: document.getElementById('j-priority').value,
+    status: document.getElementById('j-status').value,
+    assignedTo: document.getElementById('j-assignedTo').value.trim(),
+    location: document.getElementById('j-location').value.trim(),
+    dueDate: document.getElementById('j-dueDate').value,
+    remark: document.getElementById('j-remark').value.trim(),
+  };
+  if (currentJobType === 'BS') {
+    data.requester = document.getElementById('j-requester').value.trim();
+    data.phone = document.getElementById('j-phone').value.trim();
+  }
+  btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+  try {
+    let r;
+    if (editJobTarget) {
+      const action = currentJobType === 'BM' ? 'updateBMJob' : 'updateBSJob';
+      r = await callAPI({ action, id: editJobTarget, data, updatedBy: currentUser.username });
+    } else {
+      const action = currentJobType === 'BM' ? 'addBMJob' : 'addBSJob';
+      r = await callAPI({ action, data, createdBy: currentUser.username });
+    }
+    if (r.success) { closeModal('modal-job'); await loadJobs(); }
+    else { document.getElementById('modal-job-alert-msg').textContent = r.message||'เกิดข้อผิดพลาด'; errEl.classList.add('show'); }
+  } catch { document.getElementById('modal-job-alert-msg').textContent='เชื่อมต่อไม่ได้'; errEl.classList.add('show'); }
+  finally { btn.disabled=false; btn.textContent='💾 บันทึก'; }
+}
+
+
+function goBack() {
+  document.getElementById('dept-badge').classList.remove('show');
+  currentDept = null;
+  showScreen('dept');
+}
+
+function backToDash() {
+  showScreen('dash');
+}
+
+function goAdmin() {
+  showScreen('admin');
+  loadAdminData();
+}
+
+function doLogout() {
+  if (!confirm('ต้องการออกจากระบบหรือไม่?')) return;
+  currentUser = null; userPermissions = null; currentDept = null;
+  allUsers = []; allDepts = []; allMenus = [];
+  ['user-info','logout-btn','admin-btn'].forEach(id => document.getElementById(id).classList.remove('show'));
+  document.getElementById('dept-badge').classList.remove('show');
+  document.getElementById('inp-user').value = '';
+  document.getElementById('inp-pass').value = '';
+  document.getElementById('login-error').classList.remove('show');
+  showScreen('login');
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+}
+
+// ════════════════════════════════════════════════════
+//  ADMIN — LOAD ALL DATA
+// ════════════════════════════════════════════════════
+async function loadAdminData() {
+  await Promise.all([loadUsers(), loadDepts(), loadMenus()]);
+}
+
+// ════════════════════════════════════════════════════
+//  ADMIN — USERS
+// ════════════════════════════════════════════════════
+async function loadUsers() {
+  const tb = document.getElementById('user-table-body');
+  tb.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:28px">กำลังโหลด...</td></tr>`;
+  try {
+    const r = await callAPI({ action: 'getUsers' });
+    if (r.success) { allUsers = r.data; renderUserTable(allUsers); }
+    else tb.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:28px">${r.message}</td></tr>`;
+  } catch(e) { tb.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:28px">เชื่อมต่อไม่ได้</td></tr>`; }
+}
+
+function renderUserTable(users) {
+  const tb = document.getElementById('user-table-body');
+  if (!users.length) { tb.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:28px">ไม่พบผู้ใช้</td></tr>`; return; }
+  tb.innerHTML = users.map(u => `<tr>
+    <td><span style="font-family:'Barlow Condensed',sans-serif;color:var(--gold-lt);letter-spacing:.05em">${u.employeeId||'—'}</span></td>
+    <td><strong>${u.username}</strong></td>
+    <td>${u.name||'—'}</td>
+    <td><span class="badge ${u.role==='admin'?'badge-admin':'badge-user'}">${u.role}</span></td>
+    <td><span class="badge ${String(u.active)==='true'?'badge-active':'badge-inactive'}">${String(u.active)==='true'?'Active':'Inactive'}</span></td>
+    <td>${String(u.firstLogin)==='true'?'<span class="badge badge-firstlogin">รอเปลี่ยนรหัส</span>':'<span style="color:var(--muted);font-size:12px">ปกติ</span>'}</td>
+    <td><div class="action-btns">
+      <button class="btn-sm btn-edit" onclick="openEditUser('${u.username}')">✏️</button>
+      <button class="btn-sm btn-perm" onclick="openPermissions('${u.username}')">🔐 สิทธิ์</button>
+      <button class="btn-sm btn-reset" onclick="openResetPw('${u.username}')">🔑</button>
+      ${u.username!=='admin'?`<button class="btn-sm btn-del" onclick="confirmDeleteUser('${u.username}')">🗑️</button>`:''}
+    </div></td>
+  </tr>`).join('');
+}
+
+function filterUsers() {
+  const q = document.getElementById('user-search').value.toLowerCase();
+  renderUserTable(allUsers.filter(u =>
+    (u.username||'').toLowerCase().includes(q) ||
+    (u.name||'').toLowerCase().includes(q) ||
+    (u.employeeId||'').toLowerCase().includes(q)
+  ));
+}
+
+function openAddUser() {
+  editUserTarget = null;
+  document.getElementById('modal-user-title').textContent = 'เพิ่มผู้ใช้ใหม่';
+  document.getElementById('modal-user-sub').textContent = 'กรอกข้อมูลผู้ใช้งาน';
+  document.getElementById('modal-user-alert').classList.remove('show');
+  ['u-employeeId','u-username','u-name','u-password'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('u-role').value = 'user';
+  document.getElementById('u-active').value = 'true';
+  document.getElementById('u-username').disabled = false;
+  document.getElementById('pw-section').style.display = 'block';
+  openModal('modal-user');
+}
+
+function openEditUser(username) {
+  const u = allUsers.find(x => x.username === username); if (!u) return;
+  editUserTarget = username;
+  document.getElementById('modal-user-title').textContent = 'แก้ไขผู้ใช้';
+  document.getElementById('modal-user-sub').textContent = 'แก้ไขข้อมูลของ ' + username;
+  document.getElementById('modal-user-alert').classList.remove('show');
+  document.getElementById('u-employeeId').value = u.employeeId || '';
+  document.getElementById('u-username').value = u.username; document.getElementById('u-username').disabled = true;
+  document.getElementById('u-name').value = u.name || '';
+  document.getElementById('u-role').value = u.role || 'user';
+  document.getElementById('u-active').value = String(u.active) === 'true' ? 'true' : 'false';
+  document.getElementById('pw-section').style.display = 'none';
+  openModal('modal-user');
+}
+
+async function saveUser() {
+  const btn = document.getElementById('modal-user-save');
+  const errEl = document.getElementById('modal-user-alert');
+  errEl.classList.remove('show');
+  const employeeId = document.getElementById('u-employeeId').value.trim();
+  const name = document.getElementById('u-name').value.trim();
+  const role = document.getElementById('u-role').value;
+  const active = document.getElementById('u-active').value;
+  if (!employeeId) { document.getElementById('modal-user-alert-msg').textContent='กรุณากรอกรหัสพนักงาน'; errEl.classList.add('show'); return; }
+  if (!name) { document.getElementById('modal-user-alert-msg').textContent='กรุณากรอกชื่อ-สกุล'; errEl.classList.add('show'); return; }
+  btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+  try {
+    let r;
+    if (editUserTarget) {
+      r = await callAPI({ action:'updateUser', username:editUserTarget, data:{employeeId,name,role,active}, adminUser:currentUser.username });
+    } else {
+      const username = document.getElementById('u-username').value.trim();
+      const password = document.getElementById('u-password').value.trim();
+      if (!username) { document.getElementById('modal-user-alert-msg').textContent='กรุณากรอก Username'; errEl.classList.add('show'); btn.disabled=false; btn.textContent='บันทึก'; return; }
+      if (password.length < 8) { document.getElementById('modal-user-alert-msg').textContent='รหัสผ่านต้องมีอย่างน้อย 8 ตัว'; errEl.classList.add('show'); btn.disabled=false; btn.textContent='บันทึก'; return; }
+      r = await callAPI({ action:'addUser', data:{username,password,employeeId,name,role,active}, adminUser:currentUser.username });
+    }
+    if (r.success) { closeModal('modal-user'); loadUsers(); }
+    else { document.getElementById('modal-user-alert-msg').textContent = r.message; errEl.classList.add('show'); }
+  } catch { document.getElementById('modal-user-alert-msg').textContent='เชื่อมต่อไม่ได้'; errEl.classList.add('show'); }
+  finally { btn.disabled = false; btn.textContent = 'บันทึก'; }
+}
+
+async function confirmDeleteUser(username) {
+  if (!confirm(`ต้องการลบผู้ใช้ "${username}" หรือไม่?\nสิทธิ์ทั้งหมดของผู้ใช้นี้จะถูกลบด้วย`)) return;
+  try {
+    const r = await callAPI({ action:'deleteUser', username, adminUser:currentUser.username });
+    if (r.success) loadUsers(); else alert('ลบไม่สำเร็จ: '+r.message);
+  } catch { alert('เชื่อมต่อไม่ได้'); }
+}
+
+// ════════════════════════════════════════════════════
+//  ADMIN — PERMISSIONS
+// ════════════════════════════════════════════════════
+async function openPermissions(username) {
+  permTarget = username;
+  const u = allUsers.find(x => x.username === username);
+  document.getElementById('perm-sub').textContent = `กำหนดสิทธิ์สำหรับ: ${u?.name || username} (${username})`;
+  document.getElementById('modal-perm-alert').classList.remove('show');
+  document.getElementById('modal-perm-success').style.display = 'none';
+  document.getElementById('perm-container').innerHTML = `<div style="text-align:center;color:var(--muted);padding:28px">กำลังโหลด...</div>`;
+  openModal('modal-perm');
+
+  try {
+    const r = await callAPI({ action:'getUserPermissions', username });
+    if (r.success) renderPermUI(r.data);
+    else document.getElementById('perm-container').innerHTML = `<div style="color:var(--danger);padding:12px">${r.message}</div>`;
+  } catch { document.getElementById('perm-container').innerHTML = `<div style="color:var(--danger);padding:12px">เชื่อมต่อไม่ได้</div>`; }
+}
+
+function renderPermUI(currentPerms) {
+  const container = document.getElementById('perm-container');
+  const raw = currentPerms.raw || {};
+  // raw key = "deptId::menuId" or "deptId::"
+
+  let html = '';
+  allDepts.filter(d => String(d.active)==='true').sort((a,b)=>(a.order||99)-(b.order||99)).forEach(dept => {
+    const deptGranted = raw[dept.deptId+'::'] === true;
+    const deptMenus = allMenus.filter(m => m.deptId === dept.deptId && String(m.active)==='true').sort((a,b)=>(a.order||99)-(b.order||99));
+
+    html += `<div class="perm-dept-block">
+      <div class="perm-dept-header">
+        <input type="checkbox" id="perm-dept-${dept.deptId}" ${deptGranted?'checked':''} onchange="toggleDeptPerm('${dept.deptId}',this.checked)">
+        <span class="perm-dept-icon">${dept.icon||'🏢'}</span>
+        <label class="perm-dept-label" for="perm-dept-${dept.deptId}">${dept.deptName}</label>
+      </div>`;
+
+    if (deptMenus.length) {
+      html += `<div class="perm-menus">`;
+      deptMenus.forEach(menu => {
+        const menuKey = dept.deptId+'::'+menu.menuId;
+        const menuGranted = menu.defaultForAll || raw[menuKey] === true;
+        html += `<div class="perm-menu-item">
+          <input type="checkbox" id="perm-menu-${menu.menuId}" ${menuGranted?'checked':''} ${menu.defaultForAll?'disabled':''} data-deptid="${dept.deptId}" data-menuid="${menu.menuId}">
+          <label for="perm-menu-${menu.menuId}">
+            ${menu.icon||'📋'} ${menu.menuName}
+            ${menu.defaultForAll?'<span class="perm-all-badge">ทุกคน</span>':''}
+          </label>
+        </div>`;
+      });
+      html += `</div>`;
+    } else {
+      html += `<div style="padding-left:28px;font-size:12px;color:var(--muted)">ยังไม่มีเมนูในแผนกนี้</div>`;
+    }
+    html += `</div>`;
+  });
+
+  container.innerHTML = html || `<div style="color:var(--muted);padding:20px;text-align:center">ยังไม่มีแผนกในระบบ — เพิ่มในแท็บ "แผนก" ก่อน</div>`;
+}
+
+function toggleDeptPerm(deptId, checked) {
+  // เมื่อ uncheck dept ให้ uncheck เมนูใน dept นั้นด้วย
+  if (!checked) {
+    document.querySelectorAll(`[data-deptid="${deptId}"]`).forEach(cb => cb.checked = false);
+  }
+}
+
+async function savePermissions() {
+  const btn = document.getElementById('perm-save-btn');
+  document.getElementById('modal-perm-alert').classList.remove('show');
+  document.getElementById('modal-perm-success').style.display = 'none';
+  btn.disabled = true; btn.textContent = 'กำลังบันทึก...';
+
+  const permissions = [];
+
+  // เก็บ dept permissions
+  allDepts.forEach(dept => {
+    const cb = document.getElementById('perm-dept-'+dept.deptId);
+    if (cb) permissions.push({ deptId: dept.deptId, menuId: '', granted: cb.checked });
+  });
+
+  // เก็บ menu permissions (เฉพาะที่ไม่ใช่ defaultForAll)
+  document.querySelectorAll('[data-menuid]').forEach(cb => {
+    if (!cb.disabled) {
+      permissions.push({ deptId: cb.dataset.deptid, menuId: cb.dataset.menuid, granted: cb.checked });
+    }
+  });
+
+  try {
+    const r = await callAPI({ action:'savePermissions', username:permTarget, permissions, adminUser:currentUser.username });
+    if (r.success) {
+      document.getElementById('modal-perm-success').style.display = 'flex';
+      setTimeout(() => document.getElementById('modal-perm-success').style.display='none', 2000);
+    } else { document.getElementById('modal-perm-alert-msg').textContent=r.message; document.getElementById('modal-perm-alert').classList.add('show'); }
+  } catch { document.getElementById('modal-perm-alert-msg').textContent='เชื่อมต่อไม่ได้'; document.getElementById('modal-perm-alert').classList.add('show'); }
+  finally { btn.disabled=false; btn.textContent='💾 บันทึกสิทธิ์'; }
+}
+
+// RESET PASSWORD
+function openResetPw(username) {
+  const u = allUsers.find(x=>x.username===username);
+  document.getElementById('reset-sub').textContent = `ตั้งรหัสผ่านใหม่ให้: ${u?.name||''} (${username})`;
+  document.getElementById('reset-pw').value = '';
+  document.getElementById('modal-reset-alert').classList.remove('show');
+  document.getElementById('modal-reset-success').style.display = 'none';
+  openModal('modal-reset');
+  window._resetTarget = username;
+}
+
+async function doResetPassword() {
+  const pw = document.getElementById('reset-pw').value.trim();
+  if (pw.length < 8) { document.getElementById('modal-reset-alert-msg').textContent='รหัสผ่านต้องมีอย่างน้อย 8 ตัว'; document.getElementById('modal-reset-alert').classList.add('show'); return; }
+  try {
+    const r = await callAPI({ action:'resetPassword', username:window._resetTarget, newPassword:pw, adminUser:currentUser.username });
+    if (r.success) {
+      document.getElementById('modal-reset-alert').classList.remove('show');
+      document.getElementById('modal-reset-success').style.display='flex';
+      setTimeout(()=>{ closeModal('modal-reset'); loadUsers(); }, 1400);
+    } else { document.getElementById('modal-reset-alert-msg').textContent=r.message; document.getElementById('modal-reset-alert').classList.add('show'); }
+  } catch { document.getElementById('modal-reset-alert-msg').textContent='เชื่อมต่อไม่ได้'; document.getElementById('modal-reset-alert').classList.add('show'); }
+}
+
+// ════════════════════════════════════════════════════
+//  ADMIN — DEPARTMENTS
+// ════════════════════════════════════════════════════
+async function loadDepts() {
+  const tb = document.getElementById('dept-table-body');
+  try {
+    const r = await callAPI({ action:'getDepartments' });
+    if (r.success) { allDepts = r.data; renderDeptTable(allDepts); populateMenuDeptSelect(); }
+    else tb.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--danger);padding:28px">${r.message}</td></tr>`;
+  } catch { tb.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--danger);padding:28px">เชื่อมต่อไม่ได้</td></tr>`; }
+}
+
+function renderDeptTable(depts) {
+  const tb = document.getElementById('dept-table-body');
+  if (!depts.length) { tb.innerHTML=`<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:28px">ยังไม่มีแผนก</td></tr>`; return; }
+  tb.innerHTML = depts.sort((a,b)=>(a.order||99)-(b.order||99)).map(d=>`<tr>
+    <td><code style="color:var(--gold-lt);font-size:12px">${d.deptId}</code></td>
+    <td><strong>${d.deptName}</strong></td>
+    <td style="font-size:20px">${d.icon||'—'}</td>
+    <td><span class="badge ${String(d.active)==='true'?'badge-active':'badge-inactive'}">${String(d.active)==='true'?'Active':'Inactive'}</span></td>
+    <td>${d.order||'—'}</td>
+    <td><div class="action-btns">
+      <button class="btn-sm btn-edit" onclick="openEditDept('${d.deptId}')">✏️ แก้ไข</button>
+      <button class="btn-sm btn-del" onclick="confirmDeleteDept('${d.deptId}')">🗑️</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function openAddDept() {
+  editDeptTarget = null;
+  document.getElementById('modal-dept-title').textContent = 'เพิ่มแผนกใหม่';
+  document.getElementById('modal-dept-alert').classList.remove('show');
+  ['d-deptId','d-deptName','d-icon','d-order'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('d-active').value = 'true';
+  document.getElementById('d-deptId').disabled = false;
+  openModal('modal-dept');
+}
+
+function openEditDept(deptId) {
+  const d = allDepts.find(x=>x.deptId===deptId); if (!d) return;
+  editDeptTarget = deptId;
+  document.getElementById('modal-dept-title').textContent = 'แก้ไขแผนก';
+  document.getElementById('modal-dept-alert').classList.remove('show');
+  document.getElementById('d-deptId').value = d.deptId; document.getElementById('d-deptId').disabled = true;
+  document.getElementById('d-deptName').value = d.deptName || '';
+  document.getElementById('d-icon').value = d.icon || '';
+  document.getElementById('d-order').value = d.order || '';
+  document.getElementById('d-active').value = String(d.active)==='true'?'true':'false';
+  openModal('modal-dept');
+}
+
+async function saveDept() {
+  const btn = document.getElementById('modal-dept-save');
+  const errEl = document.getElementById('modal-dept-alert');
+  errEl.classList.remove('show');
+  const deptId = document.getElementById('d-deptId').value.trim();
+  const deptName = document.getElementById('d-deptName').value.trim();
+  const icon = document.getElementById('d-icon').value.trim();
+  const order = parseInt(document.getElementById('d-order').value) || 99;
+  const active = document.getElementById('d-active').value;
+  if (!deptName) { document.getElementById('modal-dept-alert-msg').textContent='กรุณากรอกชื่อแผนก'; errEl.classList.add('show'); return; }
+  btn.disabled=true; btn.textContent='กำลังบันทึก...';
+  try {
+    let r;
+    if (editDeptTarget) {
+      r = await callAPI({ action:'updateDepartment', deptId:editDeptTarget, data:{deptName,icon,order,active}, adminUser:currentUser.username });
+    } else {
+      if (!deptId) { document.getElementById('modal-dept-alert-msg').textContent='กรุณากรอก Dept ID'; errEl.classList.add('show'); btn.disabled=false; btn.textContent='บันทึก'; return; }
+      r = await callAPI({ action:'addDepartment', data:{deptId,deptName,icon,order,active}, adminUser:currentUser.username });
+    }
+    if (r.success) { closeModal('modal-dept'); loadDepts(); }
+    else { document.getElementById('modal-dept-alert-msg').textContent=r.message; errEl.classList.add('show'); }
+  } catch { document.getElementById('modal-dept-alert-msg').textContent='เชื่อมต่อไม่ได้'; errEl.classList.add('show'); }
+  finally { btn.disabled=false; btn.textContent='บันทึก'; }
+}
+
+async function confirmDeleteDept(deptId) {
+  if (!confirm(`ต้องการลบแผนก "${deptId}" หรือไม่?`)) return;
+  try {
+    const r = await callAPI({ action:'deleteDepartment', deptId, adminUser:currentUser.username });
+    if (r.success) loadDepts(); else alert('ลบไม่สำเร็จ: '+r.message);
+  } catch { alert('เชื่อมต่อไม่ได้'); }
+}
+
+// ════════════════════════════════════════════════════
+//  ADMIN — MENUS
+// ════════════════════════════════════════════════════
+async function loadMenus() {
+  const tb = document.getElementById('menu-table-body');
+  try {
+    const r = await callAPI({ action:'getMenus' });
+    if (r.success) { allMenus = r.data; renderMenuTable(allMenus); }
+    else tb.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:28px">${r.message}</td></tr>`;
+  } catch { tb.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:28px">เชื่อมต่อไม่ได้</td></tr>`; }
+}
+
+function renderMenuTable(menus) {
+  const tb = document.getElementById('menu-table-body');
+  if (!menus.length) { tb.innerHTML=`<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:28px">ยังไม่มีเมนู</td></tr>`; return; }
+  const deptMap = {};
+  allDepts.forEach(d => deptMap[d.deptId] = d.deptName);
+  tb.innerHTML = menus.sort((a,b)=>{
+    if (a.deptId!==b.deptId) return a.deptId.localeCompare(b.deptId);
+    return (a.order||99)-(b.order||99);
+  }).map(m=>`<tr>
+    <td><code style="color:var(--gold-lt);font-size:11px">${m.menuId}</code></td>
+    <td><strong>${m.menuName}</strong></td>
+    <td style="font-size:18px">${m.icon||'—'}</td>
+    <td><span style="font-size:12px;color:var(--silver)">${deptMap[m.deptId]||m.deptId}</span></td>
+    <td>${String(m.defaultForAll)==='true'?'<span class="badge badge-active">ทุกคน</span>':'<span style="color:var(--muted);font-size:12px">เฉพาะสิทธิ์</span>'}</td>
+    <td><span class="badge ${String(m.active)==='true'?'badge-active':'badge-inactive'}">${String(m.active)==='true'?'Active':'Inactive'}</span></td>
+    <td><div class="action-btns">
+      <button class="btn-sm btn-edit" onclick="openEditMenu('${m.menuId}')">✏️</button>
+      <button class="btn-sm btn-del" onclick="confirmDeleteMenu('${m.menuId}')">🗑️</button>
+    </div></td>
+  </tr>`).join('');
+}
+
+function filterMenus() {
+  const q = document.getElementById('menu-search').value.toLowerCase();
+  renderMenuTable(allMenus.filter(m =>
+    (m.menuId||'').toLowerCase().includes(q) ||
+    (m.menuName||'').toLowerCase().includes(q) ||
+    (m.deptId||'').toLowerCase().includes(q)
+  ));
+}
+
+function populateMenuDeptSelect() {
+  const sel = document.getElementById('m-deptId');
+  sel.innerHTML = '<option value="">-- เลือกแผนก --</option>' +
+    allDepts.filter(d=>String(d.active)==='true').map(d=>`<option value="${d.deptId}">${d.icon||''} ${d.deptName}</option>`).join('');
+}
+
+function openAddMenu() {
+  editMenuTarget = null;
+  document.getElementById('modal-menu-title').textContent = 'เพิ่มเมนูใหม่';
+  document.getElementById('modal-menu-alert').classList.remove('show');
+  ['m-menuId','m-menuName','m-icon','m-url','m-order'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('m-deptId').value = '';
+  document.getElementById('m-active').checked = true;
+  document.getElementById('m-defaultForAll').checked = false;
+  document.getElementById('m-menuId').disabled = false;
+  populateMenuDeptSelect();
+  openModal('modal-menu');
+}
+
+function openEditMenu(menuId) {
+  const m = allMenus.find(x=>x.menuId===menuId); if (!m) return;
+  editMenuTarget = menuId;
+  document.getElementById('modal-menu-title').textContent = 'แก้ไขเมนู';
+  document.getElementById('modal-menu-alert').classList.remove('show');
+  document.getElementById('m-menuId').value = m.menuId; document.getElementById('m-menuId').disabled = true;
+  document.getElementById('m-menuName').value = m.menuName || '';
+  document.getElementById('m-icon').value = m.icon || '';
+  document.getElementById('m-url').value = m.url || '';
+  document.getElementById('m-order').value = m.order || '';
+  document.getElementById('m-active').checked = String(m.active)==='true';
+  document.getElementById('m-defaultForAll').checked = String(m.defaultForAll)==='true';
+  populateMenuDeptSelect();
+  document.getElementById('m-deptId').value = m.deptId || '';
+  openModal('modal-menu');
+}
+
+async function saveMenu() {
+  const btn = document.getElementById('modal-menu-save');
+  const errEl = document.getElementById('modal-menu-alert');
+  errEl.classList.remove('show');
+  const menuId = document.getElementById('m-menuId').value.trim();
+  const menuName = document.getElementById('m-menuName').value.trim();
+  const deptId = document.getElementById('m-deptId').value;
+  const icon = document.getElementById('m-icon').value.trim();
+  const url = document.getElementById('m-url').value.trim();
+  const order = parseInt(document.getElementById('m-order').value) || 99;
+  const active = document.getElementById('m-active').checked;
+  const defaultForAll = document.getElementById('m-defaultForAll').checked;
+  if (!menuName) { document.getElementById('modal-menu-alert-msg').textContent='กรุณากรอกชื่อเมนู'; errEl.classList.add('show'); return; }
+  if (!deptId) { document.getElementById('modal-menu-alert-msg').textContent='กรุณาเลือกแผนก'; errEl.classList.add('show'); return; }
+  btn.disabled=true; btn.textContent='กำลังบันทึก...';
+  try {
+    let r;
+    if (editMenuTarget) {
+      r = await callAPI({ action:'updateMenu', menuId:editMenuTarget, data:{menuName,deptId,icon,url,order,active,defaultForAll}, adminUser:currentUser.username });
+    } else {
+      if (!menuId) { document.getElementById('modal-menu-alert-msg').textContent='กรุณากรอก Menu ID'; errEl.classList.add('show'); btn.disabled=false; btn.textContent='บันทึก'; return; }
+      r = await callAPI({ action:'addMenu', data:{menuId,menuName,deptId,icon,url,order,active,defaultForAll}, adminUser:currentUser.username });
+    }
+    if (r.success) { closeModal('modal-menu'); loadMenus(); }
+    else { document.getElementById('modal-menu-alert-msg').textContent=r.message; errEl.classList.add('show'); }
+  } catch { document.getElementById('modal-menu-alert-msg').textContent='เชื่อมต่อไม่ได้'; errEl.classList.add('show'); }
+  finally { btn.disabled=false; btn.textContent='บันทึก'; }
+}
+
+async function confirmDeleteMenu(menuId) {
+  if (!confirm(`ต้องการลบเมนู "${menuId}" หรือไม่?`)) return;
+  try {
+    const r = await callAPI({ action:'deleteMenu', menuId, adminUser:currentUser.username });
+    if (r.success) loadMenus(); else alert('ลบไม่สำเร็จ: '+r.message);
+  } catch { alert('เชื่อมต่อไม่ได้'); }
+}
+
+// ════════════════════════════════════════════════════
+//  ADMIN — LOGS
+// ════════════════════════════════════════════════════
+async function loadLogs() {
+  const el = document.getElementById('log-container');
+  el.innerHTML = `<div style="text-align:center;color:var(--muted);padding:20px">กำลังโหลด...</div>`;
+  try {
+    const r = await callAPI({ action:'getLogs', limit:100 });
+    if (r.success && r.data.length) {
+      el.innerHTML = r.data.map(l=>`<div class="log-item">
+        <div class="log-time">${l.timestamp||'—'}</div>
+        <div><div class="log-action" style="color:${logColor(l.action)}">${l.action||''}</div>
+        <div class="log-detail">${l.user||''} — ${l.detail||''}</div></div>
+      </div>`).join('');
+    } else el.innerHTML = `<div style="text-align:center;color:var(--muted);padding:20px">ยังไม่มีข้อมูล Log</div>`;
+  } catch { el.innerHTML = `<div style="text-align:center;color:var(--danger);padding:20px">โหลดไม่สำเร็จ</div>`; }
+}
+
+function logColor(a) {
+  if (!a) return 'var(--muted)';
+  if (a.includes('FAIL')||a.includes('DELETE')) return 'var(--danger)';
+  if (a.includes('RESET')||a.includes('UPDATE')) return 'var(--warn)';
+  if (a.includes('LOGIN')) return 'var(--success)';
+  return '#4a90d9';
+}
+
+// ════════════════════════════════════════════════════
+//  TABS
+// ════════════════════════════════════════════════════
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.admin-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  btn.classList.add('active');
+  if (tabId==='tab-logs') loadLogs();
+  if (tabId==='tab-depts') loadDepts();
+  if (tabId==='tab-menus') loadMenus();
+}
+
+// ════════════════════════════════════════════════════
+//  SETUP
+// ════════════════════════════════════════════════════
+function showSetup() { document.getElementById('api-url-input').value=getApiUrl(); openModal('setup-modal'); }
+async function saveApiUrl() {
+  const url = document.getElementById('api-url-input').value.trim();
+  if (!url) { alert('กรุณากรอก URL'); return; }
+  localStorage.setItem(API_KEY, url);
+  const ok = await pingAPI();
+  if (ok) { alert('✅ เชื่อมต่อสำเร็จ!'); closeModal('setup-modal'); }
+  else alert('❌ เชื่อมต่อไม่ได้ — ตรวจสอบ URL และ Permission ของ Web App');
+}
+
+// ════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('show'); }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function togglePw(inputId,btnId) { const inp=document.getElementById(inputId),btn=document.getElementById(btnId); inp.type=inp.type==='password'?'text':'password'; btn.textContent=inp.type==='password'?'👁️':'🙈'; }
+function genPassword() { document.getElementById('u-password').value=randPw(); }
+function genResetPw() { document.getElementById('reset-pw').value=randPw(); }
+function randPw() { const c='ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789@#$!'; let p=''; for(let i=0;i<10;i++) p+=c[Math.floor(Math.random()*c.length)]; return p; }
+
+document.getElementById('inp-pass').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+document.getElementById('inp-user').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('inp-pass').focus();});
+
+// ════════════════════════════════════════════════════
+//  ANIMATED BACKGROUND — v3 Enhanced
+// ════════════════════════════════════════════════════
+(function(){
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, mouse = { x: 0, y: 0 };
+
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+  window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+  // ── Aurora Orbs ──
+  const orbs = [
+    { x:.18, y:.25, r:.32, c:'rgba(200,145,42,', a:.07, vx:.00012, vy:.00008 },
+    { x:.75, y:.15, r:.28, c:'rgba(44,74,114,',  a:.12, vx:-.0001, vy:.00012 },
+    { x:.55, y:.72, r:.36, c:'rgba(26,52,96,',   a:.10, vx:.00008, vy:-.0001 },
+    { x:.88, y:.60, r:.22, c:'rgba(200,145,42,', a:.06, vx:-.00014,vy:.00007 },
+    { x:.12, y:.75, r:.26, c:'rgba(74,144,217,', a:.07, vx:.00011, vy:-.00009},
+  ];
+
+  // ── Particles ──
+  const COLORS = [
+    [200,145,42], [74,144,217], [168,187,212], [200,145,42], [44,74,114]
+  ];
+  function mkP() {
+    const c = COLORS[Math.floor(Math.random()*COLORS.length)];
+    return {
+      x: Math.random()*W, y: Math.random()*H,
+      r: Math.random()*1.4+.4,
+      vx: (Math.random()-.5)*.35,
+      vy: (Math.random()-.5)*.35,
+      a: Math.random()*.5+.15,
+      c,
+      pulse: Math.random()*Math.PI*2,
+      pulseSpeed: Math.random()*.02+.008,
+    };
+  }
+  const P = Array.from({length:80}, mkP);
+
+  // ── Hex Grid ──
+  function drawHex(cx, cy, size) {
+    ctx.beginPath();
+    for (let i=0; i<6; i++) {
+      const angle = Math.PI/3*i - Math.PI/6;
+      const px = cx + size*Math.cos(angle);
+      const py = cy + size*Math.sin(angle);
+      i===0 ? ctx.moveTo(px,py) : ctx.lineTo(px,py);
+    }
+    ctx.closePath();
+  }
+
+  let t = 0;
+  function draw() {
+    t += 0.005;
+    ctx.clearRect(0,0,W,H);
+
+    // 1. Aurora orbs (blurred radial gradients)
+    orbs.forEach(o => {
+      o.x += o.vx; o.y += o.vy;
+      if (o.x < -.2 || o.x > 1.2) o.vx *= -1;
+      if (o.y < -.2 || o.y > 1.2) o.vy *= -1;
+      const mx = o.x + (mouse.x/W - .5)*.025;
+      const my = o.y + (mouse.y/H - .5)*.025;
+      const g = ctx.createRadialGradient(mx*W, my*H, 0, mx*W, my*H, o.r*Math.max(W,H));
+      g.addColorStop(0, o.c + (o.a+.04)+')');
+      g.addColorStop(.5, o.c + o.a*.5+')');
+      g.addColorStop(1, o.c + '0)');
+      ctx.fillStyle = g;
+      ctx.fillRect(0,0,W,H);
+    });
+
+    // 2. Hex grid (subtle, scrolling)
+    const hexSize = 38;
+    const hexW = hexSize*Math.sqrt(3);
+    const hexH = hexSize*1.5;
+    const offsetX = (t*8) % hexW;
+    const offsetY = (t*4) % (hexH*2);
+    ctx.strokeStyle = 'rgba(44,74,114,.06)';
+    ctx.lineWidth = .6;
+    for (let row = -2; row < Math.ceil(H/hexH)+2; row++) {
+      for (let col = -2; col < Math.ceil(W/hexW)+2; col++) {
+        const cx = col*hexW + (row%2)*hexW*.5 + offsetX;
+        const cy = row*hexH + offsetY;
+        drawHex(cx, cy, hexSize);
+        ctx.stroke();
+      }
+    }
+
+    // 3. Particles
+    P.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > W) p.vx *= -1;
+      if (p.y < 0 || p.y > H) p.vy *= -1;
+      p.pulse += p.pulseSpeed;
+      const alpha = p.a * (.75 + .25*Math.sin(p.pulse));
+      const r = p.r * (1 + .15*Math.sin(p.pulse));
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(${p.c[0]},${p.c[1]},${p.c[2]},${alpha})`;
+      ctx.fill();
+    });
+
+    // 4. Connection lines (gold/blue gradient based on distance)
+    for (let i=0; i<P.length; i++) {
+      for (let j=i+1; j<P.length; j++) {
+        const dx = P[i].x-P[j].x, dy = P[i].y-P[j].y;
+        const d = Math.sqrt(dx*dx+dy*dy);
+        if (d < 110) {
+          const ratio = 1 - d/110;
+          const grad = ctx.createLinearGradient(P[i].x, P[i].y, P[j].x, P[j].y);
+          grad.addColorStop(0, `rgba(${P[i].c[0]},${P[i].c[1]},${P[i].c[2]},${ratio*.2})`);
+          grad.addColorStop(1, `rgba(${P[j].c[0]},${P[j].c[1]},${P[j].c[2]},${ratio*.2})`);
+          ctx.beginPath();
+          ctx.moveTo(P[i].x, P[i].y);
+          ctx.lineTo(P[j].x, P[j].y);
+          ctx.strokeStyle = grad;
+          ctx.lineWidth = ratio*.8;
+          ctx.stroke();
+        }
+      }
+    }
+
+    // 5. Mouse glow
+    if (mouse.x && mouse.y) {
+      const mg = ctx.createRadialGradient(mouse.x, mouse.y, 0, mouse.x, mouse.y, 120);
+      mg.addColorStop(0, 'rgba(200,145,42,.06)');
+      mg.addColorStop(1, 'rgba(200,145,42,0)');
+      ctx.fillStyle = mg;
+      ctx.fillRect(0,0,W,H);
+    }
+
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+pingAPI();
+</script>
+</body>
+</html>
