@@ -859,6 +859,7 @@ function renderDeptGrid() {
 
 function selectDept(deptId, deptName, icon) {
   currentDept = { deptId, deptName, icon };
+  saveSession();
   document.getElementById('dept-badge').textContent = deptName;
   document.getElementById('dept-badge').classList.add('show');
   document.getElementById('dash-title-text').textContent = `${icon} ${deptName}`;
@@ -1176,6 +1177,7 @@ async function saveJob() {
 function goBack() {
   document.getElementById('dept-badge').classList.remove('show');
   currentDept = null;
+  try { localStorage.removeItem('bp_dept'); } catch(e) {}
   showScreen('dept');
 }
 
@@ -1849,20 +1851,40 @@ function saveSession() {
   try {
     localStorage.setItem('bp_user', JSON.stringify(currentUser));
     localStorage.setItem('bp_perms', JSON.stringify(userPermissions));
+    if (currentDept) localStorage.setItem('bp_dept', JSON.stringify(currentDept));
   } catch(e) {}
 }
+
 function clearSession() {
-  try { localStorage.removeItem('bp_user'); localStorage.removeItem('bp_perms'); } catch(e) {}
+  try {
+    localStorage.removeItem('bp_user');
+    localStorage.removeItem('bp_perms');
+    localStorage.removeItem('bp_dept');
+  } catch(e) {}
 }
+
 function restoreSession() {
   try {
     const u = localStorage.getItem('bp_user');
     const p = localStorage.getItem('bp_perms');
+    const d = localStorage.getItem('bp_dept');
     if (u && p) {
-      currentUser = JSON.parse(u);
+      currentUser     = JSON.parse(u);
       userPermissions = JSON.parse(p);
       setupTopbar();
-      goToDept();
+      if (d) {
+        // restore แผนกที่เคยอยู่
+        const dept = JSON.parse(d);
+        currentDept = dept;
+        document.getElementById('dept-badge').textContent = dept.deptName;
+        document.getElementById('dept-badge').classList.add('show');
+        document.getElementById('dash-title-text').textContent = `${dept.icon} ${dept.deptName}`;
+        document.getElementById('dash-title-sub').textContent = dept.deptId.toUpperCase();
+        renderMenuGrid(dept.deptId);
+        showScreen('dash');
+      } else {
+        goToDept();
+      }
       return true;
     }
   } catch(e) { clearSession(); }
