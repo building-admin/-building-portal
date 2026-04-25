@@ -1909,8 +1909,8 @@ function restoreSession() {
       currentUser     = JSON.parse(u);
       userPermissions = JSON.parse(p);
       setupTopbar();
+      renderDeptGrid(); // เตรียมไว้เสมอ ไม่ว่าจะไปหน้าไหน
       if (d) {
-        // restore แผนกที่เคยอยู่
         const dept = JSON.parse(d);
         currentDept = dept;
         document.getElementById('dept-badge').textContent = dept.deptName;
@@ -1920,7 +1920,7 @@ function restoreSession() {
         renderMenuGrid(dept.deptId);
         showScreen('dash');
       } else {
-        goToDept();
+        showScreen('dept');
       }
       return true;
     }
