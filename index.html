@@ -893,9 +893,26 @@ function openMenu(menuId, url) {
     'bs_workorder': 'BS', 'bs_assign': 'BS', 'bs_cleaning': 'BS',
   };
   const reportMenus = ['bm_report','bs_report'];
-  if (jobMenus[menuId]) { openJobPanel(jobMenus[menuId], menuId); return; }
+  const leaveMenus  = ['bm_leave','bs_leave','leave'];
+
+  if (jobMenus[menuId])          { openJobPanel(jobMenus[menuId], menuId); return; }
   if (reportMenus.includes(menuId)) { alert('📊 หน้ารายงานอยู่ระหว่างพัฒนาครับ'); return; }
+  if (leaveMenus.includes(menuId))  { openLeave(); return; }
   alert(`เมนู: ${menuId}\n\nยังอยู่ระหว่างการพัฒนาครับ`);
+}
+
+function openLeave() {
+  const u = currentUser;
+  // Map role ใน portal → role ในระบบใบลา
+  const leaveRole = (u.role === 'approver' || u.role === 'hr') ? u.role : 'employee';
+  const params = new URLSearchParams({
+    uid:      u.username  || '',
+    name:     u.name      || '',
+    role:     leaveRole,
+    position: u.position  || u.role || '',
+    dept:     currentDept?.deptId || '',
+  });
+  window.location.href = `leave.html?${params.toString()}`;
 }
 
 // ════════════════════════════════════════════════════

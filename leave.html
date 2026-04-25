@@ -1,0 +1,2116 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BFS Leave Management System</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    /* พื้นหลัง */
+    --navy:        #0a1628;
+    --navy-mid:    #0f2044;
+    --navy-light:  #1a3460;
+    --steel:       #2c4a72;
+
+    /* ทอง — Accent หลัก */
+    --gold:        #c8912a;
+    --gold-light:  #e8b84b;
+    --gold-glow:   rgba(200,145,42,.18);
+
+    /* ข้อความ */
+    --white:       #eef2f8;
+    --silver:      #a8bbd4;
+    --muted:       #5a7a9a;
+
+    /* Status */
+    --success:     #3dba7a;
+    --warning:     #f0a030;
+    --danger:      #e05252;
+
+    /* UI */
+    --border:      rgba(44,74,114,.5);
+    --card-bg:     rgba(15,32,68,.7);
+    --card-hover:  rgba(26,52,96,.8);
+
+    /* Alias สำหรับ HTML เดิม */
+    --accent:        var(--gold);
+    --accent-light:  var(--gold-light);
+    --accent-glow:   var(--gold-glow);
+    --text-primary:  var(--white);
+    --text-secondary: var(--silver);
+    --text-muted:    var(--muted);
+
+    --sidebar-w: 260px;
+    --font-display: 'Sarabun', sans-serif;
+    --font-body:    'Sarabun', sans-serif;
+    --font-label:   'Barlow Condensed', sans-serif;
+    --font-mono:    'Barlow Condensed', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; min-width: 0; }
+  html {
+    scroll-behavior: smooth;
+    overflow-x: hidden; /* Firefox fix */
+  }
+  body {
+    font-family: var(--font-body);
+    background: var(--navy);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  /* ─── LOGIN ─── */
+  #page-login {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--navy);
+    position: relative;
+    overflow: hidden;
+  }
+  #page-login::before {
+    content: '';
+    position: absolute;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(46,134,193,0.12) 0%, transparent 70%);
+    top: -150px; right: -150px;
+  }
+  #page-login::after {
+    content: '';
+    position: absolute;
+    width: 400px; height: 400px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212,172,58,0.08) 0%, transparent 70%);
+    bottom: -100px; left: -100px;
+  }
+  .login-box {
+    width: 420px;
+    max-width: calc(100vw - 40px);
+    padding: 48px 40px;
+    background: var(--navy-mid);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    position: relative;
+    z-index: 1;
+    animation: fadeUp 0.6s ease both;
+  }
+  .login-logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 36px;
+  }
+  .login-logo-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .login-logo-text { font-family: var(--font-display); font-size: 20px; color: var(--white); line-height: 1.2; }
+  .login-logo-sub { font-size: 11px; color: var(--text-secondary); letter-spacing: 0.05em; }
+  .login-title { font-family: var(--font-display); font-size: 26px; margin-bottom: 6px; }
+  .login-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 32px; }
+  .form-group { margin-bottom: 18px; }
+  .form-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 8px; display: block; }
+  .form-input {
+    width: 100%; padding: 12px 16px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 14px;
+    transition: all 0.2s;
+    outline: none;
+  }
+  .form-input:focus { border-color: var(--gold); background: rgba(200,145,42,0.08); }
+  .form-input::placeholder { color: var(--text-muted); }
+  .btn-primary {
+    width: 100%; padding: 13px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    border: none; border-radius: 8px;
+    color: var(--white); font-family: var(--font-body);
+    font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+    letter-spacing: 0.03em;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+  .login-demo { margin-top: 20px; padding: 14px; background: var(--accent-glow); border-radius: 8px; border: 1px solid rgba(200,145,42,0.15); }
+  .login-demo p { font-size: 11px; color: var(--text-secondary); margin-bottom: 6px; }
+  .demo-accounts { display: flex; gap: 8px; flex-wrap: wrap; }
+  .demo-btn {
+    padding: 5px 12px; background: rgba(200,145,42,0.15);
+    border: 1px solid rgba(46,134,193,0.3); border-radius: 20px;
+    color: var(--gold-light); font-size: 11px; cursor: pointer;
+    font-family: var(--font-body); transition: all 0.2s;
+  }
+  .demo-btn:hover { background: rgba(46,134,193,0.35); }
+
+  /* ─── LAYOUT ─── */
+  #app { display: none; min-height: 100vh; }
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--navy-mid);
+    border-right: 1px solid var(--border);
+    position: fixed; top: 0; left: 0; bottom: 0;
+    display: flex; flex-direction: column;
+    z-index: 100;
+    transition: transform 0.3s ease;
+  }
+  .sidebar-header {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-logo { display: flex; align-items: center; gap: 10px; }
+  .sidebar-logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+    box-shadow: 0 0 12px var(--gold-glow);
+  }
+  .sidebar-logo-text { font-family: var(--font-label); font-size: 18px; font-weight: 700; letter-spacing: 0.05em; line-height: 1.2; }
+  .sidebar-logo-sub { font-size: 10px; color: var(--text-muted); font-family: var(--font-label); letter-spacing: 0.1em; text-transform: uppercase; }
+  .sidebar-user {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .user-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+    color: var(--navy);
+  }
+  .user-name { font-size: 13px; font-weight: 500; }
+  .user-role { font-size: 11px; color: var(--text-muted); }
+  .sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+  .nav-section { padding: 0 12px 4px; }
+  .nav-section-label { font-size: 11px; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; padding: 8px 8px 4px; font-weight: 600; font-family: var(--font-label); }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-secondary);
+    transition: all 0.15s;
+    margin-bottom: 1px;
+    text-decoration: none;
+  }
+  .nav-item:hover { background: rgba(200,145,42,0.08); color: var(--white); }
+  .nav-item.active { background: var(--accent-glow); color: var(--gold-light); border: 1px solid rgba(200,145,42,0.15); }
+  .nav-icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+  .nav-badge {
+    margin-left: auto; padding: 2px 7px;
+    background: var(--danger); border-radius: 20px;
+    font-size: 10px; font-weight: 600; color: white;
+  }
+  .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border); }
+  .logout-btn {
+    width: 100%; padding: 9px;
+    background: rgba(224,82,82,0.1); border: 1px solid rgba(192,57,43,0.2);
+    border-radius: 8px; color: var(--danger); font-family: var(--font-body);
+    font-size: 12px; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .logout-btn:hover { background: rgba(224,82,82,0.2); }
+
+  /* ─── MAIN ─── */
+  .main {
+    margin-left: var(--sidebar-w);
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    width: calc(100% - var(--sidebar-w)); /* Firefox fix */
+    overflow-x: hidden; /* Firefox fix */
+  }
+  .topbar {
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    background: rgba(10,22,40,0.95);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .topbar-title { font-family: var(--font-body); font-size: 20px; font-weight: 700; }
+  .topbar-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 1px; font-family: var(--font-label); letter-spacing: 0.07em; text-transform: uppercase; }
+  .topbar-actions { display: flex; align-items: center; gap: 10px; }
+  .topbar-date { font-size: 12px; color: var(--text-muted); font-family: var(--font-label); letter-spacing: 0.05em; }
+  .btn-new {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    border: none; border-radius: 8px;
+    color: var(--navy); font-family: var(--font-body);
+    font-size: 12px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    transition: all 0.2s;
+    box-shadow: 0 2px 10px var(--gold-glow);
+  }
+  .btn-new:hover { opacity: 0.88; transform: translateY(-1px); }
+  .content { padding: 28px; flex: 1; min-width: 0; overflow-x: hidden; }
+  .mobile-menu-btn {
+    display: none;
+    background: none; border: none; color: var(--text-primary);
+    font-size: 20px; cursor: pointer; padding: 4px;
+  }
+
+  /* ─── PAGE SECTIONS ─── */
+  .page-section { display: none; animation: fadeIn 0.3s ease; min-width: 0; width: 100%; }
+  .page-section.active { display: block; }
+
+  /* ─── DASHBOARD ─── */
+  .stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; margin-bottom: 24px; }
+  .stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s;
+  }
+  .stat-card:hover { background: var(--card-hover); border-color: rgba(255,255,255,0.12); }
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+  .stat-card.blue::before { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+  .stat-card.gold::before { background: linear-gradient(90deg, var(--gold-light), var(--gold)); }
+  .stat-card.green::before { background: var(--success); }
+  .stat-card.red::before { background: var(--danger); }
+  .stat-label { font-size: 11px; color: var(--text-secondary); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 10px; font-family: var(--font-label); font-weight: 600; }
+  .stat-value { font-family: var(--font-body); font-size: 36px; line-height: 1; margin-bottom: 8px; font-weight: 800; }
+  .stat-value.blue { color: var(--gold-light); }
+  .stat-value.gold { color: var(--gold-light); }
+  .stat-value.green { color: var(--success); }
+  .stat-value.red { color: var(--danger); }
+  .stat-change { font-size: 12px; color: var(--text-muted); }
+  .stat-icon { position: absolute; top: 16px; right: 16px; font-size: 28px; opacity: 0.2; }
+
+  .charts-grid { display: grid; grid-template-columns: minmax(0,2fr) minmax(0,1fr); gap: 16px; margin-bottom: 24px; }
+  .chart-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .chart-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .chart-sub { font-size: 11px; color: var(--text-muted); margin-bottom: 16px; font-family: var(--font-label); letter-spacing: 0.06em; text-transform: uppercase; }
+  .chart-wrap { position: relative; }
+
+  .recent-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* ─── TABLE ─── */
+  .table-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    min-width: 0;
+    width: 100%;
+  }
+  .table-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px;
+  }
+  .table-title { font-size: 14px; font-weight: 600; }
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    padding: 10px 16px;
+    font-size: 11px; font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    text-align: left; white-space: nowrap;
+    background: rgba(255,255,255,0.02);
+    font-family: var(--font-label);
+  }
+  td {
+    padding: 12px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    white-space: nowrap;
+    font-family: var(--font-body);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.03); }
+
+  /* ─── BADGES ─── */
+  .badge {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--font-label);
+    letter-spacing: 0.05em;
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .badge-pending { background: rgba(240,160,48,0.15); color: var(--warning); border: 1px solid rgba(240,160,48,0.3); }
+  .badge-approved { background: rgba(61,186,122,0.15); color: var(--success); border: 1px solid rgba(61,186,122,0.3); }
+  .badge-rejected { background: rgba(224,82,82,0.15); color: var(--danger); border: 1px solid rgba(224,82,82,0.3); }
+  .badge-partial { background: var(--gold-glow); color: var(--gold-light); border: 1px solid rgba(46,134,193,0.3); }
+  .badge-type { background: rgba(255,255,255,0.08); color: var(--text-secondary); border: 1px solid var(--border); }
+
+  /* ─── APPROVAL STATUS ─── */
+  .approver-status { display: flex; flex-direction: column; gap: 3px; }
+  .approver-row { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .dot-green { background: #2ECC71; }
+  .dot-yellow { background: #F39C12; }
+  .dot-gray { background: var(--text-muted); }
+
+  /* ─── FORM PAGE ─── */
+  .form-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    max-width: 760px;
+  }
+  .form-section-title {
+    font-size: 11px; font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 16px; margin-top: 24px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-label);
+  }
+  .form-section-title:first-child { margin-top: 0; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+  .form-row.full { grid-template-columns: 1fr; }
+  .field-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block; font-family: var(--font-label); letter-spacing: 0.07em; text-transform: uppercase; }
+  .field-required { color: var(--danger); margin-left: 2px; }
+  .field-input, .field-select, .field-textarea {
+    width: 100%; padding: 10px 14px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 13px;
+    transition: all 0.2s; outline: none;
+  }
+  .field-input:focus, .field-select:focus, .field-textarea:focus {
+    border-color: var(--gold);
+    background: rgba(200,145,42,0.08);
+  }
+  .field-input[readonly] { color: var(--text-muted); cursor: default; }
+  .field-select option { background: var(--navy-mid); }
+  .field-textarea { resize: vertical; min-height: 80px; }
+  .leave-type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .leave-type-btn {
+    padding: 12px 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    cursor: pointer; font-family: var(--font-body);
+    font-size: 12px; font-weight: 500;
+    text-align: center;
+    transition: all 0.2s;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 6px;
+  }
+  .leave-type-btn .ltype-icon { font-size: 20px; }
+  .leave-type-btn:hover { border-color: var(--gold); color: var(--text-primary); background: var(--accent-glow); }
+  .leave-type-btn.selected { border-color: var(--gold); background: var(--accent-glow); color: var(--gold-light); }
+  .days-display {
+    text-align: center; padding: 16px;
+    background: var(--accent-glow);
+    border: 1px solid rgba(200,145,42,0.15);
+    border-radius: 10px; margin-bottom: 16px;
+  }
+  .days-number { font-family: var(--font-display); font-size: 40px; color: var(--gold-light); line-height: 1; }
+  .days-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+  .upload-area {
+    border: 1px dashed rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: rgba(255,255,255,0.02);
+  }
+  .upload-area:hover { border-color: var(--gold); background: var(--accent-glow); }
+  .upload-icon { font-size: 28px; margin-bottom: 8px; opacity: 0.5; }
+  .upload-text { font-size: 13px; color: var(--text-muted); }
+  .upload-text span { color: var(--gold-light); cursor: pointer; }
+  .form-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+  .btn-cancel {
+    padding: 10px 20px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text-secondary);
+    font-family: var(--font-body); font-size: 13px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-cancel:hover { background: rgba(200,145,42,0.08); color: var(--white); }
+  .btn-submit {
+    padding: 10px 24px;
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+    border: none; border-radius: 8px;
+    color: var(--navy); font-family: var(--font-body);
+    font-size: 13px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s;
+    box-shadow: 0 2px 10px var(--gold-glow);
+  }
+  .btn-submit:hover { opacity: 0.88; transform: translateY(-1px); }
+
+  /* ─── APPROVAL PAGE ─── */
+  .approval-filters { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+  .filter-btn {
+    padding: 6px 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 20px; color: var(--text-secondary);
+    font-family: var(--font-body); font-size: 12px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .filter-btn.active { background: var(--accent-glow); border-color: rgba(200,145,42,0.35); color: var(--gold-light); }
+  .leave-detail-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    transition: all 0.2s;
+  }
+  .leave-detail-card:hover { border-color: rgba(255,255,255,0.12); }
+  .leave-card-header {
+    padding: 16px 20px;
+    display: flex; align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .leave-card-left { display: flex; align-items: center; gap: 12px; }
+  .leave-card-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 600;
+    flex-shrink: 0;
+  }
+  .av-blue { background: rgba(200,145,42,0.15); color: var(--gold-light); }
+  .av-gold { background: rgba(200,145,42,0.15); color: var(--gold-light); }
+  .av-green { background: rgba(61,186,122,0.2); color: var(--success); }
+  .av-red { background: rgba(224,82,82,0.2); color: var(--danger); }
+  .leave-card-name { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
+  .leave-card-meta { font-size: 11px; color: var(--text-muted); }
+  .leave-card-right { display: flex; align-items: center; gap: 12px; }
+  .leave-card-body { padding: 16px 20px; }
+  .leave-info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .leave-info-item {}
+  .leave-info-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 3px; font-family: var(--font-label); font-weight: 600; }
+  .leave-info-value { font-size: 13px; font-weight: 500; }
+  .approvers-section { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; }
+  .approvers-title { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.08em; font-family: var(--font-label); font-weight: 600; }
+  .approver-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .approver-item:last-child { border-bottom: none; }
+  .approver-name-role { display: flex; flex-direction: column; }
+  .approver-name { font-size: 13px; font-weight: 500; }
+  .approver-role { font-size: 11px; color: var(--text-muted); }
+  .approver-action { display: flex; align-items: center; gap: 8px; }
+  .approve-btn {
+    padding: 5px 14px;
+    background: rgba(61,186,122,0.1);
+    border: 1px solid rgba(61,186,122,0.3);
+    border-radius: 6px; color: var(--success);
+    font-family: var(--font-body); font-size: 12px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .approve-btn:hover { background: rgba(26,158,106,0.25); }
+  .reject-btn {
+    padding: 5px 14px;
+    background: rgba(224,82,82,0.1);
+    border: 1px solid rgba(224,82,82,0.3);
+    border-radius: 6px; color: var(--danger);
+    font-family: var(--font-body); font-size: 12px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .reject-btn:hover { background: rgba(192,57,43,0.25); }
+  .already-approved { font-size: 12px; color: var(--success); display: flex; align-items: center; gap: 4px; }
+  .card-expand-btn { color: var(--text-muted); font-size: 12px; transition: transform 0.2s; }
+  .card-expand-btn.open { transform: rotate(180deg); }
+
+  /* ─── REPORT PAGE ─── */
+  .report-header {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .report-period {
+    display: flex; gap: 8px; align-items: center;
+  }
+  .period-select {
+    padding: 7px 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text-primary);
+    font-family: var(--font-body); font-size: 13px;
+    outline: none; cursor: pointer;
+  }
+  .btn-print {
+    padding: 8px 16px;
+    background: var(--gold-glow);
+    border: 1px solid rgba(212,172,58,0.3);
+    border-radius: 8px; color: var(--gold-light);
+    font-family: var(--font-body); font-size: 12px;
+    font-weight: 600; cursor: pointer; transition: all 0.2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .btn-print:hover { background: rgba(200,145,42,0.15); }
+  .report-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+  /* ─── SETTINGS PAGE ─── */
+  .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .settings-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .settings-card-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .settings-card-sub { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+  .approver-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    display: flex; align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  .approver-info { display: flex; align-items: center; gap: 10px; }
+  .status-toggle {
+    width: 36px; height: 20px;
+    border-radius: 10px; border: none;
+    cursor: pointer; position: relative;
+    transition: all 0.2s;
+    background: var(--success);
+  }
+  .status-toggle::after {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    border-radius: 50%; background: white;
+    top: 3px; right: 3px;
+    transition: right 0.2s;
+  }
+  .status-toggle.off { background: var(--text-muted); }
+  .status-toggle.off::after { right: auto; left: 3px; }
+
+  /* ─── EMPTY STATE ─── */
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-text { font-size: 14px; margin-bottom: 4px; }
+  .empty-sub { font-size: 12px; }
+
+  /* ─── SUCCESS TOAST ─── */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    padding: 14px 20px;
+    background: var(--navy-mid);
+    border: 1px solid rgba(61,186,122,0.4);
+    border-radius: 10px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; z-index: 9999;
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast-icon { font-size: 18px; }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .stagger > * { animation: fadeUp 0.4s ease both; }
+  .stagger > *:nth-child(1) { animation-delay: 0.05s; }
+  .stagger > *:nth-child(2) { animation-delay: 0.1s; }
+  .stagger > *:nth-child(3) { animation-delay: 0.15s; }
+  .stagger > *:nth-child(4) { animation-delay: 0.2s; }
+
+  /* ─── OVERLAY ─── */
+  .sidebar-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 99;
+    backdrop-filter: blur(2px);
+  }
+
+  /* ─── BOTTOM NAV (mobile only) ─── */
+  .bottom-nav {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    height: 64px;
+    background: var(--navy-mid);
+    border-top: 1px solid var(--border);
+    z-index: 90;
+    padding: 0 4px;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .bottom-nav-inner {
+    display: flex; align-items: center;
+    height: 100%; gap: 2px;
+  }
+  .bnav-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 3px; padding: 6px 4px;
+    border-radius: 10px; cursor: pointer;
+    transition: all 0.15s;
+    border: none; background: none;
+    color: var(--text-muted);
+    min-height: 52px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .bnav-item.active { color: var(--gold-light); background: var(--accent-glow); }
+  .bnav-item:active { transform: scale(0.93); }
+  .bnav-icon { font-size: 20px; line-height: 1; }
+  .bnav-label { font-size: 9px; font-family: var(--font-body); font-weight: 500; white-space: nowrap; }
+  .bnav-badge {
+    position: absolute; top: 6px; right: calc(50% - 18px);
+    width: 16px; height: 16px;
+    background: var(--danger); border-radius: 50%;
+    font-size: 9px; font-weight: 700; color: white;
+    display: flex; align-items: center; justify-content: center;
+    border: 1.5px solid var(--navy-mid);
+  }
+  .bnav-item { position: relative; }
+
+  /* ─── PRINT ─── */
+  @media print {
+    .sidebar, .topbar, .no-print, .btn-print, .approval-filters, .bottom-nav { display: none !important; }
+    .main { margin-left: 0 !important; }
+    body { background: white !important; color: black !important; }
+    .table-card, .stat-card, .chart-card { background: white !important; border: 1px solid #ddd !important; color: black !important; }
+    th, td { color: black !important; }
+    .stat-value { color: black !important; }
+  }
+
+  /* ─── TABLET ─── */
+  @media (max-width: 1024px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+    .recent-grid { grid-template-columns: 1fr; }
+    .leave-info-grid { grid-template-columns: repeat(2, 1fr); }
+    .report-grid { grid-template-columns: 1fr; }
+    .settings-grid { grid-template-columns: 1fr; }
+  }
+
+  /* ─── MOBILE ─── */
+  @media (max-width: 768px) {
+
+    /* Sidebar → drawer */
+    .sidebar {
+      transform: translateX(-100%);
+      width: 280px;
+      box-shadow: 4px 0 24px rgba(0,0,0,0.4);
+    }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-overlay { display: block; }
+
+    /* Main layout */
+    .main { margin-left: 0; width: 100%; padding-bottom: 72px; }
+    .mobile-menu-btn { display: block; }
+
+    /* Topbar compact */
+    .topbar { padding: 10px 14px; height: 56px; }
+    .topbar-title { font-size: 16px; }
+    .topbar-subtitle { display: none; }
+    .topbar-date { display: none; }
+    .btn-new { padding: 7px 12px; font-size: 11px; }
+
+    /* Content */
+    .content { padding: 12px; }
+
+    /* Stats 2x2 */
+    .stats-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .stat-card { padding: 14px; }
+    .stat-value { font-size: 28px; }
+    .stat-icon { font-size: 22px; top: 12px; right: 12px; }
+    .stat-label { font-size: 10px; margin-bottom: 6px; }
+    .stat-change { font-size: 11px; }
+
+    /* Charts */
+    .chart-card { padding: 14px; }
+    .charts-grid { gap: 10px; }
+
+    /* Leave type grid 2 cols */
+    .leave-type-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .leave-type-btn { padding: 14px 8px; font-size: 13px; }
+    .leave-type-btn .ltype-icon { font-size: 24px; }
+
+    /* Form */
+    .form-card { padding: 16px; border-radius: 10px; }
+    .form-row { grid-template-columns: 1fr; gap: 12px; }
+    .form-row.three { grid-template-columns: 1fr; }
+    .form-section-title { font-size: 11px; margin-top: 18px; }
+    .field-input, .field-select, .field-textarea {
+      font-size: 16px; /* ป้องกัน iOS zoom */
+      padding: 12px 14px;
+    }
+    .form-actions { flex-direction: column-reverse; gap: 8px; }
+    .btn-cancel, .btn-submit { width: 100%; padding: 13px; font-size: 14px; text-align: center; }
+
+    /* Days display */
+    .days-display { padding: 12px; }
+    .days-number { font-size: 32px; }
+
+    /* Table → horizontal scroll */
+    .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .table-wrap table { min-width: 520px; }
+    th, td { padding: 10px 12px; font-size: 12px; }
+
+    /* Leave cards */
+    .leave-card-header { padding: 12px 14px; }
+    .leave-card-body { padding: 12px 14px; }
+    .leave-card-name { font-size: 13px; }
+    .leave-card-meta { font-size: 10px; }
+    .leave-card-right { flex-direction: column; gap: 5px; align-items: flex-end; }
+    .leave-info-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+    .leave-info-value { font-size: 12px; }
+
+    /* Approval buttons stack */
+    .approver-item { flex-wrap: wrap; gap: 8px; align-items: flex-start; }
+    .approver-action { width: 100%; display: flex; gap: 8px; }
+    .approve-btn, .reject-btn { flex: 1; text-align: center; padding: 9px 8px; font-size: 13px; }
+
+    /* Report */
+    .report-header { flex-direction: column; gap: 10px; align-items: flex-start; }
+
+    /* Settings */
+    .settings-grid { grid-template-columns: 1fr; gap: 12px; }
+    .settings-card { padding: 14px; }
+
+    /* Recent grid */
+    .recent-grid { grid-template-columns: 1fr; gap: 10px; }
+
+    /* Bottom nav show */
+    .bottom-nav { display: block; }
+
+    /* Toast position */
+    .toast { bottom: 80px; right: 12px; left: 12px; font-size: 13px; }
+
+    /* Upload area */
+    .upload-area { padding: 18px; }
+
+    /* Badge smaller */
+    .badge { font-size: 10px; padding: 3px 8px; }
+
+    /* Table card */
+    .table-card { border-radius: 10px; }
+    .table-header { padding: 12px 14px; }
+  }
+
+  /* ─── SMALL MOBILE ─── */
+  @media (max-width: 380px) {
+    .stats-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
+    .stat-value { font-size: 24px; }
+    .leave-type-grid { grid-template-columns: repeat(2, 1fr); }
+    .content { padding: 10px; }
+  }
+
+  /* ─── iOS safe area ─── */
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .main { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
+  }
+</style>
+</head>
+<body>
+
+<!-- หน้า Login ถูกย้ายไปที่ portal.html แล้ว -->
+
+<!-- ─── APP ─── -->
+<div id="app">
+  <div class="sidebar-overlay" id="overlay" onclick="closeSidebar()"></div>
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">🏢</div>
+        <div>
+          <div class="sidebar-logo-text">BFS Leave</div>
+          <div class="sidebar-logo-sub">Management System</div>
+        </div>
+      </div>
+    </div>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="sidebar-avatar">สม</div>
+      <div>
+        <div class="user-name" id="sidebar-name">สมชาย ใจดี</div>
+        <div class="user-role" id="sidebar-role">พนักงานทั่วไป</div>
+      </div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-label">หลัก</div>
+        <a class="nav-item active" onclick="showPage('dashboard')">
+          <span class="nav-icon">📊</span> Dashboard
+        </a>
+        <a class="nav-item" onclick="showPage('leave-form')">
+          <span class="nav-icon">📝</span> ยื่นใบลา
+        </a>
+        <a class="nav-item" onclick="showPage('my-leaves')">
+          <span class="nav-icon">📅</span> ประวัติการลาของฉัน
+        </a>
+      </div>
+      <div class="nav-section" id="nav-approval-section">
+        <div class="nav-section-label">การอนุมัติ</div>
+        <a class="nav-item" onclick="showPage('approval')">
+          <span class="nav-icon">✅</span> รออนุมัติ
+          <span class="nav-badge">3</span>
+        </a>
+        <a class="nav-item" onclick="showPage('all-leaves')">
+          <span class="nav-icon">📋</span> ใบลาทั้งหมด
+        </a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-label">รายงาน</div>
+        <a class="nav-item" onclick="showPage('report')">
+          <span class="nav-icon">📈</span> รายงานประจำเดือน
+        </a>
+        <a class="nav-item" onclick="showPage('settings')">
+          <span class="nav-icon">⚙️</span> ตั้งค่าระบบ
+        </a>
+      </div>
+    </div>
+    <div class="sidebar-footer">
+      <button class="logout-btn" onclick="doLogout()">🚪 ออกจากระบบ</button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
+        <div>
+          <div class="topbar-title" id="topbar-title">Dashboard</div>
+          <div class="topbar-subtitle" id="topbar-subtitle">ภาพรวมระบบใบลา</div>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div class="topbar-date" id="topbar-date"></div>
+        <button class="btn-new no-print" onclick="showPage('leave-form')">+ ยื่นใบลา</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="page-section active" id="section-dashboard">
+        <div class="stats-grid stagger">
+          <div class="stat-card blue">
+            <div class="stat-icon">📋</div>
+            <div class="stat-label">ใบลาเดือนนี้</div>
+            <div class="stat-value blue">18</div>
+            <div class="stat-change">+3 จากเดือนที่แล้ว</div>
+          </div>
+          <div class="stat-card gold">
+            <div class="stat-icon">⏳</div>
+            <div class="stat-label">รออนุมัติ</div>
+            <div class="stat-value gold">3</div>
+            <div class="stat-change">ค้างอยู่ในระบบ</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon">✅</div>
+            <div class="stat-label">อนุมัติแล้ว</div>
+            <div class="stat-value green">14</div>
+            <div class="stat-change">77% ของใบลาทั้งหมด</div>
+          </div>
+          <div class="stat-card red">
+            <div class="stat-icon">❌</div>
+            <div class="stat-label">ไม่อนุมัติ</div>
+            <div class="stat-value red">1</div>
+            <div class="stat-change">เดือนนี้</div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-title">สถิติการลารายเดือน</div>
+            <div class="chart-sub">แยกตามประเภทการลา ปี 2568</div>
+            <div class="chart-wrap"><canvas id="monthlyChart" height="90"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">สัดส่วนประเภทการลา</div>
+            <div class="chart-sub">เดือนนี้</div>
+            <div class="chart-wrap"><canvas id="typeChart" height="180"></canvas></div>
+          </div>
+        </div>
+
+        <div class="recent-grid">
+          <div class="table-card">
+            <div class="table-header">
+              <div class="table-title">ใบลาล่าสุด</div>
+              <a onclick="showPage('all-leaves')" style="font-size:12px;color:var(--accent-light);cursor:pointer;">ดูทั้งหมด →</a>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr>
+                  <th>พนักงาน</th><th>ประเภท</th><th>วันที่</th><th>สถานะ</th>
+                </tr></thead>
+                <tbody>
+                  <tr><td>สมชาย ใจดี</td><td><span class="badge badge-type">ลาป่วย</span></td><td>15-16 พ.ค.</td><td><span class="badge badge-approved">✓ อนุมัติ</span></td></tr>
+                  <tr><td>นิตยา มีสุข</td><td><span class="badge badge-type">ลากิจ</span></td><td>18 พ.ค.</td><td><span class="badge badge-pending">⏳ รอ</span></td></tr>
+                  <tr><td>วิชัย สมบูรณ์</td><td><span class="badge badge-type">พักร้อน</span></td><td>20-22 พ.ค.</td><td><span class="badge badge-partial">1/2</span></td></tr>
+                  <tr><td>สุดา รักงาน</td><td><span class="badge badge-type">นักขัตฤกษ์</span></td><td>19 พ.ค.</td><td><span class="badge badge-approved">✓ อนุมัติ</span></td></tr>
+                  <tr><td>ประเสริฐ ดีเลิศ</td><td><span class="badge badge-type">ลาป่วย</span></td><td>21 พ.ค.</td><td><span class="badge badge-pending">⏳ รอ</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">สรุปวันลาสะสม</div>
+            <div class="chart-sub">รายบุคคล เดือนนี้</div>
+            <canvas id="staffChart" height="180"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEAVE FORM -->
+      <div class="page-section" id="section-leave-form">
+        <div class="form-card">
+          <div class="form-section-title">ข้อมูลพนักงาน (Auto-fill)</div>
+          <div class="form-row three">
+            <div>
+              <label class="field-label">รหัสพนักงาน</label>
+              <input class="field-input" readonly value="EMP001">
+            </div>
+            <div>
+              <label class="field-label">ชื่อ-นามสกุล</label>
+              <input class="field-input" readonly value="สมชาย ใจดี" id="emp-name">
+            </div>
+            <div>
+              <label class="field-label">ตำแหน่ง</label>
+              <input class="field-input" readonly value="ช่างซ่อมบำรุง">
+            </div>
+          </div>
+          <div class="form-row">
+            <div>
+              <label class="field-label">แผนก</label>
+              <input class="field-input" readonly value="ฝ่ายอาคารและสถานที่">
+            </div>
+            <div>
+              <label class="field-label">วันที่ยื่นใบลา</label>
+              <input class="field-input" readonly id="today-date">
+            </div>
+          </div>
+
+          <div class="form-section-title">ประเภทการลา<span class="field-required">*</span></div>
+          <div class="leave-type-grid">
+            <button class="leave-type-btn selected" onclick="selectType(this,'ลาป่วย')"><span class="ltype-icon">🤒</span>ลาป่วย</button>
+            <button class="leave-type-btn" onclick="selectType(this,'ลากิจ')"><span class="ltype-icon">📌</span>ลากิจ</button>
+            <button class="leave-type-btn" onclick="selectType(this,'ลาพักร้อน')"><span class="ltype-icon">🏖️</span>ลาพักร้อน</button>
+            <button class="leave-type-btn" onclick="selectType(this,'ลานักขัตฤกษ์')"><span class="ltype-icon">🎉</span>ลานักขัตฤกษ์</button>
+            <button class="leave-type-btn" onclick="selectType(this,'เปลี่ยนวันหยุด')"><span class="ltype-icon">🔄</span>เปลี่ยนวันหยุด</button>
+            <button class="leave-type-btn" onclick="selectType(this,'เปลี่ยนรอบ')"><span class="ltype-icon">🔃</span>เปลี่ยนรอบ</button>
+          </div>
+
+          <div class="form-section-title">วันที่ลา<span class="field-required">*</span></div>
+          <div class="form-row three">
+            <div>
+              <label class="field-label">วันเริ่มต้น</label>
+              <input type="date" class="field-input" id="date-start" onchange="calcDays()">
+            </div>
+            <div>
+              <label class="field-label">วันสิ้นสุด</label>
+              <input type="date" class="field-input" id="date-end" onchange="calcDays()">
+            </div>
+            <div>
+              <div class="days-display">
+                <div class="days-number" id="days-count">0</div>
+                <div class="days-label">จำนวนวันลา</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section-title">รายละเอียด</div>
+          <div class="form-row full">
+            <div>
+              <label class="field-label">เหตุผลการลา<span class="field-required">*</span></label>
+              <textarea class="field-textarea" placeholder="ระบุเหตุผลการลา..."></textarea>
+            </div>
+          </div>
+          <div class="form-row full">
+            <div>
+              <label class="field-label">หมายเหตุเพิ่มเติม (ไม่บังคับ)</label>
+              <textarea class="field-textarea" style="min-height:60px" placeholder="เช่น กรณีเปลี่ยนรอบ ระบุชื่อผู้ที่สลับด้วย..."></textarea>
+            </div>
+          </div>
+
+          <div class="form-section-title">เอกสารแนบ (ถ้ามี)</div>
+          <div class="upload-area" onclick="document.getElementById('file-upload').click()">
+            <input type="file" id="file-upload" style="display:none" multiple accept="image/*,.pdf">
+            <div class="upload-icon">📎</div>
+            <div class="upload-text">ลากไฟล์มาวางที่นี่ หรือ <span>คลิกเพื่อเลือกไฟล์</span></div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">รองรับ JPG, PNG, PDF ขนาดไม่เกิน 10MB</div>
+          </div>
+
+          <div class="form-section-title">สายอนุมัติ</div>
+          <div class="approvers-section">
+            <div class="approvers-title">ผู้มีสิทธิ์อนุมัติ (ต้องครบทั้ง 2 ท่าน)</div>
+            <div class="approver-item">
+              <div class="approver-name-role">
+                <div class="approver-name">นายอภิชาต วงศ์ไพบูลย์</div>
+                <div class="approver-role">ที่ปรึกษาฝ่ายอาคาร</div>
+              </div>
+              <span class="badge badge-pending">⏳ รออนุมัติ</span>
+            </div>
+            <div class="approver-item">
+              <div class="approver-name-role">
+                <div class="approver-name">นางสาวมนัสนันท์ ศรีสวัสดิ์</div>
+                <div class="approver-role">HR Manager</div>
+              </div>
+              <span class="badge badge-pending">⏳ รออนุมัติ</span>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button class="btn-cancel" onclick="showPage('dashboard')">ยกเลิก</button>
+            <button class="btn-submit" onclick="submitLeave()">📤 ส่งใบลา</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- MY LEAVES -->
+      <div class="page-section" id="section-my-leaves">
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;" class="no-print">
+          <button class="filter-btn active" onclick="setFilter(this)">ทั้งหมด</button>
+          <button class="filter-btn" onclick="setFilter(this)">รออนุมัติ</button>
+          <button class="filter-btn" onclick="setFilter(this)">อนุมัติแล้ว</button>
+          <button class="filter-btn" onclick="setFilter(this)">ไม่อนุมัติ</button>
+        </div>
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">ประวัติการลา — สมชาย ใจดี</div>
+            <button class="btn-print" onclick="window.print()">🖨️ พิมพ์</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>รหัสใบลา</th><th>ประเภท</th><th>วันเริ่ม</th><th>วันสิ้นสุด</th><th>จำนวน</th><th>สถานะ</th><th>ผู้อนุมัติ</th>
+              </tr></thead>
+              <tbody>
+                <tr>
+                  <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-018</td>
+                  <td><span class="badge badge-type">ลาป่วย</span></td>
+                  <td>15 พ.ค. 68</td><td>16 พ.ค. 68</td><td>2 วัน</td>
+                  <td><span class="badge badge-approved">✓ อนุมัติ</span></td>
+                  <td><div class="approver-status"><div class="approver-row"><div class="dot dot-green"></div><span>อภิชาต ✓</span></div><div class="approver-row"><div class="dot dot-green"></div><span>มนัสนันท์ ✓</span></div></div></td>
+                </tr>
+                <tr>
+                  <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-012</td>
+                  <td><span class="badge badge-type">ลากิจ</span></td>
+                  <td>2 พ.ค. 68</td><td>2 พ.ค. 68</td><td>1 วัน</td>
+                  <td><span class="badge badge-approved">✓ อนุมัติ</span></td>
+                  <td><div class="approver-status"><div class="approver-row"><div class="dot dot-green"></div><span>อภิชาต ✓</span></div><div class="approver-row"><div class="dot dot-green"></div><span>มนัสนันท์ ✓</span></div></div></td>
+                </tr>
+                <tr>
+                  <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-005</td>
+                  <td><span class="badge badge-type">พักร้อน</span></td>
+                  <td>10 เม.ย. 68</td><td>14 เม.ย. 68</td><td>5 วัน</td>
+                  <td><span class="badge badge-approved">✓ อนุมัติ</span></td>
+                  <td><div class="approver-status"><div class="approver-row"><div class="dot dot-green"></div><span>อภิชาต ✓</span></div><div class="approver-row"><div class="dot dot-green"></div><span>มนัสนันท์ ✓</span></div></div></td>
+                </tr>
+                <tr>
+                  <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-001</td>
+                  <td><span class="badge badge-type">ลาป่วย</span></td>
+                  <td>3 ม.ค. 68</td><td>3 ม.ค. 68</td><td>1 วัน</td>
+                  <td><span class="badge badge-rejected">✗ ไม่อนุมัติ</span></td>
+                  <td><div class="approver-status"><div class="approver-row"><div class="dot dot-green"></div><span>อภิชาต ✓</span></div><div class="approver-row"><div class="dot" style="background:#E74C3C;"></div><span>มนัสนันท์ ✗</span></div></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
+          <div class="stat-card" style="flex:1;min-width:120px;padding:14px 16px;">
+            <div class="stat-label">ลาป่วยสะสม</div>
+            <div class="stat-value" style="font-size:24px;color:var(--accent-light)">3</div>
+            <div class="stat-change">วัน</div>
+          </div>
+          <div class="stat-card" style="flex:1;min-width:120px;padding:14px 16px;">
+            <div class="stat-label">ลากิจสะสม</div>
+            <div class="stat-value" style="font-size:24px;color:var(--gold-light)">1</div>
+            <div class="stat-change">วัน</div>
+          </div>
+          <div class="stat-card" style="flex:1;min-width:120px;padding:14px 16px;">
+            <div class="stat-label">พักร้อนสะสม</div>
+            <div class="stat-value" style="font-size:24px;color:#2ECC71">5</div>
+            <div class="stat-change">วัน</div>
+          </div>
+          <div class="stat-card" style="flex:1;min-width:120px;padding:14px 16px;">
+            <div class="stat-label">รวมทั้งหมด</div>
+            <div class="stat-value" style="font-size:24px;">9</div>
+            <div class="stat-change">วัน</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- APPROVAL -->
+      <div class="page-section" id="section-approval">
+        <div class="approval-filters no-print">
+          <button class="filter-btn active" onclick="setFilter(this)">รออนุมัติ (3)</button>
+          <button class="filter-btn" onclick="setFilter(this)">อนุมัติแล้ว</button>
+          <button class="filter-btn" onclick="setFilter(this)">ทั้งหมด</button>
+        </div>
+
+        <div class="leave-detail-card">
+          <div class="leave-card-header" onclick="toggleCard('card1')">
+            <div class="leave-card-left">
+              <div class="leave-card-avatar av-blue">นต</div>
+              <div>
+                <div class="leave-card-name">นิตยา มีสุข</div>
+                <div class="leave-card-meta">เจ้าหน้าที่ประสานงาน · ยื่น 17 พ.ค. 2568</div>
+              </div>
+            </div>
+            <div class="leave-card-right">
+              <span class="badge badge-type">ลากิจ</span>
+              <span class="badge badge-pending">⏳ รออนุมัติ</span>
+              <span class="card-expand-btn open" id="arrow-card1">▲</span>
+            </div>
+          </div>
+          <div class="leave-card-body" id="body-card1">
+            <div class="leave-info-grid">
+              <div class="leave-info-item"><div class="leave-info-label">วันที่ลา</div><div class="leave-info-value">18 พ.ค. 2568</div></div>
+              <div class="leave-info-item"><div class="leave-info-label">จำนวนวัน</div><div class="leave-info-value">1 วัน</div></div>
+              <div class="leave-info-item"><div class="leave-info-label">เหตุผล</div><div class="leave-info-value">ธุระส่วนตัว</div></div>
+              <div class="leave-info-item"><div class="leave-info-label">เอกสารแนบ</div><div class="leave-info-value" style="color:var(--text-muted)">ไม่มี</div></div>
+            </div>
+            <div class="approvers-section">
+              <div class="approvers-title">สถานะการอนุมัติ</div>
+              <div class="approver-item">
+                <div class="approver-name-role">
+                  <div class="approver-name">นายอภิชาต วงศ์ไพบูลย์</div>
+                  <div class="approver-role">ที่ปรึกษาฝ่ายอาคาร</div>
+                </div>
+                <div class="approver-action">
+                  <button class="approve-btn" onclick="approveLeave(this)">✓ อนุมัติ</button>
+                  <button class="reject-btn" onclick="rejectLeave(this)">✗ ไม่อนุมัติ</button>
+                </div>
+              </div>
+              <div class="approver-item">
+                <div class="approver-name-role">
+                  <div class="approver-name">นางสาวมนัสนันท์ ศรีสวัสดิ์</div>
+                  <div class="approver-role">HR Manager</div>
+                </div>
+                <div class="approver-action">
+                  <button class="approve-btn" onclick="approveLeave(this)">✓ อนุมัติ</button>
+                  <button class="reject-btn" onclick="rejectLeave(this)">✗ ไม่อนุมัติ</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="leave-detail-card">
+          <div class="leave-card-header" onclick="toggleCard('card2')">
+            <div class="leave-card-left">
+              <div class="leave-card-avatar av-gold">วช</div>
+              <div>
+                <div class="leave-card-name">วิชัย สมบูรณ์</div>
+                <div class="leave-card-meta">ช่างไฟฟ้า · ยื่น 16 พ.ค. 2568</div>
+              </div>
+            </div>
+            <div class="leave-card-right">
+              <span class="badge badge-type">ลาพักร้อน</span>
+              <span class="badge badge-partial">อนุมัติ 1/2</span>
+              <span class="card-expand-btn" id="arrow-card2">▼</span>
+            </div>
+          </div>
+          <div class="leave-card-body" id="body-card2" style="display:none">
+            <div class="leave-info-grid">
+              <div class="leave-info-item"><div class="leave-info-label">วันที่ลา</div><div class="leave-info-value">20-22 พ.ค. 2568</div></div>
+              <div class="leave-info-item"><div class="leave-info-label">จำนวนวัน</div><div class="leave-info-value">3 วัน</div></div>
+              <div class="leave-info-item"><div class="leave-info-label">เหตุผล</div><div class="leave-info-value">พักผ่อนประจำปี</div></div>
+              <div class="leave-info-item"><div class="leave-info-label">เอกสารแนบ</div><div class="leave-info-value" style="color:var(--text-muted)">ไม่มี</div></div>
+            </div>
+            <div class="approvers-section">
+              <div class="approvers-title">สถานะการอนุมัติ</div>
+              <div class="approver-item">
+                <div class="approver-name-role">
+                  <div class="approver-name">นายอภิชาต วงศ์ไพบูลย์</div>
+                  <div class="approver-role">ที่ปรึกษาฝ่ายอาคาร</div>
+                </div>
+                <div class="already-approved">✓ อนุมัติแล้ว <span style="color:var(--text-muted);margin-left:4px;">17 พ.ค. 10:30</span></div>
+              </div>
+              <div class="approver-item">
+                <div class="approver-name-role">
+                  <div class="approver-name">นางสาวมนัสนันท์ ศรีสวัสดิ์</div>
+                  <div class="approver-role">HR Manager</div>
+                </div>
+                <div class="approver-action">
+                  <button class="approve-btn" onclick="approveLeave(this)">✓ อนุมัติ</button>
+                  <button class="reject-btn" onclick="rejectLeave(this)">✗ ไม่อนุมัติ</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="leave-detail-card">
+          <div class="leave-card-header" onclick="toggleCard('card3')">
+            <div class="leave-card-left">
+              <div class="leave-card-avatar av-green">ปส</div>
+              <div>
+                <div class="leave-card-name">ประเสริฐ ดีเลิศ</div>
+                <div class="leave-card-meta">พนักงานรักษาความสะอาด · ยื่น 18 พ.ค. 2568</div>
+              </div>
+            </div>
+            <div class="leave-card-right">
+              <span class="badge badge-type">ลาป่วย</span>
+              <span class="badge badge-pending">⏳ รออนุมัติ</span>
+              <span class="card-expand-btn" id="arrow-card3">▼</span>
+            </div>
+          </div>
+          <div class="leave-card-body" id="body-card3" style="display:none">
+            <div class="leave-info-grid">
+              <div class="leave-info-item"><div class="leave-info-label">วันที่ลา</div><div class="leave-info-value">21 พ.ค. 2568</div></div>
+              <div class="leave-info-item"><div class="leave-info-label">จำนวนวัน</div><div class="leave-info-value">1 วัน</div></div>
+              <div class="leave-info-item"><div class="leave-info-label">เหตุผล</div><div class="leave-info-value">ไม่สบาย มีไข้</div></div>
+              <div class="leave-info-item"><div class="leave-info-label">เอกสารแนบ</div><div class="leave-info-value" style="color:var(--accent-light);cursor:pointer;">📎 ใบรับรองแพทย์.jpg</div></div>
+            </div>
+            <div class="approvers-section">
+              <div class="approvers-title">สถานะการอนุมัติ</div>
+              <div class="approver-item">
+                <div class="approver-name-role">
+                  <div class="approver-name">นายอภิชาต วงศ์ไพบูลย์</div>
+                  <div class="approver-role">ที่ปรึกษาฝ่ายอาคาร</div>
+                </div>
+                <div class="approver-action">
+                  <button class="approve-btn" onclick="approveLeave(this)">✓ อนุมัติ</button>
+                  <button class="reject-btn" onclick="rejectLeave(this)">✗ ไม่อนุมัติ</button>
+                </div>
+              </div>
+              <div class="approver-item">
+                <div class="approver-name-role">
+                  <div class="approver-name">นางสาวมนัสนันท์ ศรีสวัสดิ์</div>
+                  <div class="approver-role">HR Manager</div>
+                </div>
+                <div class="approver-action">
+                  <button class="approve-btn" onclick="approveLeave(this)">✓ อนุมัติ</button>
+                  <button class="reject-btn" onclick="rejectLeave(this)">✗ ไม่อนุมัติ</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ALL LEAVES -->
+      <div class="page-section" id="section-all-leaves">
+        <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;" class="no-print">
+          <button class="filter-btn active" onclick="setFilter(this)">ทั้งหมด</button>
+          <button class="filter-btn" onclick="setFilter(this)">เดือนนี้</button>
+          <button class="filter-btn" onclick="setFilter(this)">รออนุมัติ</button>
+          <div style="flex:1;min-width:160px;">
+            <input class="field-input" style="padding:7px 12px;font-size:12px;" placeholder="🔍 ค้นหาชื่อพนักงาน...">
+          </div>
+          <button class="btn-print" onclick="window.print()">🖨️ พิมพ์</button>
+        </div>
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">ใบลาทั้งหมด — เดือนพฤษภาคม 2568</div>
+            <span style="font-size:12px;color:var(--text-muted)">18 รายการ</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>รหัสใบลา</th><th>พนักงาน</th><th>ตำแหน่ง</th><th>ประเภท</th>
+                <th>วันเริ่ม</th><th>วันสิ้นสุด</th><th>จำนวน</th>
+                <th>ที่ปรึกษา</th><th>HR</th><th>สถานะรวม</th>
+              </tr></thead>
+              <tbody id="all-leaves-tbody">
+                <tr><td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-018</td><td>สมชาย ใจดี</td><td style="color:var(--text-muted)">ช่างซ่อมบำรุง</td><td><span class="badge badge-type">ลาป่วย</span></td><td>15 พ.ค.</td><td>16 พ.ค.</td><td>2 วัน</td><td><span class="badge badge-approved" style="font-size:10px;">✓</span></td><td><span class="badge badge-approved" style="font-size:10px;">✓</span></td><td><span class="badge badge-approved">อนุมัติ</span></td></tr>
+                <tr><td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-017</td><td>นิตยา มีสุข</td><td style="color:var(--text-muted)">เจ้าหน้าที่ประสาน</td><td><span class="badge badge-type">ลากิจ</span></td><td>18 พ.ค.</td><td>18 พ.ค.</td><td>1 วัน</td><td><span class="badge badge-pending" style="font-size:10px;">⏳</span></td><td><span class="badge badge-pending" style="font-size:10px;">⏳</span></td><td><span class="badge badge-pending">รออนุมัติ</span></td></tr>
+                <tr><td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-016</td><td>วิชัย สมบูรณ์</td><td style="color:var(--text-muted)">ช่างไฟฟ้า</td><td><span class="badge badge-type">พักร้อน</span></td><td>20 พ.ค.</td><td>22 พ.ค.</td><td>3 วัน</td><td><span class="badge badge-approved" style="font-size:10px;">✓</span></td><td><span class="badge badge-pending" style="font-size:10px;">⏳</span></td><td><span class="badge badge-partial">1/2</span></td></tr>
+                <tr><td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-015</td><td>สุดา รักงาน</td><td style="color:var(--text-muted)">พนักงานทำความสะอาด</td><td><span class="badge badge-type">นักขัตฤกษ์</span></td><td>19 พ.ค.</td><td>19 พ.ค.</td><td>1 วัน</td><td><span class="badge badge-approved" style="font-size:10px;">✓</span></td><td><span class="badge badge-approved" style="font-size:10px;">✓</span></td><td><span class="badge badge-approved">อนุมัติ</span></td></tr>
+                <tr><td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-014</td><td>ประเสริฐ ดีเลิศ</td><td style="color:var(--text-muted)">รักษาความสะอาด</td><td><span class="badge badge-type">ลาป่วย</span></td><td>21 พ.ค.</td><td>21 พ.ค.</td><td>1 วัน</td><td><span class="badge badge-pending" style="font-size:10px;">⏳</span></td><td><span class="badge badge-pending" style="font-size:10px;">⏳</span></td><td><span class="badge badge-pending">รออนุมัติ</span></td></tr>
+                <tr><td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-013</td><td>ธนพล รุ่งเรือง</td><td style="color:var(--text-muted)">ช่างประปา</td><td><span class="badge badge-type">เปลี่ยนรอบ</span></td><td>17 พ.ค.</td><td>18 พ.ค.</td><td>2 วัน</td><td><span class="badge badge-approved" style="font-size:10px;">✓</span></td><td><span class="badge badge-approved" style="font-size:10px;">✓</span></td><td><span class="badge badge-approved">อนุมัติ</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- REPORT -->
+      <div class="page-section" id="section-report">
+        <div class="report-header no-print">
+          <div class="report-period">
+            <select class="period-select">
+              <option>พฤษภาคม 2568</option>
+              <option>เมษายน 2568</option>
+              <option>มีนาคม 2568</option>
+            </select>
+          </div>
+          <button class="btn-print" onclick="window.print()">🖨️ พิมพ์รายงาน</button>
+        </div>
+
+        <div style="margin-bottom:20px;padding:20px;background:var(--card-bg);border:1px solid var(--border);border-radius:12px;">
+          <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:4px;">รายงานสรุปการลา</div>
+          <div style="font-family:var(--font-display);font-size:22px;margin-bottom:2px;">ฝ่ายอาคารและสถานที่</div>
+          <div style="font-size:13px;color:var(--text-secondary);">ประจำเดือน พฤษภาคม 2568 | จัดทำ: ระบบ BFS Leave Management</div>
+        </div>
+
+        <div class="stats-grid stagger" style="margin-bottom:20px;">
+          <div class="stat-card blue"><div class="stat-icon">👥</div><div class="stat-label">พนักงานทั้งหมด</div><div class="stat-value blue">12</div><div class="stat-change">คน</div></div>
+          <div class="stat-card gold"><div class="stat-icon">📋</div><div class="stat-label">ใบลาเดือนนี้</div><div class="stat-value gold">18</div><div class="stat-change">ใบ</div></div>
+          <div class="stat-card green"><div class="stat-icon">📅</div><div class="stat-label">วันลารวม</div><div class="stat-value green">26</div><div class="stat-change">วัน</div></div>
+          <div class="stat-card red"><div class="stat-icon">📊</div><div class="stat-label">เฉลี่ย/คน</div><div class="stat-value red">2.2</div><div class="stat-change">วัน/เดือน</div></div>
+        </div>
+
+        <div class="report-grid">
+          <div class="chart-card">
+            <div class="chart-title">วันลาตามประเภท</div>
+            <div class="chart-sub">สะสมเดือนพฤษภาคม</div>
+            <canvas id="reportTypeChart" height="200"></canvas>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">แนวโน้มการลา 6 เดือน</div>
+            <div class="chart-sub">ม.ค. — พ.ค. 2568</div>
+            <canvas id="reportTrendChart" height="200"></canvas>
+          </div>
+        </div>
+
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">สรุปวันลารายบุคคล</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr>
+                <th>ชื่อพนักงาน</th><th>ตำแหน่ง</th>
+                <th>ลาป่วย</th><th>ลากิจ</th><th>พักร้อน</th>
+                <th>นักขัตฤกษ์</th><th>เปลี่ยนวัน</th><th>รวม</th>
+              </tr></thead>
+              <tbody>
+                <tr><td>สมชาย ใจดี</td><td style="color:var(--text-muted)">ช่างซ่อมบำรุง</td><td>2</td><td>1</td><td>0</td><td>0</td><td>0</td><td style="font-weight:500;color:var(--accent-light)">3</td></tr>
+                <tr><td>นิตยา มีสุข</td><td style="color:var(--text-muted)">เจ้าหน้าที่ประสาน</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td style="font-weight:500;color:var(--accent-light)">1</td></tr>
+                <tr><td>วิชัย สมบูรณ์</td><td style="color:var(--text-muted)">ช่างไฟฟ้า</td><td>0</td><td>0</td><td>3</td><td>0</td><td>0</td><td style="font-weight:500;color:var(--accent-light)">3</td></tr>
+                <tr><td>สุดา รักงาน</td><td style="color:var(--text-muted)">พนักงานทำความสะอาด</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td style="font-weight:500;color:var(--accent-light)">1</td></tr>
+                <tr><td>ประเสริฐ ดีเลิศ</td><td style="color:var(--text-muted)">รักษาความสะอาด</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td style="font-weight:500;color:var(--accent-light)">1</td></tr>
+                <tr><td>ธนพล รุ่งเรือง</td><td style="color:var(--text-muted)">ช่างประปา</td><td>0</td><td>0</td><td>0</td><td>0</td><td>2</td><td style="font-weight:500;color:var(--accent-light)">2</td></tr>
+                <tr style="border-top:1px solid var(--border);"><td style="font-weight:500">รวมทั้งหมด</td><td></td><td style="font-weight:500">6</td><td style="font-weight:500">4</td><td style="font-weight:500">5</td><td style="font-weight:500">3</td><td style="font-weight:500">4</td><td style="font-weight:600;color:var(--gold-light)">26</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="page-section" id="section-settings">
+        <div class="settings-grid">
+          <div class="settings-card">
+            <div class="settings-card-title">ผู้มีสิทธิ์อนุมัติ</div>
+            <div class="settings-card-sub">จัดการรายชื่อผู้อนุมัติ (ต้องครบ 2 ท่าน)</div>
+            <div class="approver-card">
+              <div class="approver-info">
+                <div class="leave-card-avatar av-blue" style="width:34px;height:34px;font-size:12px;">อว</div>
+                <div>
+                  <div style="font-size:13px;font-weight:500;">นายอภิชาต วงศ์ไพบูลย์</div>
+                  <div style="font-size:11px;color:var(--text-muted);">ที่ปรึกษา · @telegram_apichat</div>
+                </div>
+              </div>
+              <button class="status-toggle" title="สถานะ: Active"></button>
+            </div>
+            <div class="approver-card">
+              <div class="approver-info">
+                <div class="leave-card-avatar av-gold" style="width:34px;height:34px;font-size:12px;">มน</div>
+                <div>
+                  <div style="font-size:13px;font-weight:500;">นางสาวมนัสนันท์ ศรีสวัสดิ์</div>
+                  <div style="font-size:11px;color:var(--text-muted);">HR Manager · @telegram_manasnun</div>
+                </div>
+              </div>
+              <button class="status-toggle" title="สถานะ: Active"></button>
+            </div>
+            <button class="btn-cancel" style="width:100%;margin-top:12px;font-size:12px;">+ เพิ่มผู้อนุมัติ</button>
+          </div>
+
+          <div class="settings-card">
+            <div class="settings-card-title">การแจ้งเตือน Telegram</div>
+            <div class="settings-card-sub">ตั้งค่า Bot และการทวงอัตโนมัติ</div>
+            <div class="form-group">
+              <label class="field-label">Telegram Bot Token</label>
+              <input class="field-input" type="password" value="1234567890:ABCdefGHI_example_token" style="font-family:var(--font-mono);font-size:11px;">
+            </div>
+            <div class="form-group">
+              <label class="field-label">ทวงอัตโนมัติ (ชั่วโมง)</label>
+              <select class="field-select">
+                <option>4 ชั่วโมง</option>
+                <option>8 ชั่วโมง</option>
+                <option>24 ชั่วโมง</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="field-label">แจ้งเตือนเมื่อ</label>
+              <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" checked> มีใบลาใหม่</label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" checked> อนุมัติ/ไม่อนุมัติ</label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" checked> ใบลาค้างเกินกำหนด</label>
+              </div>
+            </div>
+            <button class="btn-submit" style="width:100%;" onclick="showToast('บันทึกการตั้งค่าสำเร็จ')">💾 บันทึกการตั้งค่า</button>
+          </div>
+
+          <div class="settings-card">
+            <div class="settings-card-title">ข้อมูลพนักงาน</div>
+            <div class="settings-card-sub">จัดการบัญชีผู้ใช้งานในระบบ</div>
+            <div class="table-wrap" style="max-height:220px;overflow-y:auto;">
+              <table>
+                <thead><tr><th>ชื่อ</th><th>สิทธิ์</th><th>สถานะ</th></tr></thead>
+                <tbody>
+                  <tr><td>สมชาย ใจดี</td><td style="color:var(--text-muted)">พนักงาน</td><td><span class="badge badge-approved" style="font-size:10px;">ใช้งาน</span></td></tr>
+                  <tr><td>นิตยา มีสุข</td><td style="color:var(--text-muted)">พนักงาน</td><td><span class="badge badge-approved" style="font-size:10px;">ใช้งาน</span></td></tr>
+                  <tr><td>วิชัย สมบูรณ์</td><td style="color:var(--text-muted)">พนักงาน</td><td><span class="badge badge-approved" style="font-size:10px;">ใช้งาน</span></td></tr>
+                  <tr><td>อภิชาต วงศ์ไพบูลย์</td><td style="color:var(--gold-light)">ผู้อนุมัติ</td><td><span class="badge badge-approved" style="font-size:10px;">ใช้งาน</span></td></tr>
+                  <tr><td>มนัสนันท์ ศรีสวัสดิ์</td><td style="color:var(--gold-light)">ผู้อนุมัติ</td><td><span class="badge badge-approved" style="font-size:10px;">ใช้งาน</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <button class="btn-cancel" style="width:100%;margin-top:12px;font-size:12px;">+ เพิ่มพนักงาน</button>
+          </div>
+
+          <div class="settings-card">
+            <div class="settings-card-title">การเชื่อมต่อ Google Sheets</div>
+            <div class="settings-card-sub">ฐานข้อมูลหลักของระบบ</div>
+            <div class="form-group">
+              <label class="field-label">Apps Script Web App URL</label>
+              <input class="field-input" placeholder="https://script.google.com/macros/s/..." style="font-size:11px;">
+            </div>
+            <div class="form-group">
+              <label class="field-label">Google Sheets ID</label>
+              <input class="field-input" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" style="font-size:11px;">
+            </div>
+            <div style="padding:10px 12px;background:rgba(26,158,106,0.1);border:1px solid rgba(26,158,106,0.2);border-radius:8px;margin-bottom:12px;">
+              <div style="font-size:12px;color:#2ECC71;">● เชื่อมต่อสำเร็จ (Demo Mode)</div>
+            </div>
+            <button class="btn-submit" style="width:100%;" onclick="showToast('ทดสอบการเชื่อมต่อสำเร็จ')">🔗 ทดสอบการเชื่อมต่อ</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV (mobile) -->
+<nav class="bottom-nav no-print">
+  <div class="bottom-nav-inner">
+    <button class="bnav-item active" id="bnav-dashboard" onclick="showPage('dashboard');setBnav('dashboard')">
+      <span class="bnav-icon">📊</span>
+      <span class="bnav-label">หน้าหลัก</span>
+    </button>
+    <button class="bnav-item" id="bnav-leave-form" onclick="showPage('leave-form');setBnav('leave-form')">
+      <span class="bnav-icon">📝</span>
+      <span class="bnav-label">ยื่นใบลา</span>
+    </button>
+    <button class="bnav-item" id="bnav-my-leaves" onclick="showPage('my-leaves');setBnav('my-leaves')">
+      <span class="bnav-icon">📅</span>
+      <span class="bnav-label">ของฉัน</span>
+    </button>
+    <button class="bnav-item" id="bnav-approval" onclick="showPage('approval');setBnav('approval')" style="display:none">
+      <span class="bnav-icon">✅</span>
+      <span class="bnav-label">อนุมัติ</span>
+      <span class="bnav-badge" id="bnav-badge">3</span>
+    </button>
+    <button class="bnav-item" id="bnav-more" onclick="openSidebar()">
+      <span class="bnav-icon">☰</span>
+      <span class="bnav-label">เพิ่มเติม</span>
+    </button>
+  </div>
+</nav>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span class="toast-icon">✅</span>
+  <span id="toast-msg">ดำเนินการสำเร็จ</span>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════
+//  API CONFIG
+// ════════════════════════════════════════════════════
+const API_URL = 'https://script.google.com/macros/s/AKfycbz8Mu8UUKeGppQe0_WpoqMV28HcKaSSNJIPbDP2powRrZbLFgtHMqpSQ2zU-gBqYjI18w/exec';
+
+async function callAPI(payload) {
+  try {
+    const qs = new URLSearchParams({ payload: JSON.stringify(payload) }).toString();
+    const res = await fetch(`${API_URL}?${qs}`, { redirect: 'follow' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (err) {
+    console.error('API Error:', err);
+    return { success: false, message: err.message };
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  LOAD DASHBOARD DATA
+// ════════════════════════════════════════════════════
+async function loadDashboardData() {
+  try {
+    const [allRes, pendingRes] = await Promise.all([
+      callAPI({ action: 'getAllLeaves', month: new Date().getMonth()+1, year: new Date().getFullYear() }),
+      callAPI({ action: 'getPendingLeaves' })
+    ]);
+
+    if (allRes.success) {
+      const all      = allRes.data || [];
+      const approved = all.filter(r => r['สถานะ'] === 'อนุมัติ').length;
+      const rejected = all.filter(r => r['สถานะ'] === 'ไม่อนุมัติ').length;
+      const pending  = pendingRes.success ? (pendingRes.data || []).length : 0;
+
+      // อัปเดต stat cards
+      document.querySelectorAll('.stat-value.blue')[0].textContent  = all.length;
+      document.querySelectorAll('.stat-value.gold')[0].textContent  = pending;
+      document.querySelectorAll('.stat-value.green')[0].textContent = approved;
+      document.querySelectorAll('.stat-value.red')[0].textContent   = rejected;
+
+      // อัปเดตตาราง recent
+      renderRecentTable(all.slice(0, 5));
+    }
+  } catch (err) {
+    console.error('loadDashboardData:', err);
+  }
+}
+
+function renderRecentTable(leaves) {
+  const tbody = document.querySelector('#section-dashboard tbody');
+  if (!tbody || !leaves.length) return;
+  tbody.innerHTML = leaves.map(r => {
+    const statusBadge = r['สถานะ'] === 'อนุมัติ'
+      ? `<span class="badge badge-approved">✓ อนุมัติ</span>`
+      : r['สถานะ'] === 'ไม่อนุมัติ'
+      ? `<span class="badge badge-rejected">✗ ไม่อนุมัติ</span>`
+      : r['ผู้อนุมัติ1-สถานะ'] === 'อนุมัติ' || r['ผู้อนุมัติ2-สถานะ'] === 'อนุมัติ'
+      ? `<span class="badge badge-partial">1/2</span>`
+      : `<span class="badge badge-pending">⏳ รอ</span>`;
+    return `<tr>
+      <td>${r['ชื่อพนักงาน'] || ''}</td>
+      <td><span class="badge badge-type">${r['ประเภทลา'] || ''}</span></td>
+      <td>${formatDateShort(r['วันเริ่มลา'])}</td>
+      <td>${statusBadge}</td>
+    </tr>`;
+  }).join('');
+}
+
+function formatDateShort(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('th-TH', { day:'numeric', month:'short' });
+}
+
+// ════════════════════════════════════════════════════
+//  LOAD MY LEAVES
+// ════════════════════════════════════════════════════
+async function loadMyLeaves() {
+  const tbody = document.querySelector('#section-my-leaves .table-wrap tbody');
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">⏳ กำลังโหลด...</td></tr>`;
+
+  const res = await callAPI({ action: 'getMyLeaves', employeeId: currentUser.id });
+  if (!res.success || !res.data?.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">ไม่พบประวัติการลา</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = res.data.map(r => {
+    const s1 = r['ผู้อนุมัติ1-สถานะ'] === 'อนุมัติ' ? 'dot-green' : 'dot-gray';
+    const s2 = r['ผู้อนุมัติ2-สถานะ'] === 'อนุมัติ' ? 'dot-green' : r['ผู้อนุมัติ2-สถานะ'] === 'ไม่อนุมัติ' ? 'dot-red' : 'dot-gray';
+    const statusBadge = r['สถานะ'] === 'อนุมัติ'
+      ? `<span class="badge badge-approved">✓ อนุมัติ</span>`
+      : r['สถานะ'] === 'ไม่อนุมัติ'
+      ? `<span class="badge badge-rejected">✗ ไม่อนุมัติ</span>`
+      : `<span class="badge badge-pending">⏳ รออนุมัติ</span>`;
+    return `<tr>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">${r['รหัสใบลา']}</td>
+      <td><span class="badge badge-type">${r['ประเภทลา']}</span></td>
+      <td>${formatDateShort(r['วันเริ่มลา'])}</td>
+      <td>${formatDateShort(r['วันสิ้นสุด'])}</td>
+      <td>${r['จำนวนวัน']} วัน</td>
+      <td>${statusBadge}</td>
+      <td><div class="approver-status">
+        <div class="approver-row"><div class="dot ${s1}"></div><span>ท่านที่ 1: ${r['ผู้อนุมัติ1-สถานะ'] || 'รอ'}</span></div>
+        <div class="approver-row"><div class="dot ${s2}"></div><span>ท่านที่ 2: ${r['ผู้อนุมัติ2-สถานะ'] || 'รอ'}</span></div>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════
+//  LOAD ALL LEAVES (เจ้าหน้าที่/ผู้อนุมัติ)
+// ════════════════════════════════════════════════════
+async function loadAllLeaves() {
+  const tbody = document.getElementById('all-leaves-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:24px;">⏳ กำลังโหลด...</td></tr>`;
+
+  const now = new Date();
+  const res = await callAPI({ action: 'getAllLeaves', month: now.getMonth()+1, year: now.getFullYear() });
+
+  if (!res.success || !res.data?.length) {
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--text-muted);padding:24px;">ไม่พบข้อมูล</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = res.data.map(r => {
+    const s1 = r['ผู้อนุมัติ1-สถานะ'] === 'อนุมัติ'
+      ? `<span class="badge badge-approved" style="font-size:10px;">✓</span>`
+      : `<span class="badge badge-pending" style="font-size:10px;">⏳</span>`;
+    const s2 = r['ผู้อนุมัติ2-สถานะ'] === 'อนุมัติ'
+      ? `<span class="badge badge-approved" style="font-size:10px;">✓</span>`
+      : `<span class="badge badge-pending" style="font-size:10px;">⏳</span>`;
+    const overall = r['สถานะ'] === 'อนุมัติ'
+      ? `<span class="badge badge-approved">อนุมัติ</span>`
+      : r['สถานะ'] === 'ไม่อนุมัติ'
+      ? `<span class="badge badge-rejected">ไม่อนุมัติ</span>`
+      : `<span class="badge badge-pending">รออนุมัติ</span>`;
+    return `<tr>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">${r['รหัสใบลา']}</td>
+      <td>${r['ชื่อพนักงาน']}</td>
+      <td style="color:var(--text-muted)">${r['ตำแหน่ง']}</td>
+      <td><span class="badge badge-type">${r['ประเภทลา']}</span></td>
+      <td>${formatDateShort(r['วันเริ่มลา'])}</td>
+      <td>${formatDateShort(r['วันสิ้นสุด'])}</td>
+      <td>${r['จำนวนวัน']} วัน</td>
+      <td>${s1}</td><td>${s2}</td>
+      <td>${overall}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════
+//  LOAD PENDING APPROVAL
+// ════════════════════════════════════════════════════
+async function loadPendingApproval() {
+  const container = document.getElementById('section-approval');
+  const cards = container.querySelectorAll('.leave-detail-card');
+  cards.forEach(c => c.remove());
+
+  const loadingEl = document.createElement('div');
+  loadingEl.className = 'empty-state';
+  loadingEl.innerHTML = '<div class="empty-icon">⏳</div><div class="empty-text">กำลังโหลด...</div>';
+  container.appendChild(loadingEl);
+
+  const res = await callAPI({ action: 'getPendingLeaves' });
+  loadingEl.remove();
+
+  if (!res.success || !res.data?.length) {
+    const empty = document.createElement('div');
+    empty.className = 'empty-state';
+    empty.innerHTML = '<div class="empty-icon">✅</div><div class="empty-text">ไม่มีใบลารออนุมัติ</div>';
+    container.appendChild(empty);
+    return;
+  }
+
+  res.data.forEach((r, i) => {
+    const cardId = 'api-card-' + i;
+    const card = document.createElement('div');
+    card.className = 'leave-detail-card';
+    const initials = (r['ชื่อพนักงาน'] || 'XX').substring(0, 2);
+    const s1done = r['ผู้อนุมัติ1-สถานะ'] === 'อนุมัติ';
+    const s2done = r['ผู้อนุมัติ2-สถานะ'] === 'อนุมัติ';
+
+    card.innerHTML = `
+      <div class="leave-card-header" onclick="toggleCard('${cardId}')">
+        <div class="leave-card-left">
+          <div class="leave-card-avatar av-blue">${initials}</div>
+          <div>
+            <div class="leave-card-name">${r['ชื่อพนักงาน']}</div>
+            <div class="leave-card-meta">${r['ตำแหน่ง']} · ยื่น ${formatDateShort(r['วันที่ยื่น'])}</div>
+          </div>
+        </div>
+        <div class="leave-card-right">
+          <span class="badge badge-type">${r['ประเภทลา']}</span>
+          <span class="badge badge-pending">⏳ รออนุมัติ</span>
+          <span class="card-expand-btn open" id="arrow-${cardId}">▲</span>
+        </div>
+      </div>
+      <div class="leave-card-body" id="body-${cardId}">
+        <div class="leave-info-grid">
+          <div class="leave-info-item"><div class="leave-info-label">วันที่ลา</div><div class="leave-info-value">${formatDateShort(r['วันเริ่มลา'])} — ${formatDateShort(r['วันสิ้นสุด'])}</div></div>
+          <div class="leave-info-item"><div class="leave-info-label">จำนวนวัน</div><div class="leave-info-value">${r['จำนวนวัน']} วัน</div></div>
+          <div class="leave-info-item"><div class="leave-info-label">เหตุผล</div><div class="leave-info-value">${r['เหตุผล'] || '—'}</div></div>
+          <div class="leave-info-item"><div class="leave-info-label">หมายเหตุ</div><div class="leave-info-value" style="color:var(--text-muted)">${r['หมายเหตุ'] || 'ไม่มี'}</div></div>
+        </div>
+        <div class="approvers-section">
+          <div class="approvers-title">สถานะการอนุมัติ</div>
+          <div class="approver-item" id="approver1-${cardId}">
+            <div class="approver-name-role">
+              <div class="approver-name">ผู้อนุมัติท่านที่ 1</div>
+              <div class="approver-role">ที่ปรึกษา</div>
+            </div>
+            ${s1done
+              ? `<div class="already-approved">✓ อนุมัติแล้ว</div>`
+              : `<div class="approver-action">
+                  <button class="approve-btn" onclick="apiApprove('${r['รหัสใบลา']}', 0, 'approve', 'approver1-${cardId}')">✓ อนุมัติ</button>
+                  <button class="reject-btn"  onclick="apiApprove('${r['รหัสใบลา']}', 0, 'reject',  'approver1-${cardId}')">✗ ไม่อนุมัติ</button>
+                </div>`
+            }
+          </div>
+          <div class="approver-item" id="approver2-${cardId}">
+            <div class="approver-name-role">
+              <div class="approver-name">ผู้อนุมัติท่านที่ 2</div>
+              <div class="approver-role">HR Manager</div>
+            </div>
+            ${s2done
+              ? `<div class="already-approved">✓ อนุมัติแล้ว</div>`
+              : `<div class="approver-action">
+                  <button class="approve-btn" onclick="apiApprove('${r['รหัสใบลา']}', 1, 'approve', 'approver2-${cardId}')">✓ อนุมัติ</button>
+                  <button class="reject-btn"  onclick="apiApprove('${r['รหัสใบลา']}', 1, 'reject',  'approver2-${cardId}')">✗ ไม่อนุมัติ</button>
+                </div>`
+            }
+          </div>
+        </div>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+
+// ── อนุมัติผ่านเว็บ ───────────────────────────────────
+async function apiApprove(leaveId, approverIndex, action, rowId) {
+  const row = document.getElementById(rowId);
+  if (!row) return;
+  row.querySelector('.approver-action').innerHTML = `<span style="font-size:12px;color:var(--text-muted);">⏳ กำลังบันทึก...</span>`;
+
+  const approvers = await callAPI({ action: 'getApprovers' });
+  const approverList = approvers.success ? approvers.data : [];
+  const approver = approverList[approverIndex];
+  const telegramId = approver ? approver['Telegram ID'] : '';
+
+  const res = await callAPI({
+    action: 'approve',
+    leaveId,
+    approverTelegramId: telegramId,
+    action: action
+  });
+
+  if (res.success) {
+    const word = action === 'approve' ? 'อนุมัติ' : 'ไม่อนุมัติ';
+    row.querySelector('.approver-action') && row.querySelector('.approver-action').remove
+      ? row.innerHTML = row.innerHTML.replace(/<div class="approver-action">.*<\/div>/s,
+          `<div class="already-approved">${action === 'approve' ? '✓' : '✗'} ${word}แล้ว</div>`)
+      : null;
+    row.innerHTML = `
+      <div class="approver-name-role">
+        <div class="approver-name">${approver ? approver['ชื่อ'] : 'ผู้อนุมัติ'}</div>
+      </div>
+      <div class="already-approved">${action === 'approve' ? '✓ อนุมัติแล้ว' : '✗ ไม่อนุมัติ'}</div>`;
+    showToast(res.message);
+  } else {
+    showToast('เกิดข้อผิดพลาด: ' + res.message);
+    row.querySelector('.approver-action') && (row.innerHTML = `<div style="color:var(--danger);font-size:12px;">เกิดข้อผิดพลาด</div>`);
+  }
+}
+
+let currentUser = null;
+
+function loadUserFromPortal() {
+  // รับข้อมูล user จาก URL param (ส่งมาจาก portal)
+  const params = new URLSearchParams(window.location.search);
+  const uid   = params.get('uid');
+  const name  = params.get('name');
+  const role  = params.get('role');
+  const pos   = params.get('position');
+  const dept  = params.get('dept');
+
+  // Role label
+  const roleLabel = (role === 'approver') ? 'ที่ปรึกษา / ผู้อนุมัติ'
+                  : (role === 'hr')       ? 'HR / ผู้อนุมัติ'
+                  : (role === 'staff')    ? 'เจ้าหน้าที่ฝ่ายอาคาร'
+                  : 'พนักงานทั่วไป';
+
+  const deptLabel = (dept === 'bm') ? 'แผนกบริหารอาคาร'
+                  : (dept === 'bs') ? 'แผนกบริการงานอาคาร'
+                  : dept || 'ฝ่ายอาคารและสถานที่';
+
+  currentUser = {
+    id:       uid      || 'EMP001',
+    name:     name     || 'พนักงาน',
+    type:     role     || 'employee',
+    role:     roleLabel,
+    position: pos      || 'เจ้าหน้าที่',
+    dept:     deptLabel,
+    initials: name     ? name.substring(0,2) : 'พน'
+  };
+
+  document.getElementById('sidebar-name').textContent   = currentUser.name;
+  document.getElementById('sidebar-role').textContent   = currentUser.role;
+  document.getElementById('sidebar-avatar').textContent = currentUser.initials;
+  document.getElementById('emp-name').value             = currentUser.name;
+
+  // แสดงเมนูอนุมัติเฉพาะ approver และ hr
+  const canApprove = (currentUser.type === 'approver' || currentUser.type === 'hr' || currentUser.type === 'staff');
+  if (!canApprove) {
+    document.getElementById('nav-approval-section').style.display = 'none';
+  } else {
+    const bnavApproval = document.getElementById('bnav-approval');
+    if (bnavApproval) bnavApproval.style.display = 'flex';
+  }
+
+  document.getElementById('app').style.display       = 'flex';
+  document.getElementById('app').style.flexDirection = 'row';
+
+  const d = new Date();
+  document.getElementById('topbar-date').textContent =
+    d.toLocaleDateString('th-TH', { weekday:'short', year:'numeric', month:'long', day:'numeric' });
+  document.getElementById('today-date').value = d.toISOString().split('T')[0];
+  setTimeout(() => { initCharts(); loadDashboardData(); }, 100);
+}
+
+function doLogout() {
+  // กลับไป portal
+  window.location.href = 'index.html';
+}
+
+const pageConfig = {
+  'dashboard': { title:'Dashboard', sub:'ภาพรวมระบบใบลา' },
+  'leave-form': { title:'ยื่นใบลา', sub:'กรอกแบบฟอร์มการลา' },
+  'my-leaves': { title:'ประวัติการลา', sub:'ใบลาของฉัน' },
+  'approval': { title:'รออนุมัติ', sub:'ใบลาที่รอการพิจารณา' },
+  'all-leaves': { title:'ใบลาทั้งหมด', sub:'รายการการลาในระบบ' },
+  'report': { title:'รายงานประจำเดือน', sub:'สรุปสถิติการลาเพื่อผู้บริหาร' },
+  'settings': { title:'ตั้งค่าระบบ', sub:'จัดการผู้อนุมัติและการเชื่อมต่อ' }
+};
+
+function setBnav(page) {
+  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+  const el = document.getElementById('bnav-' + page);
+  if (el) el.classList.add('active');
+}
+
+function showPage(page) {
+  document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const sec = document.getElementById('section-' + page);
+  if (sec) sec.classList.add('active');
+  const cfg = pageConfig[page];
+  if (cfg) {
+    document.getElementById('topbar-title').textContent = cfg.title;
+    document.getElementById('topbar-subtitle').textContent = cfg.sub;
+  }
+  setBnav(page);
+  closeSidebar();
+  if (page === 'dashboard')  loadDashboardData();
+  if (page === 'my-leaves')  loadMyLeaves();
+  if (page === 'all-leaves') loadAllLeaves();
+  if (page === 'approval')   loadPendingApproval();
+  if (page === 'report')     setTimeout(initReportCharts, 100);
+}
+
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('overlay').style.display = 'block';
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('overlay').style.display = 'none';
+}
+
+function selectType(btn, type) {
+  document.querySelectorAll('.leave-type-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+function calcDays() {
+  const s = document.getElementById('date-start').value;
+  const e = document.getElementById('date-end').value;
+  if (s && e) {
+    const diff = Math.max(0, Math.round((new Date(e) - new Date(s)) / 86400000) + 1);
+    document.getElementById('days-count').textContent = diff;
+  }
+}
+
+async function submitLeave() {
+  const leaveType = document.querySelector('.leave-type-btn.selected')?.textContent?.trim()?.replace(/\s+/g,' ').split(' ').pop() || '';
+  const startDate = document.getElementById('date-start').value;
+  const endDate   = document.getElementById('date-end').value;
+  const days      = parseInt(document.getElementById('days-count').textContent) || 0;
+  const reason    = document.querySelector('.field-textarea')?.value || '';
+  const remark    = document.querySelectorAll('.field-textarea')[1]?.value || '';
+
+  if (!leaveType) { showToast('กรุณาเลือกประเภทการลา'); return; }
+  if (!startDate)  { showToast('กรุณาระบุวันที่ลา'); return; }
+  if (!reason)     { showToast('กรุณาระบุเหตุผลการลา'); return; }
+
+  const btn = document.querySelector('.btn-submit');
+  btn.disabled = true;
+  btn.textContent = '⏳ กำลังส่ง...';
+
+  const res = await callAPI({
+    action:       'submitLeave',
+    employeeId:   currentUser.id,
+    employeeName: currentUser.name,
+    position:     currentUser.position,
+    leaveType,
+    startDate,
+    endDate:      endDate || startDate,
+    days,
+    reason,
+    remark
+  });
+
+  btn.disabled = false;
+  btn.textContent = '📤 ส่งใบลา';
+
+  if (res.success) {
+    showToast(`✅ ${res.message}`);
+    setTimeout(() => showPage('my-leaves'), 1000);
+  } else {
+    showToast('❌ เกิดข้อผิดพลาด: ' + res.message);
+  }
+}
+
+function approveLeave(btn) {
+  const row = btn.closest('.approver-item');
+  const name = row.querySelector('.approver-name').textContent;
+  row.querySelector('.approver-action').innerHTML = `<div class="already-approved">✓ อนุมัติแล้ว <span style="color:var(--text-muted);margin-left:4px;">เพิ่งเมื่อกี้</span></div>`;
+  showToast('อนุมัติแล้ว — ' + name);
+}
+
+function rejectLeave(btn) {
+  const row = btn.closest('.approver-item');
+  row.querySelector('.approver-action').innerHTML = `<div style="font-size:12px;color:#E74C3C;display:flex;align-items:center;gap:4px;">✗ ไม่อนุมัติ</div>`;
+  showToast('บันทึกการไม่อนุมัติแล้ว');
+}
+
+function toggleCard(id) {
+  const body = document.getElementById('body-' + id);
+  const arrow = document.getElementById('arrow-' + id);
+  const open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  arrow.textContent = open ? '▼' : '▲';
+  arrow.classList.toggle('open', !open);
+}
+
+function setFilter(btn) {
+  btn.closest('div').querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// โหลด user จาก Portal ทันทีที่เปิดหน้า
+window.addEventListener('DOMContentLoaded', loadUserFromPortal);
+
+// ปุ่ม "กลับ Portal" ใน topbar
+document.addEventListener('DOMContentLoaded', () => {
+  const topActions = document.querySelector('.topbar-actions');
+  const backBtn = document.createElement('button');
+  backBtn.className = 'btn-cancel no-print';
+  backBtn.style.cssText = 'font-size:12px;padding:7px 13px;';
+  backBtn.textContent = '← Portal';
+  backBtn.onclick = () => window.location.href = 'portal.html';
+  topActions.prepend(backBtn);
+});
+
+let chartsInit = false;
+function initCharts() {
+  if (chartsInit) return;
+  chartsInit = true;
+  const colors = { blue:'rgba(46,134,193,', gold:'rgba(212,172,58,', green:'rgba(26,158,106,', red:'rgba(192,57,43,' };
+  Chart.defaults.color = '#8DA4BE';
+  Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+  Chart.defaults.font.family = "'IBM Plex Sans Thai', sans-serif";
+
+  new Chart(document.getElementById('monthlyChart'), {
+    type: 'bar',
+    data: {
+      labels: ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.'],
+      datasets: [
+        { label:'ลาป่วย', data:[4,2,6,3,6], backgroundColor: colors.red+'0.7)', borderRadius:4, borderSkipped:false },
+        { label:'ลากิจ', data:[2,3,2,4,4], backgroundColor: colors.gold+'0.7)', borderRadius:4, borderSkipped:false },
+        { label:'พักร้อน', data:[1,0,3,5,5], backgroundColor: colors.blue+'0.7)', borderRadius:4, borderSkipped:false },
+        { label:'อื่นๆ', data:[1,1,2,1,3], backgroundColor: colors.green+'0.7)', borderRadius:4, borderSkipped:false }
+      ]
+    },
+    options: { responsive:true, plugins:{ legend:{ position:'top', labels:{ boxWidth:10, padding:16, font:{size:11} } } }, scales:{ x:{ grid:{ display:false }, stacked:false }, y:{ grid:{ color:'rgba(255,255,255,0.05)' }, ticks:{ stepSize:2 } } } }
+  });
+
+  new Chart(document.getElementById('typeChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['ลาป่วย','ลากิจ','พักร้อน','นักขัตฤกษ์','เปลี่ยนวัน'],
+      datasets: [{ data:[6,4,5,2,1], backgroundColor: ['rgba(192,57,43,0.8)','rgba(212,172,58,0.8)','rgba(46,134,193,0.8)','rgba(26,158,106,0.8)','rgba(100,120,150,0.8)'], borderWidth:0, hoverOffset:6 }]
+    },
+    options: { responsive:true, cutout:'65%', plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, padding:12, font:{size:11} } } } }
+  });
+
+  new Chart(document.getElementById('staffChart'), {
+    type: 'bar',
+    data: {
+      labels: ['สมชาย','นิตยา','วิชัย','สุดา','ประเสริฐ','ธนพล'],
+      datasets: [{ label:'วันลา', data:[3,1,3,1,1,2], backgroundColor: 'rgba(46,134,193,0.6)', borderRadius:4, borderSkipped:false }]
+    },
+    options: { responsive:true, indexAxis:'y', plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ color:'rgba(255,255,255,0.05)' } }, y:{ grid:{ display:false } } } }
+  });
+}
+
+let reportChartsInit = false;
+function initReportCharts() {
+  if (reportChartsInit) return;
+  reportChartsInit = true;
+  new Chart(document.getElementById('reportTypeChart'), {
+    type: 'bar',
+    data: {
+      labels: ['ลาป่วย','ลากิจ','พักร้อน','นักขัตฤกษ์','เปลี่ยนวัน','เปลี่ยนรอบ'],
+      datasets: [{ label:'วันลา', data:[6,4,5,3,4,2], backgroundColor: ['rgba(192,57,43,0.7)','rgba(212,172,58,0.7)','rgba(46,134,193,0.7)','rgba(26,158,106,0.7)','rgba(120,80,180,0.7)','rgba(80,160,200,0.7)'], borderRadius:6, borderSkipped:false }]
+    },
+    options: { responsive:true, plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ display:false } }, y:{ grid:{ color:'rgba(255,255,255,0.05)' }, ticks:{ stepSize:2 } } } }
+  });
+
+  new Chart(document.getElementById('reportTrendChart'), {
+    type: 'line',
+    data: {
+      labels: ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.'],
+      datasets: [{
+        label:'วันลารวม', data:[8,6,13,13,26],
+        borderColor: 'rgba(46,134,193,0.9)',
+        backgroundColor: 'rgba(200,145,42,0.1)',
+        tension: 0.4, fill: true, pointRadius: 5,
+        pointBackgroundColor: 'rgba(46,134,193,1)'
+      }]
+    },
+    options: { responsive:true, plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ display:false } }, y:{ grid:{ color:'rgba(255,255,255,0.05)' } } } }
+  });
+}
+</script>
+</body>
+</html>
