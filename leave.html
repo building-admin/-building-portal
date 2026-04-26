@@ -1111,7 +1111,7 @@
         </div>
         <div class="table-card">
           <div class="table-header">
-            <div class="table-title">ประวัติการลา — สมชาย ใจดี</div>
+            <div class="table-title" id="my-leaves-title">ประวัติการลา</div>
             <button class="btn-print" onclick="window.print()">🖨️ พิมพ์</button>
           </div>
           <div class="table-wrap">
@@ -1119,35 +1119,8 @@
               <thead><tr>
                 <th>รหัสใบลา</th><th>ประเภท</th><th>วันเริ่ม</th><th>วันสิ้นสุด</th><th>จำนวน</th><th>สถานะ</th><th>ผู้อนุมัติ</th>
               </tr></thead>
-              <tbody>
-                <tr>
-                  <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-018</td>
-                  <td><span class="badge badge-type">ลาป่วย</span></td>
-                  <td>15 พ.ค. 68</td><td>16 พ.ค. 68</td><td>2 วัน</td>
-                  <td><span class="badge badge-approved">✓ อนุมัติ</span></td>
-                  <td><div class="approver-status"><div class="approver-row"><div class="dot dot-green"></div><span>อภิชาต ✓</span></div><div class="approver-row"><div class="dot dot-green"></div><span>มนัสนันท์ ✓</span></div></div></td>
-                </tr>
-                <tr>
-                  <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-012</td>
-                  <td><span class="badge badge-type">ลากิจ</span></td>
-                  <td>2 พ.ค. 68</td><td>2 พ.ค. 68</td><td>1 วัน</td>
-                  <td><span class="badge badge-approved">✓ อนุมัติ</span></td>
-                  <td><div class="approver-status"><div class="approver-row"><div class="dot dot-green"></div><span>อภิชาต ✓</span></div><div class="approver-row"><div class="dot dot-green"></div><span>มนัสนันท์ ✓</span></div></div></td>
-                </tr>
-                <tr>
-                  <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-005</td>
-                  <td><span class="badge badge-type">พักร้อน</span></td>
-                  <td>10 เม.ย. 68</td><td>14 เม.ย. 68</td><td>5 วัน</td>
-                  <td><span class="badge badge-approved">✓ อนุมัติ</span></td>
-                  <td><div class="approver-status"><div class="approver-row"><div class="dot dot-green"></div><span>อภิชาต ✓</span></div><div class="approver-row"><div class="dot dot-green"></div><span>มนัสนันท์ ✓</span></div></div></td>
-                </tr>
-                <tr>
-                  <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-001</td>
-                  <td><span class="badge badge-type">ลาป่วย</span></td>
-                  <td>3 ม.ค. 68</td><td>3 ม.ค. 68</td><td>1 วัน</td>
-                  <td><span class="badge badge-rejected">✗ ไม่อนุมัติ</span></td>
-                  <td><div class="approver-status"><div class="approver-row"><div class="dot dot-green"></div><span>อภิชาต ✓</span></div><div class="approver-row"><div class="dot" style="background:#E74C3C;"></div><span>มนัสนันท์ ✗</span></div></div></td>
-                </tr>
+              <tbody id="my-leaves-tbody">
+                <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:28px;">⏳ กำลังโหลด...</td></tr>
               </tbody>
             </table>
           </div>
@@ -1155,22 +1128,22 @@
         <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;">
           <div class="stat-card" style="flex:1;min-width:120px;padding:14px 16px;">
             <div class="stat-label">ลาป่วยสะสม</div>
-            <div class="stat-value" style="font-size:24px;color:var(--accent-light)">3</div>
+            <div class="stat-value" id="sum-sick" style="font-size:24px;color:var(--danger)">—</div>
             <div class="stat-change">วัน</div>
           </div>
           <div class="stat-card" style="flex:1;min-width:120px;padding:14px 16px;">
             <div class="stat-label">ลากิจสะสม</div>
-            <div class="stat-value" style="font-size:24px;color:var(--gold-light)">1</div>
+            <div class="stat-value" id="sum-personal" style="font-size:24px;color:var(--gold-light)">—</div>
             <div class="stat-change">วัน</div>
           </div>
           <div class="stat-card" style="flex:1;min-width:120px;padding:14px 16px;">
             <div class="stat-label">พักร้อนสะสม</div>
-            <div class="stat-value" style="font-size:24px;color:#2ECC71">5</div>
+            <div class="stat-value" id="sum-vacation" style="font-size:24px;color:var(--success)">—</div>
             <div class="stat-change">วัน</div>
           </div>
           <div class="stat-card" style="flex:1;min-width:120px;padding:14px 16px;">
             <div class="stat-label">รวมทั้งหมด</div>
-            <div class="stat-value" style="font-size:24px;">9</div>
+            <div class="stat-value" id="sum-total" style="font-size:24px;color:var(--white)">—</div>
             <div class="stat-change">วัน</div>
           </div>
         </div>
@@ -1179,150 +1152,11 @@
       <!-- APPROVAL -->
       <div class="page-section" id="section-approval">
         <div class="approval-filters no-print">
-          <button class="filter-btn active" onclick="setFilter(this)">รออนุมัติ (3)</button>
-          <button class="filter-btn" onclick="setFilter(this)">อนุมัติแล้ว</button>
+          <button class="filter-btn active" onclick="setFilter(this)">รออนุมัติ</button>
           <button class="filter-btn" onclick="setFilter(this)">ทั้งหมด</button>
         </div>
-
-        <div class="leave-detail-card">
-          <div class="leave-card-header" onclick="toggleCard('card1')">
-            <div class="leave-card-left">
-              <div class="leave-card-avatar av-blue">นต</div>
-              <div>
-                <div class="leave-card-name">นิตยา มีสุข</div>
-                <div class="leave-card-meta">เจ้าหน้าที่ประสานงาน · ยื่น 17 พ.ค. 2568</div>
-              </div>
-            </div>
-            <div class="leave-card-right">
-              <span class="badge badge-type">ลากิจ</span>
-              <span class="badge badge-pending">⏳ รออนุมัติ</span>
-              <span class="card-expand-btn open" id="arrow-card1">▲</span>
-            </div>
-          </div>
-          <div class="leave-card-body" id="body-card1">
-            <div class="leave-info-grid">
-              <div class="leave-info-item"><div class="leave-info-label">วันที่ลา</div><div class="leave-info-value">18 พ.ค. 2568</div></div>
-              <div class="leave-info-item"><div class="leave-info-label">จำนวนวัน</div><div class="leave-info-value">1 วัน</div></div>
-              <div class="leave-info-item"><div class="leave-info-label">เหตุผล</div><div class="leave-info-value">ธุระส่วนตัว</div></div>
-              <div class="leave-info-item"><div class="leave-info-label">เอกสารแนบ</div><div class="leave-info-value" style="color:var(--text-muted)">ไม่มี</div></div>
-            </div>
-            <div class="approvers-section">
-              <div class="approvers-title">สถานะการอนุมัติ</div>
-              <div class="approver-item">
-                <div class="approver-name-role">
-                  <div class="approver-name">นายอภิชาต วงศ์ไพบูลย์</div>
-                  <div class="approver-role">ที่ปรึกษาฝ่ายอาคาร</div>
-                </div>
-                <div class="approver-action">
-                  <button class="approve-btn" onclick="approveLeave(this)">✓ อนุมัติ</button>
-                  <button class="reject-btn" onclick="rejectLeave(this)">✗ ไม่อนุมัติ</button>
-                </div>
-              </div>
-              <div class="approver-item">
-                <div class="approver-name-role">
-                  <div class="approver-name">นางสาวมนัสนันท์ ศรีสวัสดิ์</div>
-                  <div class="approver-role">HR Manager</div>
-                </div>
-                <div class="approver-action">
-                  <button class="approve-btn" onclick="approveLeave(this)">✓ อนุมัติ</button>
-                  <button class="reject-btn" onclick="rejectLeave(this)">✗ ไม่อนุมัติ</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="leave-detail-card">
-          <div class="leave-card-header" onclick="toggleCard('card2')">
-            <div class="leave-card-left">
-              <div class="leave-card-avatar av-gold">วช</div>
-              <div>
-                <div class="leave-card-name">วิชัย สมบูรณ์</div>
-                <div class="leave-card-meta">ช่างไฟฟ้า · ยื่น 16 พ.ค. 2568</div>
-              </div>
-            </div>
-            <div class="leave-card-right">
-              <span class="badge badge-type">ลาพักร้อน</span>
-              <span class="badge badge-partial">อนุมัติ 1/2</span>
-              <span class="card-expand-btn" id="arrow-card2">▼</span>
-            </div>
-          </div>
-          <div class="leave-card-body" id="body-card2" style="display:none">
-            <div class="leave-info-grid">
-              <div class="leave-info-item"><div class="leave-info-label">วันที่ลา</div><div class="leave-info-value">20-22 พ.ค. 2568</div></div>
-              <div class="leave-info-item"><div class="leave-info-label">จำนวนวัน</div><div class="leave-info-value">3 วัน</div></div>
-              <div class="leave-info-item"><div class="leave-info-label">เหตุผล</div><div class="leave-info-value">พักผ่อนประจำปี</div></div>
-              <div class="leave-info-item"><div class="leave-info-label">เอกสารแนบ</div><div class="leave-info-value" style="color:var(--text-muted)">ไม่มี</div></div>
-            </div>
-            <div class="approvers-section">
-              <div class="approvers-title">สถานะการอนุมัติ</div>
-              <div class="approver-item">
-                <div class="approver-name-role">
-                  <div class="approver-name">นายอภิชาต วงศ์ไพบูลย์</div>
-                  <div class="approver-role">ที่ปรึกษาฝ่ายอาคาร</div>
-                </div>
-                <div class="already-approved">✓ อนุมัติแล้ว <span style="color:var(--text-muted);margin-left:4px;">17 พ.ค. 10:30</span></div>
-              </div>
-              <div class="approver-item">
-                <div class="approver-name-role">
-                  <div class="approver-name">นางสาวมนัสนันท์ ศรีสวัสดิ์</div>
-                  <div class="approver-role">HR Manager</div>
-                </div>
-                <div class="approver-action">
-                  <button class="approve-btn" onclick="approveLeave(this)">✓ อนุมัติ</button>
-                  <button class="reject-btn" onclick="rejectLeave(this)">✗ ไม่อนุมัติ</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="leave-detail-card">
-          <div class="leave-card-header" onclick="toggleCard('card3')">
-            <div class="leave-card-left">
-              <div class="leave-card-avatar av-green">ปส</div>
-              <div>
-                <div class="leave-card-name">ประเสริฐ ดีเลิศ</div>
-                <div class="leave-card-meta">พนักงานรักษาความสะอาด · ยื่น 18 พ.ค. 2568</div>
-              </div>
-            </div>
-            <div class="leave-card-right">
-              <span class="badge badge-type">ลาป่วย</span>
-              <span class="badge badge-pending">⏳ รออนุมัติ</span>
-              <span class="card-expand-btn" id="arrow-card3">▼</span>
-            </div>
-          </div>
-          <div class="leave-card-body" id="body-card3" style="display:none">
-            <div class="leave-info-grid">
-              <div class="leave-info-item"><div class="leave-info-label">วันที่ลา</div><div class="leave-info-value">21 พ.ค. 2568</div></div>
-              <div class="leave-info-item"><div class="leave-info-label">จำนวนวัน</div><div class="leave-info-value">1 วัน</div></div>
-              <div class="leave-info-item"><div class="leave-info-label">เหตุผล</div><div class="leave-info-value">ไม่สบาย มีไข้</div></div>
-              <div class="leave-info-item"><div class="leave-info-label">เอกสารแนบ</div><div class="leave-info-value" style="color:var(--accent-light);cursor:pointer;">📎 ใบรับรองแพทย์.jpg</div></div>
-            </div>
-            <div class="approvers-section">
-              <div class="approvers-title">สถานะการอนุมัติ</div>
-              <div class="approver-item">
-                <div class="approver-name-role">
-                  <div class="approver-name">นายอภิชาต วงศ์ไพบูลย์</div>
-                  <div class="approver-role">ที่ปรึกษาฝ่ายอาคาร</div>
-                </div>
-                <div class="approver-action">
-                  <button class="approve-btn" onclick="approveLeave(this)">✓ อนุมัติ</button>
-                  <button class="reject-btn" onclick="rejectLeave(this)">✗ ไม่อนุมัติ</button>
-                </div>
-              </div>
-              <div class="approver-item">
-                <div class="approver-name-role">
-                  <div class="approver-name">นางสาวมนัสนันท์ ศรีสวัสดิ์</div>
-                  <div class="approver-role">HR Manager</div>
-                </div>
-                <div class="approver-action">
-                  <button class="approve-btn" onclick="approveLeave(this)">✓ อนุมัติ</button>
-                  <button class="reject-btn" onclick="rejectLeave(this)">✗ ไม่อนุมัติ</button>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div id="approval-container">
+          <div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-text">กำลังโหลด...</div></div>
         </div>
       </div>
 
@@ -1330,7 +1164,6 @@
       <div class="page-section" id="section-all-leaves">
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;" class="no-print">
           <button class="filter-btn active" onclick="setFilter(this)">ทั้งหมด</button>
-          <button class="filter-btn" onclick="setFilter(this)">เดือนนี้</button>
           <button class="filter-btn" onclick="setFilter(this)">รออนุมัติ</button>
           <div style="flex:1;min-width:160px;">
             <input class="field-input" style="padding:7px 12px;font-size:12px;" placeholder="🔍 ค้นหาชื่อพนักงาน...">
@@ -1339,23 +1172,18 @@
         </div>
         <div class="table-card">
           <div class="table-header">
-            <div class="table-title">ใบลาทั้งหมด — เดือนพฤษภาคม 2568</div>
-            <span style="font-size:12px;color:var(--text-muted)">18 รายการ</span>
+            <div class="table-title" id="all-leaves-title">ใบลาทั้งหมด</div>
+            <span style="font-size:12px;color:var(--muted)" id="all-leaves-count">—</span>
           </div>
           <div class="table-wrap">
             <table>
               <thead><tr>
                 <th>รหัสใบลา</th><th>พนักงาน</th><th>ตำแหน่ง</th><th>ประเภท</th>
                 <th>วันเริ่ม</th><th>วันสิ้นสุด</th><th>จำนวน</th>
-                <th>ที่ปรึกษา</th><th>HR</th><th>สถานะรวม</th>
+                <th>ท่านที่ 1</th><th>ท่านที่ 2</th><th>สถานะรวม</th>
               </tr></thead>
               <tbody id="all-leaves-tbody">
-                <tr><td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-018</td><td>สมชาย ใจดี</td><td style="color:var(--text-muted)">ช่างซ่อมบำรุง</td><td><span class="badge badge-type">ลาป่วย</span></td><td>15 พ.ค.</td><td>16 พ.ค.</td><td>2 วัน</td><td><span class="badge badge-approved" style="font-size:10px;">✓</span></td><td><span class="badge badge-approved" style="font-size:10px;">✓</span></td><td><span class="badge badge-approved">อนุมัติ</span></td></tr>
-                <tr><td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-017</td><td>นิตยา มีสุข</td><td style="color:var(--text-muted)">เจ้าหน้าที่ประสาน</td><td><span class="badge badge-type">ลากิจ</span></td><td>18 พ.ค.</td><td>18 พ.ค.</td><td>1 วัน</td><td><span class="badge badge-pending" style="font-size:10px;">⏳</span></td><td><span class="badge badge-pending" style="font-size:10px;">⏳</span></td><td><span class="badge badge-pending">รออนุมัติ</span></td></tr>
-                <tr><td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-016</td><td>วิชัย สมบูรณ์</td><td style="color:var(--text-muted)">ช่างไฟฟ้า</td><td><span class="badge badge-type">พักร้อน</span></td><td>20 พ.ค.</td><td>22 พ.ค.</td><td>3 วัน</td><td><span class="badge badge-approved" style="font-size:10px;">✓</span></td><td><span class="badge badge-pending" style="font-size:10px;">⏳</span></td><td><span class="badge badge-partial">1/2</span></td></tr>
-                <tr><td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-015</td><td>สุดา รักงาน</td><td style="color:var(--text-muted)">พนักงานทำความสะอาด</td><td><span class="badge badge-type">นักขัตฤกษ์</span></td><td>19 พ.ค.</td><td>19 พ.ค.</td><td>1 วัน</td><td><span class="badge badge-approved" style="font-size:10px;">✓</span></td><td><span class="badge badge-approved" style="font-size:10px;">✓</span></td><td><span class="badge badge-approved">อนุมัติ</span></td></tr>
-                <tr><td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-014</td><td>ประเสริฐ ดีเลิศ</td><td style="color:var(--text-muted)">รักษาความสะอาด</td><td><span class="badge badge-type">ลาป่วย</span></td><td>21 พ.ค.</td><td>21 พ.ค.</td><td>1 วัน</td><td><span class="badge badge-pending" style="font-size:10px;">⏳</span></td><td><span class="badge badge-pending" style="font-size:10px;">⏳</span></td><td><span class="badge badge-pending">รออนุมัติ</span></td></tr>
-                <tr><td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">LV-2568-013</td><td>ธนพล รุ่งเรือง</td><td style="color:var(--text-muted)">ช่างประปา</td><td><span class="badge badge-type">เปลี่ยนรอบ</span></td><td>17 พ.ค.</td><td>18 พ.ค.</td><td>2 วัน</td><td><span class="badge badge-approved" style="font-size:10px;">✓</span></td><td><span class="badge badge-approved" style="font-size:10px;">✓</span></td><td><span class="badge badge-approved">อนุมัติ</span></td></tr>
+                <tr><td colspan="10" style="text-align:center;color:var(--muted);padding:28px;">⏳ กำลังโหลด...</td></tr>
               </tbody>
             </table>
           </div>
@@ -1366,37 +1194,33 @@
       <div class="page-section" id="section-report">
         <div class="report-header no-print">
           <div class="report-period">
-            <select class="period-select">
-              <option>พฤษภาคม 2568</option>
-              <option>เมษายน 2568</option>
-              <option>มีนาคม 2568</option>
-            </select>
+            <select class="period-select" id="report-month-select" onchange="loadReportData()"></select>
           </div>
           <button class="btn-print" onclick="window.print()">🖨️ พิมพ์รายงาน</button>
         </div>
 
         <div style="margin-bottom:20px;padding:20px;background:var(--card-bg);border:1px solid var(--border);border-radius:12px;">
-          <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:4px;">รายงานสรุปการลา</div>
-          <div style="font-family:var(--font-display);font-size:22px;margin-bottom:2px;">ฝ่ายอาคารและสถานที่</div>
-          <div style="font-size:13px;color:var(--text-secondary);">ประจำเดือน พฤษภาคม 2568 | จัดทำ: ระบบ BFS Leave Management</div>
+          <div style="font-size:11px;color:var(--muted);letter-spacing:0.07em;text-transform:uppercase;margin-bottom:4px;font-family:var(--font-label);">รายงานสรุปการลา</div>
+          <div style="font-size:22px;font-weight:700;margin-bottom:2px;">ฝ่ายอาคารและสถานที่</div>
+          <div style="font-size:13px;color:var(--silver)" id="report-subtitle">กำลังโหลด...</div>
         </div>
 
         <div class="stats-grid stagger" style="margin-bottom:20px;">
-          <div class="stat-card blue"><div class="stat-icon">👥</div><div class="stat-label">พนักงานทั้งหมด</div><div class="stat-value blue">12</div><div class="stat-change">คน</div></div>
-          <div class="stat-card gold"><div class="stat-icon">📋</div><div class="stat-label">ใบลาเดือนนี้</div><div class="stat-value gold">18</div><div class="stat-change">ใบ</div></div>
-          <div class="stat-card green"><div class="stat-icon">📅</div><div class="stat-label">วันลารวม</div><div class="stat-value green">26</div><div class="stat-change">วัน</div></div>
-          <div class="stat-card red"><div class="stat-icon">📊</div><div class="stat-label">เฉลี่ย/คน</div><div class="stat-value red">2.2</div><div class="stat-change">วัน/เดือน</div></div>
+          <div class="stat-card blue"><div class="stat-icon">📋</div><div class="stat-label">ใบลาทั้งหมด</div><div class="stat-value blue" id="rpt-total">—</div><div class="stat-change">ใบ</div></div>
+          <div class="stat-card gold"><div class="stat-icon">✅</div><div class="stat-label">อนุมัติแล้ว</div><div class="stat-value gold" id="rpt-approved">—</div><div class="stat-change">ใบ</div></div>
+          <div class="stat-card green"><div class="stat-icon">📅</div><div class="stat-label">วันลารวม</div><div class="stat-value green" id="rpt-days">—</div><div class="stat-change">วัน</div></div>
+          <div class="stat-card red"><div class="stat-icon">⏳</div><div class="stat-label">รออนุมัติ</div><div class="stat-value red" id="rpt-pending">—</div><div class="stat-change">ใบ</div></div>
         </div>
 
         <div class="report-grid">
           <div class="chart-card">
             <div class="chart-title">วันลาตามประเภท</div>
-            <div class="chart-sub">สะสมเดือนพฤษภาคม</div>
+            <div class="chart-sub">สะสมเดือนนี้</div>
             <canvas id="reportTypeChart" height="200"></canvas>
           </div>
           <div class="chart-card">
-            <div class="chart-title">แนวโน้มการลา 6 เดือน</div>
-            <div class="chart-sub">ม.ค. — พ.ค. 2568</div>
+            <div class="chart-title">แนวโน้มการลา 12 เดือน</div>
+            <div class="chart-sub">ย้อนหลัง 1 ปี</div>
             <canvas id="reportTrendChart" height="200"></canvas>
           </div>
         </div>
@@ -1412,21 +1236,15 @@
                 <th>ลาป่วย</th><th>ลากิจ</th><th>พักร้อน</th>
                 <th>นักขัตฤกษ์</th><th>เปลี่ยนวัน</th><th>รวม</th>
               </tr></thead>
-              <tbody>
-                <tr><td>สมชาย ใจดี</td><td style="color:var(--text-muted)">ช่างซ่อมบำรุง</td><td>2</td><td>1</td><td>0</td><td>0</td><td>0</td><td style="font-weight:500;color:var(--accent-light)">3</td></tr>
-                <tr><td>นิตยา มีสุข</td><td style="color:var(--text-muted)">เจ้าหน้าที่ประสาน</td><td>0</td><td>1</td><td>0</td><td>0</td><td>0</td><td style="font-weight:500;color:var(--accent-light)">1</td></tr>
-                <tr><td>วิชัย สมบูรณ์</td><td style="color:var(--text-muted)">ช่างไฟฟ้า</td><td>0</td><td>0</td><td>3</td><td>0</td><td>0</td><td style="font-weight:500;color:var(--accent-light)">3</td></tr>
-                <tr><td>สุดา รักงาน</td><td style="color:var(--text-muted)">พนักงานทำความสะอาด</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td style="font-weight:500;color:var(--accent-light)">1</td></tr>
-                <tr><td>ประเสริฐ ดีเลิศ</td><td style="color:var(--text-muted)">รักษาความสะอาด</td><td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td style="font-weight:500;color:var(--accent-light)">1</td></tr>
-                <tr><td>ธนพล รุ่งเรือง</td><td style="color:var(--text-muted)">ช่างประปา</td><td>0</td><td>0</td><td>0</td><td>0</td><td>2</td><td style="font-weight:500;color:var(--accent-light)">2</td></tr>
-                <tr style="border-top:1px solid var(--border);"><td style="font-weight:500">รวมทั้งหมด</td><td></td><td style="font-weight:500">6</td><td style="font-weight:500">4</td><td style="font-weight:500">5</td><td style="font-weight:500">3</td><td style="font-weight:500">4</td><td style="font-weight:600;color:var(--gold-light)">26</td></tr>
+              <tbody id="report-summary-tbody">
+                <tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px;">⏳ กำลังโหลด...</td></tr>
               </tbody>
             </table>
           </div>
         </div>
       </div>
 
-      <!-- SETTINGS -->
+      <!-- SETTINGS -->      <!-- SETTINGS -->
       <div class="page-section" id="section-settings">
         <div class="settings-grid">
           <div class="settings-card">
