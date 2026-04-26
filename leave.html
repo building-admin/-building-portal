@@ -378,13 +378,45 @@
   .dot-gray { background: var(--text-muted); }
 
   /* ─── FORM PAGE ─── */
+  .form-page-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+    align-items: start;
+  }
   .form-card {
     background: var(--card-bg);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 28px;
-    max-width: 760px;
+    padding: 24px 28px;
+    width: 100%;
   }
+  .form-side {
+    display: flex; flex-direction: column; gap: 14px;
+    position: sticky; top: 72px;
+  }
+  .form-side-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+  }
+  .form-side-title {
+    font-size: 11px; font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    margin-bottom: 12px; padding-bottom: 9px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-label);
+  }
+  .leave-summary-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 0; border-bottom: 1px solid rgba(44,74,114,0.3);
+    font-size: 13px;
+  }
+  .leave-summary-row:last-child { border-bottom: none; }
+  .leave-summary-label { color: var(--muted); font-size: 12px; }
+  .leave-summary-value { font-weight: 500; color: var(--white); }
   .form-section-title {
     font-size: 11px; font-weight: 700;
     color: var(--text-secondary);
@@ -773,6 +805,8 @@
     .leave-type-btn .ltype-icon { font-size: 24px; }
 
     /* Form */
+    .form-page-layout { grid-template-columns: 1fr; }
+    .form-side { position: static; }
     .form-card { padding: 16px; border-radius: 10px; }
     .form-row { grid-template-columns: 1fr; gap: 12px; }
     .form-row.three { grid-template-columns: 1fr; }
@@ -998,105 +1032,124 @@
 
       <!-- LEAVE FORM -->
       <div class="page-section" id="section-leave-form">
-        <div class="form-card">
-          <div class="form-section-title">ข้อมูลพนักงาน (Auto-fill)</div>
-          <div class="form-row three">
-            <div>
-              <label class="field-label">รหัสพนักงาน</label>
-              <input class="field-input" readonly value="EMP001" id="emp-id">
-            </div>
-            <div>
-              <label class="field-label">ชื่อ-นามสกุล</label>
-              <input class="field-input" readonly value="สมชาย ใจดี" id="emp-name">
-            </div>
-            <div>
-              <label class="field-label">ตำแหน่ง</label>
-              <input class="field-input" readonly value="ช่างซ่อมบำรุง" id="emp-position">
-            </div>
-          </div>
-          <div class="form-row">
-            <div>
-              <label class="field-label">แผนก</label>
-              <input class="field-input" readonly value="ฝ่ายอาคารและสถานที่" id="emp-dept">
-            </div>
-            <div>
-              <label class="field-label">วันที่ยื่นใบลา</label>
-              <input class="field-input" readonly id="today-date">
-            </div>
-          </div>
+        <div class="form-page-layout">
 
-          <div class="form-section-title">ประเภทการลา<span class="field-required">*</span></div>
-          <div class="leave-type-grid">
-            <button class="leave-type-btn selected" onclick="selectType(this,'ลาป่วย')"><span class="ltype-icon">🤒</span>ลาป่วย</button>
-            <button class="leave-type-btn" onclick="selectType(this,'ลากิจ')"><span class="ltype-icon">📌</span>ลากิจ</button>
-            <button class="leave-type-btn" onclick="selectType(this,'ลาพักร้อน')"><span class="ltype-icon">🏖️</span>ลาพักร้อน</button>
-            <button class="leave-type-btn" onclick="selectType(this,'ลานักขัตฤกษ์')"><span class="ltype-icon">🎉</span>ลานักขัตฤกษ์</button>
-            <button class="leave-type-btn" onclick="selectType(this,'เปลี่ยนวันหยุด')"><span class="ltype-icon">🔄</span>เปลี่ยนวันหยุด</button>
-            <button class="leave-type-btn" onclick="selectType(this,'เปลี่ยนรอบ')"><span class="ltype-icon">🔃</span>เปลี่ยนรอบ</button>
-          </div>
-
-          <div class="form-section-title">วันที่ลา<span class="field-required">*</span></div>
-          <div class="form-row three">
-            <div>
-              <label class="field-label">วันเริ่มต้น</label>
-              <input type="date" class="field-input" id="date-start" onchange="calcDays()">
-            </div>
-            <div>
-              <label class="field-label">วันสิ้นสุด</label>
-              <input type="date" class="field-input" id="date-end" onchange="calcDays()">
-            </div>
-            <div>
-              <div class="days-display">
-                <div class="days-number" id="days-count">0</div>
-                <div class="days-label">จำนวนวันลา</div>
+          <!-- ── คอลัมน์ซ้าย: กรอกข้อมูล ── -->
+          <div class="form-card">
+            <div class="form-section-title" style="margin-top:0;">ข้อมูลพนักงาน</div>
+            <div class="form-row three">
+              <div>
+                <label class="field-label">รหัสพนักงาน</label>
+                <input class="field-input" readonly id="emp-id">
+              </div>
+              <div>
+                <label class="field-label">ชื่อ-นามสกุล</label>
+                <input class="field-input" readonly id="emp-name">
+              </div>
+              <div>
+                <label class="field-label">ตำแหน่ง</label>
+                <input class="field-input" readonly id="emp-position">
               </div>
             </div>
-          </div>
-
-          <div class="form-section-title">รายละเอียด</div>
-          <div class="form-row full">
-            <div>
-              <label class="field-label">เหตุผลการลา<span class="field-required">*</span></label>
-              <textarea class="field-textarea" placeholder="ระบุเหตุผลการลา..."></textarea>
+            <div class="form-row">
+              <div>
+                <label class="field-label">แผนก</label>
+                <input class="field-input" readonly id="emp-dept">
+              </div>
+              <div>
+                <label class="field-label">วันที่ยื่นใบลา</label>
+                <input class="field-input" readonly id="today-date">
+              </div>
             </div>
-          </div>
-          <div class="form-row full">
+
+            <div class="form-section-title">ประเภทการลา<span class="field-required">*</span></div>
+            <div class="leave-type-grid">
+              <button class="leave-type-btn selected" onclick="selectType(this,'ลาป่วย')"><span class="ltype-icon">🤒</span>ลาป่วย</button>
+              <button class="leave-type-btn" onclick="selectType(this,'ลากิจ')"><span class="ltype-icon">📌</span>ลากิจ</button>
+              <button class="leave-type-btn" onclick="selectType(this,'ลาพักร้อน')"><span class="ltype-icon">🏖️</span>ลาพักร้อน</button>
+              <button class="leave-type-btn" onclick="selectType(this,'ลานักขัตฤกษ์')"><span class="ltype-icon">🎉</span>ลานักขัตฤกษ์</button>
+              <button class="leave-type-btn" onclick="selectType(this,'เปลี่ยนวันหยุด')"><span class="ltype-icon">🔄</span>เปลี่ยนวันหยุด</button>
+              <button class="leave-type-btn" onclick="selectType(this,'เปลี่ยนรอบ')"><span class="ltype-icon">🔃</span>เปลี่ยนรอบ</button>
+            </div>
+
+            <div class="form-section-title">วันที่ลา<span class="field-required">*</span></div>
+            <div class="form-row">
+              <div>
+                <label class="field-label">วันเริ่มต้น</label>
+                <input type="date" class="field-input" id="date-start" onchange="calcDays()">
+              </div>
+              <div>
+                <label class="field-label">วันสิ้นสุด</label>
+                <input type="date" class="field-input" id="date-end" onchange="calcDays()">
+              </div>
+            </div>
+
+            <div class="form-section-title">รายละเอียด</div>
+            <div style="margin-bottom:14px;">
+              <label class="field-label">เหตุผลการลา<span class="field-required">*</span></label>
+              <textarea class="field-textarea" id="leave-reason" placeholder="ระบุเหตุผลการลา..."></textarea>
+            </div>
             <div>
               <label class="field-label">หมายเหตุเพิ่มเติม (ไม่บังคับ)</label>
-              <textarea class="field-textarea" style="min-height:60px" placeholder="เช่น กรณีเปลี่ยนรอบ ระบุชื่อผู้ที่สลับด้วย..."></textarea>
+              <textarea class="field-textarea" id="leave-remark" style="min-height:60px" placeholder="เช่น กรณีเปลี่ยนรอบ ระบุชื่อผู้ที่สลับด้วย..."></textarea>
+            </div>
+
+            <div class="form-section-title">เอกสารแนบ (ถ้ามี)</div>
+            <div class="upload-area" onclick="document.getElementById('file-upload').click()">
+              <input type="file" id="file-upload" style="display:none" multiple accept="image/*,.pdf">
+              <div class="upload-icon">📎</div>
+              <div class="upload-text">ลากไฟล์มาวางที่นี่ หรือ <span>คลิกเพื่อเลือกไฟล์</span></div>
+              <div style="font-size:11px;color:var(--muted);margin-top:4px;">รองรับ JPG, PNG, PDF ขนาดไม่เกิน 10MB</div>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn-cancel" onclick="showPage('dashboard')">ยกเลิก</button>
+              <button class="btn-submit" onclick="submitLeave()">📤 ส่งใบลา</button>
             </div>
           </div>
 
-          <div class="form-section-title">เอกสารแนบ (ถ้ามี)</div>
-          <div class="upload-area" onclick="document.getElementById('file-upload').click()">
-            <input type="file" id="file-upload" style="display:none" multiple accept="image/*,.pdf">
-            <div class="upload-icon">📎</div>
-            <div class="upload-text">ลากไฟล์มาวางที่นี่ หรือ <span>คลิกเพื่อเลือกไฟล์</span></div>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">รองรับ JPG, PNG, PDF ขนาดไม่เกิน 10MB</div>
-          </div>
+          <!-- ── คอลัมน์ขวา: สรุป + สายอนุมัติ ── -->
+          <div class="form-side">
 
-          <div class="form-section-title">สายอนุมัติ</div>
-          <div class="approvers-section">
-            <div class="approvers-title">ผู้มีสิทธิ์อนุมัติ (ต้องครบทั้ง 2 ท่าน)</div>
-            <div class="approver-item">
-              <div class="approver-name-role">
-                <div class="approver-name">นายอภิชาต วงศ์ไพบูลย์</div>
-                <div class="approver-role">ที่ปรึกษาฝ่ายอาคาร</div>
+            <!-- สรุปใบลา -->
+            <div class="form-side-card">
+              <div class="form-side-title">สรุปใบลา</div>
+              <div style="text-align:center;padding:14px 0 18px;">
+                <div class="days-number" id="days-count" style="font-size:52px;line-height:1;">0</div>
+                <div class="days-label">วันลา</div>
               </div>
-              <span class="badge badge-pending">⏳ รออนุมัติ</span>
-            </div>
-            <div class="approver-item">
-              <div class="approver-name-role">
-                <div class="approver-name">นางสาวมนัสนันท์ ศรีสวัสดิ์</div>
-                <div class="approver-role">HR Manager</div>
+              <div class="leave-summary-row">
+                <span class="leave-summary-label">ประเภท</span>
+                <span class="leave-summary-value" id="summary-type">ลาป่วย</span>
               </div>
-              <span class="badge badge-pending">⏳ รออนุมัติ</span>
+              <div class="leave-summary-row">
+                <span class="leave-summary-label">เริ่มต้น</span>
+                <span class="leave-summary-value" id="summary-start">—</span>
+              </div>
+              <div class="leave-summary-row">
+                <span class="leave-summary-label">สิ้นสุด</span>
+                <span class="leave-summary-value" id="summary-end">—</span>
+              </div>
             </div>
-          </div>
 
-          <div class="form-actions">
-            <button class="btn-cancel" onclick="showPage('dashboard')">ยกเลิก</button>
-            <button class="btn-submit" onclick="submitLeave()">📤 ส่งใบลา</button>
+            <!-- สายอนุมัติ -->
+            <div class="form-side-card">
+              <div class="form-side-title">สายอนุมัติ</div>
+              <div id="approvers-list">
+                <div style="text-align:center;padding:12px;color:var(--muted);font-size:13px;">⏳ กำลังโหลด...</div>
+              </div>
+            </div>
+
+            <!-- หมายเหตุ -->
+            <div class="form-side-card" style="background:var(--gold-glow);border-color:rgba(200,145,42,0.25);">
+              <div class="form-side-title" style="color:var(--gold-light);border-color:rgba(200,145,42,0.2);">หมายเหตุ</div>
+              <ul style="font-size:12px;color:var(--silver);line-height:1.9;padding-left:16px;">
+                <li>ต้องได้รับอนุมัติ <strong style="color:var(--gold-light);">ครบ 2 ท่าน</strong></li>
+                <li>ลาป่วย &gt; 3 วัน แนบใบรับรองแพทย์</li>
+                <li>ยื่นล่วงหน้าอย่างน้อย 3 วันทำการ</li>
+              </ul>
+            </div>
+
           </div>
         </div>
       </div>
@@ -1797,6 +1850,7 @@ function showPage(page) {
   if (page === 'my-leaves')  loadMyLeaves();
   if (page === 'all-leaves') loadAllLeaves();
   if (page === 'approval')   loadPendingApproval();
+  if (page === 'leave-form') loadApprovers();
   if (page === 'report')     setTimeout(initReportCharts, 100);
 }
 
@@ -1812,15 +1866,43 @@ function closeSidebar() {
 function selectType(btn, type) {
   document.querySelectorAll('.leave-type-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
+  const el = document.getElementById('summary-type');
+  if (el) el.textContent = type;
 }
 
 function calcDays() {
   const s = document.getElementById('date-start').value;
   const e = document.getElementById('date-end').value;
-  if (s && e) {
-    const diff = Math.max(0, Math.round((new Date(e) - new Date(s)) / 86400000) + 1);
+  if (s) {
+    const end = e || s;
+    const diff = Math.max(0, Math.round((new Date(end) - new Date(s)) / 86400000) + 1);
     document.getElementById('days-count').textContent = diff;
+    const fmt = d => new Date(d).toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'2-digit' });
+    const elS = document.getElementById('summary-start');
+    const elE = document.getElementById('summary-end');
+    if (elS) elS.textContent = fmt(s);
+    if (elE) elE.textContent = fmt(end);
   }
+}
+
+async function loadApprovers() {
+  const container = document.getElementById('approvers-list');
+  if (!container) return;
+  const res = await callAPI({ action: 'getApprovers' });
+  if (!res.success || !res.data?.length) {
+    container.innerHTML = `<div style="font-size:12px;color:var(--muted);text-align:center;padding:8px;">ไม่พบข้อมูลผู้อนุมัติ<br><span style="font-size:11px;">กรุณาตั้งค่าใน Google Sheets</span></div>`;
+    return;
+  }
+  container.innerHTML = res.data
+    .filter(a => String(a['สถานะ']).toLowerCase() === 'active')
+    .map(a => `
+      <div class="approver-item" style="padding:8px 0;">
+        <div class="approver-name-role">
+          <div class="approver-name" style="font-size:13px;">${a['ชื่อ']}</div>
+          <div class="approver-role">${a['ตำแหน่ง']}</div>
+        </div>
+        <span class="badge badge-pending" style="font-size:10px;">⏳ รอ</span>
+      </div>`).join('');
 }
 
 async function submitLeave() {
