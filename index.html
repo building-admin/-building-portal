@@ -920,14 +920,15 @@ function openMenu(menuId, url) {
 
 function openLeave() {
   const u = currentUser;
-  // Map role ใน portal → role ในระบบใบลา
   const leaveRole = (u.role === 'approver' || u.role === 'hr') ? u.role : 'employee';
   const params = new URLSearchParams({
-    uid:      u.username  || '',
-    name:     u.name      || '',
+    uid:      u.username   || '',
+    name:     u.name       || '',
     role:     leaveRole,
-    position: u.position  || u.role || '',
-    dept:     currentDept?.deptId || '',
+    position: u.position   || '',
+    dept:     u.dept       || currentDept?.deptId || '',
+    division: u.division   || '',
+    empId:    u.employeeId || '',
   });
   window.location.href = `leave.html?${params.toString()}`;
 }
