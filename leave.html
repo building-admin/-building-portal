@@ -901,10 +901,10 @@
       </div>
     </div>
     <div class="sidebar-user">
-      <div class="user-avatar" id="sidebar-avatar">สม</div>
+      <div class="user-avatar" id="sidebar-avatar">—</div>
       <div>
-        <div class="user-name" id="sidebar-name">สมชาย ใจดี</div>
-        <div class="user-role" id="sidebar-role">พนักงานทั่วไป</div>
+        <div class="user-name" id="sidebar-name">กำลังโหลด...</div>
+        <div class="user-role" id="sidebar-role">—</div>
       </div>
     </div>
     <div class="sidebar-nav">
@@ -924,7 +924,7 @@
         <div class="nav-section-label">การอนุมัติ</div>
         <a class="nav-item" onclick="showPage('approval')">
           <span class="nav-icon">✅</span> รออนุมัติ
-          <span class="nav-badge">3</span>
+          <span class="nav-badge" id="nav-pending-badge" style="display:none">0</span>
         </a>
         <a class="nav-item" onclick="showPage('all-leaves')">
           <span class="nav-icon">📋</span> ใบลาทั้งหมด
@@ -1300,38 +1300,26 @@
       <!-- SETTINGS -->      <!-- SETTINGS -->
       <div class="page-section" id="section-settings">
         <div class="settings-grid">
+
+          <!-- ผู้อนุมัติ — ดึงจาก Sheets จริง -->
           <div class="settings-card">
             <div class="settings-card-title">ผู้มีสิทธิ์อนุมัติ</div>
-            <div class="settings-card-sub">จัดการรายชื่อผู้อนุมัติ (ต้องครบ 2 ท่าน)</div>
-            <div class="approver-card">
-              <div class="approver-info">
-                <div class="leave-card-avatar av-blue" style="width:34px;height:34px;font-size:12px;">อว</div>
-                <div>
-                  <div style="font-size:13px;font-weight:500;">นายอภิชาต วงศ์ไพบูลย์</div>
-                  <div style="font-size:11px;color:var(--text-muted);">ที่ปรึกษา · @telegram_apichat</div>
-                </div>
-              </div>
-              <button class="status-toggle" title="สถานะ: Active"></button>
+            <div class="settings-card-sub">ดึงข้อมูลจาก Google Sheets แผ่น "ผู้อนุมัติ"</div>
+            <div id="settings-approvers-list">
+              <div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">⏳ กำลังโหลด...</div>
             </div>
-            <div class="approver-card">
-              <div class="approver-info">
-                <div class="leave-card-avatar av-gold" style="width:34px;height:34px;font-size:12px;">มน</div>
-                <div>
-                  <div style="font-size:13px;font-weight:500;">นางสาวมนัสนันท์ ศรีสวัสดิ์</div>
-                  <div style="font-size:11px;color:var(--text-muted);">HR Manager · @telegram_manasnun</div>
-                </div>
-              </div>
-              <button class="status-toggle" title="สถานะ: Active"></button>
-            </div>
-            <button class="btn-cancel" style="width:100%;margin-top:12px;font-size:12px;">+ เพิ่มผู้อนุมัติ</button>
+            <a href="https://docs.google.com/spreadsheets/d/19MSawi_7rwdUa8nOcyfGRh_FHHfmZteM3cvK1CMfw6c/edit" target="_blank">
+              <button class="btn-cancel" style="width:100%;margin-top:12px;font-size:12px;">✏️ แก้ไขใน Google Sheets</button>
+            </a>
           </div>
 
+          <!-- Telegram -->
           <div class="settings-card">
             <div class="settings-card-title">การแจ้งเตือน Telegram</div>
             <div class="settings-card-sub">ตั้งค่า Bot และการทวงอัตโนมัติ</div>
             <div class="form-group">
               <label class="field-label">Telegram Bot Token</label>
-              <input class="field-input" type="password" value="1234567890:ABCdefGHI_example_token" style="font-family:var(--font-mono);font-size:11px;">
+              <input class="field-input" type="password" placeholder="ตั้งค่าใน Code.gs" style="font-family:var(--font-mono);font-size:11px;" readonly value="••••••••••••••••••••">
             </div>
             <div class="form-group">
               <label class="field-label">ทวงอัตโนมัติ (ชั่วโมง)</label>
@@ -1349,43 +1337,27 @@
                 <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;"><input type="checkbox" checked> ใบลาค้างเกินกำหนด</label>
               </div>
             </div>
-            <button class="btn-submit" style="width:100%;" onclick="showToast('บันทึกการตั้งค่าสำเร็จ')">💾 บันทึกการตั้งค่า</button>
+            <button class="btn-submit" style="width:100%;" onclick="showToast('แก้ไข Token ได้ที่ Code.gs ใน Apps Script ครับ')">💾 ข้อมูล Token</button>
           </div>
 
-          <div class="settings-card">
-            <div class="settings-card-title">ข้อมูลพนักงาน</div>
-            <div class="settings-card-sub">จัดการบัญชีผู้ใช้งานในระบบ</div>
-            <div class="table-wrap" style="max-height:220px;overflow-y:auto;">
-              <table>
-                <thead><tr><th>ชื่อ</th><th>สิทธิ์</th><th>สถานะ</th></tr></thead>
-                <tbody>
-                  <tr><td>สมชาย ใจดี</td><td style="color:var(--text-muted)">พนักงาน</td><td><span class="badge badge-approved" style="font-size:10px;">ใช้งาน</span></td></tr>
-                  <tr><td>นิตยา มีสุข</td><td style="color:var(--text-muted)">พนักงาน</td><td><span class="badge badge-approved" style="font-size:10px;">ใช้งาน</span></td></tr>
-                  <tr><td>วิชัย สมบูรณ์</td><td style="color:var(--text-muted)">พนักงาน</td><td><span class="badge badge-approved" style="font-size:10px;">ใช้งาน</span></td></tr>
-                  <tr><td>อภิชาต วงศ์ไพบูลย์</td><td style="color:var(--gold-light)">ผู้อนุมัติ</td><td><span class="badge badge-approved" style="font-size:10px;">ใช้งาน</span></td></tr>
-                  <tr><td>มนัสนันท์ ศรีสวัสดิ์</td><td style="color:var(--gold-light)">ผู้อนุมัติ</td><td><span class="badge badge-approved" style="font-size:10px;">ใช้งาน</span></td></tr>
-                </tbody>
-              </table>
-            </div>
-            <button class="btn-cancel" style="width:100%;margin-top:12px;font-size:12px;">+ เพิ่มพนักงาน</button>
-          </div>
-
+          <!-- การเชื่อมต่อ -->
           <div class="settings-card">
             <div class="settings-card-title">การเชื่อมต่อ Google Sheets</div>
             <div class="settings-card-sub">ฐานข้อมูลหลักของระบบ</div>
             <div class="form-group">
-              <label class="field-label">Apps Script Web App URL</label>
-              <input class="field-input" placeholder="https://script.google.com/macros/s/..." style="font-size:11px;">
+              <label class="field-label">Apps Script URL</label>
+              <input class="field-input" value="https://script.google.com/macros/s/AKfycbz8Mu8UUKeGppQe0_WpoqMV28HcKaSSNJIPbDP2powRrZbLFgtHMqpSQ2zU-gBqYjI18w/exec" readonly style="font-size:10px;color:var(--muted);">
             </div>
             <div class="form-group">
-              <label class="field-label">Google Sheets ID</label>
-              <input class="field-input" placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" style="font-size:11px;">
+              <label class="field-label">Spreadsheet ID</label>
+              <input class="field-input" value="19MSawi_7rwdUa8nOcyfGRh_FHHfmZteM3cvK1CMfw6c" readonly style="font-size:11px;color:var(--muted);">
             </div>
-            <div style="padding:10px 12px;background:rgba(26,158,106,0.1);border:1px solid rgba(26,158,106,0.2);border-radius:8px;margin-bottom:12px;">
-              <div style="font-size:12px;color:#2ECC71;">● เชื่อมต่อสำเร็จ (Demo Mode)</div>
+            <div id="connection-status" style="padding:10px 12px;background:rgba(61,186,122,0.1);border:1px solid rgba(61,186,122,0.2);border-radius:8px;margin-bottom:12px;">
+              <div style="font-size:12px;color:var(--success);">● กำลังตรวจสอบ...</div>
             </div>
-            <button class="btn-submit" style="width:100%;" onclick="showToast('ทดสอบการเชื่อมต่อสำเร็จ')">🔗 ทดสอบการเชื่อมต่อ</button>
+            <button class="btn-submit" style="width:100%;" onclick="testConnection()">🔗 ทดสอบการเชื่อมต่อ</button>
           </div>
+
         </div>
       </div>
 
@@ -1411,7 +1383,7 @@
     <button class="bnav-item" id="bnav-approval" onclick="showPage('approval');setBnav('approval')" style="display:none">
       <span class="bnav-icon">✅</span>
       <span class="bnav-label">อนุมัติ</span>
-      <span class="bnav-badge" id="bnav-badge">3</span>
+      <span class="bnav-badge" id="bnav-badge" style="display:none"></span>
     </button>
     <button class="bnav-item" id="bnav-more" onclick="openSidebar()">
       <span class="bnav-icon">☰</span>
@@ -1470,7 +1442,14 @@ async function loadDashboardData() {
 
     // badge bottom nav
     const bnavBadge = document.getElementById('bnav-badge');
-    if (bnavBadge) bnavBadge.textContent = pending || '';
+    const navBadge  = document.getElementById('nav-pending-badge');
+    if (pending > 0) {
+      if (bnavBadge) bnavBadge.textContent = pending;
+      if (navBadge)  { navBadge.textContent = pending; navBadge.style.display = ''; }
+    } else {
+      if (bnavBadge) bnavBadge.textContent = '';
+      if (navBadge)  navBadge.style.display = 'none';
+    }
 
     // ตารางใบลาล่าสุด
     renderRecentTable(all.slice(0, 5));
@@ -1851,7 +1830,8 @@ function showPage(page) {
   if (page === 'all-leaves') loadAllLeaves();
   if (page === 'approval')   loadPendingApproval();
   if (page === 'leave-form') loadApprovers();
-  if (page === 'report')     setTimeout(initReportCharts, 100);
+  if (page === 'settings')   { loadSettingsApprovers(); testConnection(); }
+  if (page === 'report')     { setTimeout(initReportCharts, 100); initReportPeriod(); }
 }
 
 function openSidebar() {
@@ -1970,6 +1950,67 @@ function toggleCard(id) {
 function setFilter(btn) {
   btn.closest('div').querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+}
+
+async function loadSettingsApprovers() {
+  const container = document.getElementById('settings-approvers-list');
+  if (!container) return;
+  const res = await callAPI({ action: 'getApprovers' });
+  if (!res.success || !res.data?.length) {
+    container.innerHTML = `<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">ไม่พบข้อมูล<br><span style="font-size:11px;">กรุณาเพิ่มข้อมูลใน Google Sheets</span></div>`;
+    return;
+  }
+  const colors = ['av-blue','av-gold','av-green','av-red'];
+  container.innerHTML = res.data.map((a, i) => {
+    const initials = (a['ชื่อ'] || '??').substring(0, 2);
+    const isActive = String(a['สถานะ']).toLowerCase() === 'active';
+    const tgId = a['Telegram ID'] ? `· ${a['Telegram ID']}` : '· ยังไม่มี Telegram ID';
+    return `<div class="approver-card">
+      <div class="approver-info">
+        <div class="leave-card-avatar ${colors[i % colors.length]}" style="width:34px;height:34px;font-size:12px;">${initials}</div>
+        <div>
+          <div style="font-size:13px;font-weight:500;">${a['ชื่อ']}</div>
+          <div style="font-size:11px;color:var(--muted);">${a['ตำแหน่ง']} ${tgId}</div>
+        </div>
+      </div>
+      <span class="badge ${isActive ? 'badge-approved' : 'badge-rejected'}" style="font-size:10px;">
+        ${isActive ? '● active' : '○ inactive'}
+      </span>
+    </div>`;
+  }).join('');
+}
+
+async function testConnection() {
+  const statusEl = document.getElementById('connection-status');
+  if (statusEl) statusEl.innerHTML = `<div style="font-size:12px;color:var(--muted);">⏳ กำลังทดสอบ...</div>`;
+  const res = await callAPI({ action: 'ping' });
+  if (statusEl) {
+    if (res.success) {
+      statusEl.style.background = 'rgba(61,186,122,0.1)';
+      statusEl.style.borderColor = 'rgba(61,186,122,0.2)';
+      statusEl.innerHTML = `<div style="font-size:12px;color:var(--success);">● เชื่อมต่อสำเร็จ</div>`;
+    } else {
+      statusEl.style.background = 'rgba(224,82,82,0.1)';
+      statusEl.style.borderColor = 'rgba(224,82,82,0.2)';
+      statusEl.innerHTML = `<div style="font-size:12px;color:var(--danger);">✗ เชื่อมต่อไม่ได้</div>`;
+    }
+  }
+  showToast(res.success ? '✅ เชื่อมต่อสำเร็จ' : '❌ เชื่อมต่อไม่ได้');
+}
+
+function initReportPeriod() {
+  const sel = document.getElementById('report-month-select');
+  if (!sel || sel.options.length > 0) { loadReportData(); return; }
+  const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+  const now = new Date();
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const opt = document.createElement('option');
+    opt.value = `${d.getMonth()+1}|${d.getFullYear()}`;
+    opt.textContent = `${months[d.getMonth()]} ${d.getFullYear()+543}`;
+    sel.appendChild(opt);
+  }
+  loadReportData();
 }
 
 function showToast(msg) {
