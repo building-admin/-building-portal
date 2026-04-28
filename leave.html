@@ -2031,8 +2031,8 @@ function setFilter(btn) {
   const filterText = btn.textContent.trim();
 
   // กรองหน้า approval (reload ข้อมูลตาม filter)
-  const approvalContainer = document.getElementById('approval-container');
-  if (approvalContainer) {
+  const approvalSection = document.getElementById('section-approval');
+  if (approvalSection && approvalSection.classList.contains('active')) {
     if (filterText === 'รออนุมัติ') {
       loadPendingApproval();
     } else if (filterText === 'ทั้งหมด') {
