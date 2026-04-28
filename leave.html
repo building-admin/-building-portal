@@ -1607,11 +1607,17 @@ async function loadAllLeaves() {
 //  LOAD PENDING APPROVAL
 // ════════════════════════════════════════════════════
 async function loadPendingApproval() {
-  const container = document.getElementById('approval-container');
-  container.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-text">กำลังโหลด...</div></div>';
+  const container = document.getElementById('section-approval');
+  const cards = container.querySelectorAll('.leave-detail-card');
+  cards.forEach(c => c.remove());
+
+  const loadingEl = document.createElement('div');
+  loadingEl.className = 'empty-state';
+  loadingEl.innerHTML = '<div class="empty-icon">⏳</div><div class="empty-text">กำลังโหลด...</div>';
+  container.appendChild(loadingEl);
 
   const res = await callAPI({ action: 'getPendingLeaves' });
-  container.innerHTML = '';
+  loadingEl.remove();
 
   if (!res.success || !res.data?.length) {
     const empty = document.createElement('div');
@@ -1653,6 +1659,7 @@ async function loadPendingApproval() {
         </div>
         <div class="approvers-section">
           <div class="approvers-title">สถานะการอนุมัติ</div>
+          ${(role === 'approver' || role === 'admin') ? `
           <div class="approver-item" id="approver1-${cardId}">
             <div class="approver-name-role">
               <div class="approver-name">ผู้อนุมัติท่านที่ 1</div>
@@ -1665,7 +1672,15 @@ async function loadPendingApproval() {
                   <button class="reject-btn"  onclick="apiApprove('${r['รหัสใบลา']}', 0, 'reject',  'approver1-${cardId}')">✗ ไม่อนุมัติ</button>
                 </div>`
             }
-          </div>
+          </div>` : `
+          <div class="approver-item">
+            <div class="approver-name-role">
+              <div class="approver-name">ผู้อนุมัติท่านที่ 1</div>
+              <div class="approver-role">ที่ปรึกษา</div>
+            </div>
+            ${s1done ? `<div class="already-approved">✓ อนุมัติแล้ว</div>` : `<div style="font-size:12px;color:var(--muted)">รออนุมัติ</div>`}
+          </div>`}
+          ${(role === 'hr' || role === 'admin') ? `
           <div class="approver-item" id="approver2-${cardId}">
             <div class="approver-name-role">
               <div class="approver-name">ผู้อนุมัติท่านที่ 2</div>
@@ -1678,7 +1693,14 @@ async function loadPendingApproval() {
                   <button class="reject-btn"  onclick="apiApprove('${r['รหัสใบลา']}', 1, 'reject',  'approver2-${cardId}')">✗ ไม่อนุมัติ</button>
                 </div>`
             }
-          </div>
+          </div>` : `
+          <div class="approver-item">
+            <div class="approver-name-role">
+              <div class="approver-name">ผู้อนุมัติท่านที่ 2</div>
+              <div class="approver-role">HR Manager</div>
+            </div>
+            ${s2done ? `<div class="already-approved">✓ อนุมัติแล้ว</div>` : `<div style="font-size:12px;color:var(--muted)">รออนุมัติ</div>`}
+          </div>`}
         </div>
       </div>`;
     container.appendChild(card);
