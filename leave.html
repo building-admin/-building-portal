@@ -1653,7 +1653,7 @@ async function loadPendingApproval() {
         </div>
         <div class="approvers-section">
           <div class="approvers-title">สถานะการอนุมัติ</div>
-          ${(role === 'approver' || role === 'admin') ? `
+          ${(currentRole === 'approver' || currentRole === 'admin') ? `
           <div class="approver-item" id="approver1-${cardId}">
             <div class="approver-name-role">
               <div class="approver-name">ผู้อนุมัติท่านที่ 1</div>
@@ -1667,7 +1667,7 @@ async function loadPendingApproval() {
                 </div>`
             }
           </div>` : ''}
-          ${(role === 'hr' || role === 'admin') ? `
+          ${(currentRole === 'hr' || currentRole === 'admin') ? `
           <div class="approver-item" id="approver2-${cardId}">
             <div class="approver-name-role">
               <div class="approver-name">ผู้อนุมัติท่านที่ 2</div>
@@ -1724,12 +1724,14 @@ async function apiApprove(leaveId, approverIndex, action, rowId) {
 }
 
 let currentUser = null;
+let currentRole  = 'employee'; // global role ใช้ได้ทุก function
 
 function loadUserFromPortal() {
   const params = new URLSearchParams(window.location.search);
   const uid      = params.get('uid');
   const name     = params.get('name');
   const role     = params.get('role');
+  currentRole    = role || 'employee'; // set global
   const pos      = params.get('position');
   const dept     = params.get('dept');
   const division = params.get('division');
