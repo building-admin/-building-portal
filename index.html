@@ -531,7 +531,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
     </div>
 
     <!-- TAB: LEAVE PERMISSIONS -->
-    <div class="tab-content" id="tab-leave-perms" style="display:none">
+    <div class="tab-content" id="tab-leave-perms">
       <div style="margin-bottom:20px;">
         <div style="font-size:13px;color:var(--muted);margin-bottom:16px;">กำหนดว่าแต่ละ Role มีสิทธิ์เข้าถึงเมนูใบลาอะไรได้บ้าง</div>
         <div id="leave-perm-loading" style="text-align:center;padding:28px;color:var(--muted);">⏳ กำลังโหลด...</div>
@@ -1708,6 +1708,7 @@ async function loadLeavePerms() {
 
   loading.style.display = 'block';
   table.style.display   = 'none';
+  tbody.innerHTML       = '';
 
   try {
     const r = await callAPI({ action: 'getLeavePermissions' });
@@ -1720,8 +1721,8 @@ async function loadLeavePerms() {
         ${['employee','approver','hr','admin'].map(role => `
           <td style="text-align:center;padding:12px 8px;">
             <input type="checkbox" data-idx="${i}" data-role="${role}"
-              ${p[role] ? 'checked' : ''}
-              ${role === 'admin' ? 'disabled' : ''}
+              ${(p[role]===true||p[role]==='TRUE') ? 'checked' : ''}
+              ${role==='admin' ? 'disabled' : ''}
               style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer;">
           </td>`).join('')}
       </tr>`).join('');
@@ -1734,15 +1735,12 @@ async function loadLeavePerms() {
 }
 
 async function saveLeavePerms() {
-  const checkboxes = document.querySelectorAll('#leave-perm-tbody input[type=checkbox]');
-  checkboxes.forEach(cb => {
+  document.querySelectorAll('#leave-perm-tbody input[type=checkbox]').forEach(cb => {
     const idx  = parseInt(cb.dataset.idx);
     const role = cb.dataset.role;
     leavePermsData[idx][role] = cb.checked;
   });
-  // admin เห็นทุกอย่างเสมอ
-  leavePermsData.forEach(p => { p.admin = true; });
-
+  leavePermsData.forEach(p => { p.admin = true; }); // admin เห็นทุกอย่างเสมอ
   try {
     const r = await callAPI({ action: 'saveLeavePermissions', permissions: leavePermsData });
     if (!r.success) throw new Error(r.message);
