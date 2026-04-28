@@ -1774,27 +1774,20 @@ function loadUserFromPortal() {
     if (el) el.value = val;
   });
 
-  // ── สิทธิ์เมนูตาม role (hardcoded) ─────────────────
-  // role ถูกประกาศไว้แล้วบรรทัด 1736 ใช้ต่อได้เลย
-  const PERMS = {
-    'dashboard':  ['employee','hr','admin'],
-    'leave-form': ['employee','admin'],
-    'my-leaves':  ['employee','admin'],
-    'approval':   ['approver','hr','admin'],
-    'all-leaves': ['approver','hr','admin'],
-    'report':     ['admin'],
-    'settings':   ['admin']
-  };
-  Object.entries(PERMS).forEach(([page, roles]) => {
-    const navItem = document.querySelector(`[onclick="showPage('${page}')"]`);
-    if (navItem) navItem.style.display = roles.includes(role) ? '' : 'none';
-  });
-  const navApproval = document.getElementById('nav-approval-section');
-  if (navApproval) navApproval.style.display = ['approver','hr','admin'].includes(role) ? '' : 'none';
+  // เมนูอนุมัติ — เฉพาะ approver, hr, staff, admin
+  const canApprove = ['approver','hr','staff','admin'].includes(currentUser.type);
+  if (!canApprove) {
+    const navApproval = document.getElementById('nav-approval-section');
+    if (navApproval) navApproval.style.display = 'none';
+  } else {
+    const bnavApproval = document.getElementById('bnav-approval');
+    if (bnavApproval) bnavApproval.style.display = 'flex';
+  }
+
+  // เมนูรายงาน + ตั้งค่า — เฉพาะ admin เท่านั้น
+  const isAdmin = currentUser.type === 'admin';
   const navAdmin = document.getElementById('nav-admin-section');
-  if (navAdmin) navAdmin.style.display = (role === 'admin') ? '' : 'none';
-  const bnavApproval = document.getElementById('bnav-approval');
-  if (bnavApproval) bnavApproval.style.display = ['approver','hr','admin'].includes(role) ? 'flex' : 'none';
+  if (navAdmin) navAdmin.style.display = isAdmin ? 'block' : 'none';
 
   document.getElementById('app').style.display       = 'flex';
   document.getElementById('app').style.flexDirection = 'row';
@@ -1803,10 +1796,7 @@ function loadUserFromPortal() {
   document.getElementById('topbar-date').textContent =
     d.toLocaleDateString('th-TH', { weekday:'short', year:'numeric', month:'long', day:'numeric' });
   document.getElementById('today-date').value = d.toISOString().split('T')[0];
-
-  // Redirect ไปหน้าแรกตาม role
-  const firstPage = role === 'approver' ? 'approval' : 'dashboard';
-  setTimeout(() => { showPage(firstPage); initCharts(); loadDashboardData(); }, 100);
+  setTimeout(() => { initCharts(); loadDashboardData(); }, 100);
 }
 
 function doLogout() {
