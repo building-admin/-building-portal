@@ -920,7 +920,9 @@ function openMenu(menuId, url) {
 
 function openLeave() {
   const u = currentUser;
-  const leaveRole = (u.role === 'admin') ? 'admin' : 'employee';
+  const leaveRole = (u.role === 'admin')                       ? 'approver'
+                 : (u.role === 'approver' || u.role === 'hr') ? u.role
+                 : 'employee';
   const params = new URLSearchParams({
     uid:      u.username   || '',
     name:     u.name       || '',
