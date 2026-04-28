@@ -2003,7 +2003,7 @@ function setFilter(btn) {
   const allLeavesTable = document.querySelector('#section-all-leaves tbody');
   if (allLeavesTable) {
     allLeavesTable.querySelectorAll('tr').forEach(row => {
-      const statusCell = row.querySelector('td:nth-child(8)');
+      const statusCell = row.querySelector('td:nth-child(10)');
       if (!statusCell) return;
       const status = statusCell.textContent.trim();
       if (filterText === 'ทั้งหมด') {
@@ -2063,6 +2063,44 @@ async function testConnection() {
     }
   }
   showToast(res.success ? '✅ เชื่อมต่อสำเร็จ' : '❌ เชื่อมต่อไม่ได้');
+}
+
+async function loadReportData() {
+  const sel = document.getElementById('report-month-select');
+  if (!sel) return;
+  const [month, year] = (sel.value || `${new Date().getMonth()+1}|${new Date().getFullYear()}`).split('|');
+  const subtitle = document.getElementById('report-subtitle');
+  if (subtitle) subtitle.textContent = 'กำลังโหลด...';
+
+  try {
+    const res = await callAPI({ action: 'getAllLeaves', month: parseInt(month), year: parseInt(year) });
+    const data = res.success ? (res.data || []) : [];
+
+    // อัปเดต subtitle
+    const months = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    if (subtitle) subtitle.textContent = `${months[parseInt(month)]} ${parseInt(year)+543} — รวม ${data.length} รายการ`;
+
+    // ตาราง
+    const tbody = document.querySelector('#section-report .table-wrap tbody');
+    if (!tbody) return;
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px;">ไม่มีข้อมูลเดือนนี้</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.map(r => `
+      <tr>
+        <td>${r['ชื่อพนักงาน'] || '—'}</td>
+        <td>${r['ตำแหน่ง'] || '—'}</td>
+        <td>${r['ประเภทลา'] || '—'}</td>
+        <td>${r['วันเริ่มลา'] ? new Date(r['วันเริ่มลา']).toLocaleDateString('th-TH') : '—'}</td>
+        <td>${r['วันสิ้นสุด'] ? new Date(r['วันสิ้นสุด']).toLocaleDateString('th-TH') : '—'}</td>
+        <td>${r['จำนวนวัน'] || '—'}</td>
+        <td>${r['เหตุผล'] || '—'}</td>
+        <td><span class="badge ${r['สถานะ']==='อนุมัติ'?'badge-approved':r['สถานะ']==='ไม่อนุมัติ'?'badge-rejected':'badge-pending'}">${r['สถานะ']||'—'}</span></td>
+      </tr>`).join('');
+  } catch(e) {
+    if (subtitle) subtitle.textContent = 'โหลดข้อมูลไม่สำเร็จ';
+  }
 }
 
 function initReportPeriod() {
