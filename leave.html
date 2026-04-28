@@ -1607,17 +1607,11 @@ async function loadAllLeaves() {
 //  LOAD PENDING APPROVAL
 // ════════════════════════════════════════════════════
 async function loadPendingApproval() {
-  const container = document.getElementById('section-approval');
-  const cards = container.querySelectorAll('.leave-detail-card');
-  cards.forEach(c => c.remove());
-
-  const loadingEl = document.createElement('div');
-  loadingEl.className = 'empty-state';
-  loadingEl.innerHTML = '<div class="empty-icon">⏳</div><div class="empty-text">กำลังโหลด...</div>';
-  container.appendChild(loadingEl);
+  const container = document.getElementById('approval-container');
+  container.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-text">กำลังโหลด...</div></div>';
 
   const res = await callAPI({ action: 'getPendingLeaves' });
-  loadingEl.remove();
+  container.innerHTML = '';
 
   if (!res.success || !res.data?.length) {
     const empty = document.createElement('div');
