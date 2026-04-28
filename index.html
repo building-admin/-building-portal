@@ -553,7 +553,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
     </div>
     <div class="form-group"><label>ชื่อ-สกุล <span class="req">*</span></label><div class="input-wrap"><span class="input-icon">📝</span><input type="text" id="u-name" placeholder="ชื่อ นามสกุล"></div></div>
     <div class="form-row">
-      <div class="form-group"><label>Role</label><div class="input-wrap"><span class="input-icon">🎭</span><select id="u-role"><option value="user">User</option><option value="admin">Admin</option></select></div></div>
+      <div class="form-group"><label>Role</label><div class="input-wrap"><span class="input-icon">🎭</span><select id="u-role"><option value="user">User</option><option value="approver">Approver (ที่ปรึกษา)</option><option value="hr">HR</option><option value="admin">Admin</option></select></div></div>
       <div class="form-group"><label>สถานะ</label><div class="input-wrap"><span class="input-icon">🔘</span><select id="u-active"><option value="true">Active</option><option value="false">Inactive</option></select></div></div>
     </div>
     <div id="pw-section">
@@ -920,7 +920,7 @@ function openMenu(menuId, url) {
 
 function openLeave() {
   const u = currentUser;
-  const leaveRole = (u.role === 'approver' || u.role === 'hr') ? u.role : u.role === 'admin' ? 'admin' : 'employee';
+  const leaveRole = (u.role === 'approver' || u.role === 'hr') ? u.role : 'employee';
   const params = new URLSearchParams({
     uid:      u.username   || '',
     name:     u.name       || '',
