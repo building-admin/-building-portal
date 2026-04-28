@@ -1774,39 +1774,8 @@ function loadUserFromPortal() {
     if (el) el.value = val;
   });
 
-  // โหลดสิทธิ์เมนูจาก Sheets แล้วแสดงผล
-  const role = currentUser.type || 'employee';
-  try {
-    const permRes = await callAPI({ action: 'getLeavePermissions' });
-    if (permRes.success && permRes.data) {
-      permRes.data.forEach(p => {
-        const canSee = p[role] === true || p[role] === 'TRUE';
-        // Sidebar nav item
-        const navItem = document.querySelector(`[onclick="showPage('${p.menu}')"]`);
-        if (navItem) navItem.style.display = canSee ? '' : 'none';
-        // Bottom nav (mobile) — approval only
-        if (p.menu === 'approval') {
-          const bnav = document.getElementById('bnav-approval');
-          if (bnav) bnav.style.display = canSee ? 'flex' : 'none';
-        }
-      });
-      // ซ่อน section label ถ้าทุก item ในกลุ่มซ่อนหมด
-      document.querySelectorAll('.nav-section').forEach(sec => {
-        const items = sec.querySelectorAll('.nav-item');
-        const allHidden = [...items].every(i => i.style.display === 'none');
-        sec.style.display = allHidden ? 'none' : '';
-      });
-    }
-  } catch(e) {
-    // fallback: approver/hr เห็นอนุมัติ, admin เห็นทุกอย่าง
-    const canApprove = ['approver','hr','admin'].includes(role);
-    const navApproval = document.getElementById('nav-approval-section');
-    if (navApproval) navApproval.style.display = canApprove ? '' : 'none';
-    const bnavApproval = document.getElementById('bnav-approval');
-    if (bnavApproval) bnavApproval.style.display = canApprove ? 'flex' : 'none';
-    const navAdmin = document.getElementById('nav-admin-section');
-    if (navAdmin) navAdmin.style.display = (role === 'admin') ? '' : 'none';
-  }
+  // แสดงหน้าทันที (fallback ตาม role ก่อน)
+  applyMenuFallback(currentUser.type);
 
   document.getElementById('app').style.display       = 'flex';
   document.getElementById('app').style.flexDirection = 'row';
@@ -1816,6 +1785,45 @@ function loadUserFromPortal() {
     d.toLocaleDateString('th-TH', { weekday:'short', year:'numeric', month:'long', day:'numeric' });
   document.getElementById('today-date').value = d.toISOString().split('T')[0];
   setTimeout(() => { initCharts(); loadDashboardData(); }, 100);
+
+  // โหลดสิทธิ์จาก Sheets ทีหลัง (ไม่บล็อกหน้า)
+  applyLeavePermissionsAsync(currentUser.type);
+}
+
+// Fallback สิทธิ์ตาม role (ใช้ระหว่างรอ API)
+function applyMenuFallback(role) {
+  const canApprove = ['approver','hr','admin'].includes(role);
+  const navApproval = document.getElementById('nav-approval-section');
+  if (navApproval) navApproval.style.display = canApprove ? '' : 'none';
+  const bnavApproval = document.getElementById('bnav-approval');
+  if (bnavApproval) bnavApproval.style.display = canApprove ? 'flex' : 'none';
+  const navAdmin = document.getElementById('nav-admin-section');
+  if (navAdmin) navAdmin.style.display = (role === 'admin' || role === 'hr') ? '' : 'none';
+}
+
+// โหลดสิทธิ์จริงจาก Sheets (async หลังหน้าโหลดแล้ว)
+async function applyLeavePermissionsAsync(role) {
+  try {
+    const r = await callAPI({ action: 'getLeavePermissions' });
+    if (!r.success || !r.data) return;
+    r.data.forEach(p => {
+      const canSee = p[role] === true || p[role] === 'TRUE';
+      const navItem = document.querySelector(`[onclick="showPage('${p.menu}')"]`);
+      if (navItem) navItem.style.display = canSee ? '' : 'none';
+      if (p.menu === 'approval') {
+        const bnav = document.getElementById('bnav-approval');
+        if (bnav) bnav.style.display = canSee ? 'flex' : 'none';
+      }
+    });
+    // ซ่อน section label ถ้าไม่มี item แสดงในกลุ่ม
+    document.querySelectorAll('.nav-section').forEach(sec => {
+      const items = [...sec.querySelectorAll('.nav-item')];
+      sec.style.display = items.every(i => i.style.display === 'none') ? 'none' : '';
+    });
+  } catch(e) {
+    // ถ้า API ล้มเหลว ใช้ fallback เดิมที่โหลดไปแล้ว
+    console.warn('LeavePerms API error:', e.message);
+  }
 }
 
 function doLogout() {
