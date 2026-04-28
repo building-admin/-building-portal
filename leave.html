@@ -1991,10 +1991,12 @@ function setFilter(btn) {
   const approvalContainer = document.getElementById('approval-container');
   if (approvalContainer) {
     approvalContainer.querySelectorAll('.leave-detail-card').forEach(card => {
-      if (filterText === 'ทั้งหมด' || filterText === 'รออนุมัติ') {
+      const badge = card.querySelector('.badge-pending, .badge-approved, .badge-rejected');
+      const badgeText = badge ? badge.textContent.trim() : '';
+      if (filterText === 'ทั้งหมด') {
         card.style.display = '';
-      } else {
-        card.style.display = 'none';
+      } else if (filterText === 'รออนุมัติ') {
+        card.style.display = badgeText.includes('รออนุมัติ') ? '' : 'none';
       }
     });
   }
