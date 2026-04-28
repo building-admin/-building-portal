@@ -1775,7 +1775,7 @@ function loadUserFromPortal() {
   });
 
   // ── สิทธิ์เมนูตาม role (hardcoded) ─────────────────
-  const role = currentUser.type;
+  // role ถูกประกาศไว้แล้วบรรทัด 1736 ใช้ต่อได้เลย
   const PERMS = {
     'dashboard':  ['employee','hr','admin'],
     'leave-form': ['employee','admin'],
