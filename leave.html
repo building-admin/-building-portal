@@ -930,7 +930,7 @@
           <span class="nav-icon">📋</span> ใบลาทั้งหมด
         </a>
       </div>
-      <div class="nav-section">
+      <div class="nav-section" id="nav-admin-section">
         <div class="nav-section-label">รายงาน</div>
         <a class="nav-item" onclick="showPage('report')">
           <span class="nav-icon">📈</span> รายงานประจำเดือน
@@ -1739,21 +1739,22 @@ function loadUserFromPortal() {
   const division = params.get('division');
   const empId    = params.get('empId');
 
-  const roleLabel = (role === 'approver') ? 'ที่ปรึกษา / ผู้อนุมัติ'
+  const roleLabel = (role === 'admin')    ? 'ผู้ดูแลระบบ'
+                  : (role === 'approver') ? 'ที่ปรึกษา / ผู้อนุมัติ'
                   : (role === 'hr')       ? 'HR / ผู้อนุมัติ'
                   : (role === 'staff')    ? 'เจ้าหน้าที่ฝ่ายอาคาร'
                   : 'พนักงานทั่วไป';
 
   currentUser = {
-    id:         uid      || 'EMP001',
+    id:         uid      || '',
     employeeId: empId    || uid || '',
-    name:       name     || 'พนักงาน',
+    name:       name     || '',
     type:       role     || 'employee',
     role:       roleLabel,
     position:   pos      || '',
-    dept:       dept     || 'ฝ่ายอาคารและสถานที่',
-    division:   division || 'ฝ่ายอาคารและสถานที่',
-    initials:   name     ? name.substring(0,2) : 'พน'
+    dept:       dept     || '',
+    division:   division || '',
+    initials:   name     ? name.substring(0,2) : '?'
   };
 
   document.getElementById('sidebar-name').textContent   = currentUser.name;
@@ -1773,7 +1774,8 @@ function loadUserFromPortal() {
     if (el) el.value = val;
   });
 
-  const canApprove = ['approver','hr','staff'].includes(currentUser.type);
+  // เมนูอนุมัติ — เฉพาะ approver, hr, staff, admin
+  const canApprove = ['approver','hr','staff','admin'].includes(currentUser.type);
   if (!canApprove) {
     const navApproval = document.getElementById('nav-approval-section');
     if (navApproval) navApproval.style.display = 'none';
@@ -1781,6 +1783,11 @@ function loadUserFromPortal() {
     const bnavApproval = document.getElementById('bnav-approval');
     if (bnavApproval) bnavApproval.style.display = 'flex';
   }
+
+  // เมนูรายงาน + ตั้งค่า — เฉพาะ admin เท่านั้น
+  const isAdmin = currentUser.type === 'admin';
+  const navAdmin = document.getElementById('nav-admin-section');
+  if (navAdmin) navAdmin.style.display = isAdmin ? 'block' : 'none';
 
   document.getElementById('app').style.display       = 'flex';
   document.getElementById('app').style.flexDirection = 'row';
