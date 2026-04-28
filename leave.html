@@ -1774,29 +1774,50 @@ function loadUserFromPortal() {
     if (el) el.value = val;
   });
 
-  // เมนูอนุมัติ — เฉพาะ approver, hr, staff, admin
-  const canApprove = ['approver','hr','staff','admin'].includes(currentUser.type);
-  if (!canApprove) {
-    const navApproval = document.getElementById('nav-approval-section');
-    if (navApproval) navApproval.style.display = 'none';
-  } else {
-    const bnavApproval = document.getElementById('bnav-approval');
-    if (bnavApproval) bnavApproval.style.display = 'flex';
-  }
+  // ── สิทธิ์เมนูตาม role ──────────────────────────────
+  // role ใช้ตัวแปรที่ประกาศไว้แล้วบรรทัด 1736
+  // employee : dashboard, leave-form, my-leaves
+  // approver : approval, all-leaves
+  // hr       : dashboard, approval, all-leaves
+  // admin    : ทุกเมนู
 
-  // เมนูรายงาน + ตั้งค่า — เฉพาะ admin เท่านั้น
-  const isAdmin = currentUser.type === 'admin';
-  const navAdmin = document.getElementById('nav-admin-section');
-  if (navAdmin) navAdmin.style.display = isAdmin ? 'block' : 'none';
+  // nav item แต่ละอัน
+  const menuPerms = {
+    'dashboard':  ['employee','hr','admin'],
+    'leave-form': ['employee','admin'],
+    'my-leaves':  ['employee','admin'],
+    'approval':   ['approver','hr','admin'],
+    'all-leaves': ['approver','hr','admin'],
+    'report':     ['admin'],
+    'settings':   ['admin']
+  };
+  Object.keys(menuPerms).forEach(function(page) {
+    var allowed = menuPerms[page];
+    var navItem = document.querySelector('[onclick="showPage(\'' + page + '\')"]');
+    if (navItem) navItem.style.display = allowed.indexOf(role) >= 0 ? '' : 'none';
+  });
+
+  // section labels
+  var navApprovalSec = document.getElementById('nav-approval-section');
+  if (navApprovalSec) navApprovalSec.style.display = (['approver','hr','admin'].indexOf(role) >= 0) ? '' : 'none';
+  var navAdminSec = document.getElementById('nav-admin-section');
+  if (navAdminSec) navAdminSec.style.display = (role === 'admin') ? '' : 'none';
+
+  // bottom nav approval (mobile)
+  var bnavApproval = document.getElementById('bnav-approval');
+  if (bnavApproval) bnavApproval.style.display = (['approver','hr','admin'].indexOf(role) >= 0) ? 'flex' : 'none';
 
   document.getElementById('app').style.display       = 'flex';
   document.getElementById('app').style.flexDirection = 'row';
 
-  const d = new Date();
+  var d = new Date();
   document.getElementById('topbar-date').textContent =
     d.toLocaleDateString('th-TH', { weekday:'short', year:'numeric', month:'long', day:'numeric' });
   document.getElementById('today-date').value = d.toISOString().split('T')[0];
-  setTimeout(() => { initCharts(); loadDashboardData(); }, 100);
+
+  // หน้าแรกตาม role
+  var firstPage = (role === 'approver') ? 'approval' : 'dashboard';
+  setTimeout(function() { showPage(firstPage); initCharts(); loadDashboardData(); }, 100);
 }
 
 function doLogout() {
