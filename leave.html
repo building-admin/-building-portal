@@ -1219,7 +1219,7 @@
           <button class="filter-btn active" onclick="setFilter(this)">ทั้งหมด</button>
           <button class="filter-btn" onclick="setFilter(this)">รออนุมัติ</button>
           <div style="flex:1;min-width:160px;">
-            <input class="field-input" style="padding:7px 12px;font-size:12px;" placeholder="🔍 ค้นหาชื่อพนักงาน...">
+            <input class="field-input" id="all-leaves-search" style="padding:7px 12px;font-size:12px;" placeholder="🔍 ค้นหาชื่อพนักงาน..." oninput="searchAllLeaves(this.value)">
           </div>
           <button class="btn-print" onclick="window.print()">🖨️ พิมพ์</button>
         </div>
@@ -1973,9 +1973,50 @@ function toggleCard(id) {
   arrow.classList.toggle('open', !open);
 }
 
+function searchAllLeaves(keyword) {
+  const kw = keyword.toLowerCase().trim();
+  const rows = document.querySelectorAll('#section-all-leaves tbody tr');
+  rows.forEach(row => {
+    const name = (row.querySelector('td:nth-child(2)')?.textContent || '').toLowerCase();
+    row.style.display = (!kw || name.includes(kw)) ? '' : 'none';
+  });
+}
+
 function setFilter(btn) {
   btn.closest('div').querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  const filterText = btn.textContent.trim();
+
+  // กรองหน้า approval (cards)
+  const approvalContainer = document.getElementById('approval-container');
+  if (approvalContainer) {
+    approvalContainer.querySelectorAll('.leave-detail-card').forEach(card => {
+      if (filterText === 'ทั้งหมด' || filterText === 'รออนุมัติ') {
+        card.style.display = '';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  // กรองหน้า all-leaves (table rows)
+  const allLeavesTable = document.querySelector('#section-all-leaves tbody');
+  if (allLeavesTable) {
+    allLeavesTable.querySelectorAll('tr').forEach(row => {
+      const statusCell = row.querySelector('td:nth-child(8)');
+      if (!statusCell) return;
+      const status = statusCell.textContent.trim();
+      if (filterText === 'ทั้งหมด') {
+        row.style.display = '';
+      } else if (filterText === 'รออนุมัติ') {
+        row.style.display = status.includes('รออนุมัติ') ? '' : 'none';
+      } else if (filterText === 'อนุมัติแล้ว') {
+        row.style.display = status.includes('อนุมัติ') && !status.includes('รอ') ? '' : 'none';
+      } else if (filterText === 'ไม่อนุมัติ') {
+        row.style.display = status.includes('ไม่อนุมัติ') ? '' : 'none';
+      }
+    });
+  }
 }
 
 async function loadSettingsApprovers() {
