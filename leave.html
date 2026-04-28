@@ -1476,6 +1476,27 @@ function updateChartsFromData(all) {
   const typeCounts = { 'ลาป่วย':0,'ลากิจ':0,'ลาพักร้อน':0,'ลานักขัตฤกษ์':0,'เปลี่ยนวันหยุด':0,'เปลี่ยนรอบ':0 };
   all.forEach(r => { if (typeCounts[r['ประเภทลา']] !== undefined) typeCounts[r['ประเภทลา']]++; });
 
+  // อัปเดต monthly bar chart
+  if (window._monthlyChart) {
+    const monthlyCounts = { 'ลาป่วย':Array(12).fill(0), 'ลากิจ':Array(12).fill(0), 'ลาพักร้อน':Array(12).fill(0), 'อื่นๆ':Array(12).fill(0) };
+    all.forEach(r => {
+      const d = new Date(r['วันเริ่มลา']);
+      if (!isNaN(d)) {
+        const m = d.getMonth();
+        const t = r['ประเภทลา'];
+        if (t === 'ลาป่วย') monthlyCounts['ลาป่วย'][m]++;
+        else if (t === 'ลากิจ') monthlyCounts['ลากิจ'][m]++;
+        else if (t === 'ลาพักร้อน') monthlyCounts['ลาพักร้อน'][m]++;
+        else monthlyCounts['อื่นๆ'][m]++;
+      }
+    });
+    window._monthlyChart.data.datasets[0].data = monthlyCounts['ลาป่วย'];
+    window._monthlyChart.data.datasets[1].data = monthlyCounts['ลากิจ'];
+    window._monthlyChart.data.datasets[2].data = monthlyCounts['ลาพักร้อน'];
+    window._monthlyChart.data.datasets[3].data = monthlyCounts['อื่นๆ'];
+    window._monthlyChart.update();
+  }
+
   // อัปเดต donut chart
   if (window._typeChart) {
     window._typeChart.data.datasets[0].data = Object.values(typeCounts);
@@ -1885,6 +1906,8 @@ function setBnav(page) {
 function showPage(page) {
   document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const activeNav = document.querySelector('[onclick="showPage(\''+page+'\')"]');
+  if (activeNav) activeNav.classList.add('active');
   const sec = document.getElementById('section-' + page);
   if (sec) sec.classList.add('active');
   const cfg = pageConfig[page];
