@@ -1687,6 +1687,49 @@ async function loadPendingApproval() {
   });
 }
 
+async function loadAllApproval() {
+  const container = document.getElementById('approval-container');
+  container.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><div class="empty-text">กำลังโหลด...</div></div>';
+  const res = await callAPI({ action: 'getAllLeaves' });
+  container.innerHTML = '';
+  if (!res.success || !res.data?.length) {
+    container.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><div class="empty-text">ไม่มีข้อมูลใบลา</div></div>';
+    return;
+  }
+  res.data.forEach((r, i) => {
+    const cardId = 'all-card-' + i;
+    const card = document.createElement('div');
+    card.className = 'leave-detail-card';
+    const initials = (r['ชื่อพนักงาน'] || 'XX').substring(0, 2);
+    const status = r['สถานะ'] || 'รออนุมัติ';
+    const badgeClass = status === 'อนุมัติ' ? 'badge-approved' : status === 'ไม่อนุมัติ' ? 'badge-rejected' : 'badge-pending';
+    const badgeIcon = status === 'อนุมัติ' ? '✅' : status === 'ไม่อนุมัติ' ? '❌' : '⏳';
+    card.innerHTML = `
+      <div class="leave-card-header" onclick="toggleCard('${cardId}')">
+        <div class="leave-card-left">
+          <div class="leave-card-avatar av-blue">${initials}</div>
+          <div>
+            <div class="leave-card-name">${r['ชื่อพนักงาน']}</div>
+            <div class="leave-card-meta">${r['ตำแหน่ง']} · ยื่น ${formatDateShort(r['วันที่ยื่น'])}</div>
+          </div>
+        </div>
+        <div class="leave-card-right">
+          <span class="badge badge-type">${r['ประเภทลา']}</span>
+          <span class="badge ${badgeClass}">${badgeIcon} ${status}</span>
+          <span class="card-expand-btn open" id="arrow-${cardId}">▲</span>
+        </div>
+      </div>
+      <div class="leave-card-body" id="body-${cardId}">
+        <div class="leave-info-grid">
+          <div class="leave-info-item"><div class="leave-info-label">วันที่ลา</div><div class="leave-info-value">${formatDateShort(r['วันเริ่มลา'])} — ${formatDateShort(r['วันสิ้นสุด'])}</div></div>
+          <div class="leave-info-item"><div class="leave-info-label">จำนวนวัน</div><div class="leave-info-value">${r['จำนวนวัน']} วัน</div></div>
+          <div class="leave-info-item"><div class="leave-info-label">เหตุผล</div><div class="leave-info-value">${r['เหตุผล'] || '—'}</div></div>
+        </div>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+
 // ── อนุมัติผ่านเว็บ ───────────────────────────────────
 async function apiApprove(leaveId, approverIndex, action, rowId) {
   const row = document.getElementById(rowId);
@@ -1987,18 +2030,14 @@ function setFilter(btn) {
   btn.classList.add('active');
   const filterText = btn.textContent.trim();
 
-  // กรองหน้า approval (cards)
+  // กรองหน้า approval (reload ข้อมูลตาม filter)
   const approvalContainer = document.getElementById('approval-container');
   if (approvalContainer) {
-    approvalContainer.querySelectorAll('.leave-detail-card').forEach(card => {
-      const badge = card.querySelector('.badge-pending, .badge-approved, .badge-rejected');
-      const badgeText = badge ? badge.textContent.trim() : '';
-      if (filterText === 'ทั้งหมด') {
-        card.style.display = '';
-      } else if (filterText === 'รออนุมัติ') {
-        card.style.display = badgeText.includes('รออนุมัติ') ? '' : 'none';
-      }
-    });
+    if (filterText === 'รออนุมัติ') {
+      loadPendingApproval();
+    } else if (filterText === 'ทั้งหมด') {
+      loadAllApproval();
+    }
   }
 
   // กรองหน้า all-leaves (table rows)
