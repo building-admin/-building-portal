@@ -924,13 +924,28 @@ async function openLeave() {
                  : (u.role === 'approver' || u.role === 'hr') ? u.role
                  : 'employee';
 
-  // สร้าง one-time token ก่อนเปิด leave.html
   try {
-    const res = await callAPI({ action: 'generateToken', username: u.username, role: leaveRole });
-    if (!res.success) throw new Error(res.message);
+    // ถ้ามี session token เดิมอยู่แล้ว ใช้ต่อได้เลย
+    const savedToken = sessionStorage.getItem('leave_token');
+    let token = null;
+
+    if (savedToken) {
+      const vRes = await callAPI({ action: 'verifyToken', token: savedToken });
+      if (vRes.success) {
+        token = savedToken;
+      }
+    }
+
+    // ถ้าไม่มีหรือหมดอายุ → สร้างใหม่
+    if (!token) {
+      const res = await callAPI({ action: 'generateToken', username: u.username, role: leaveRole });
+      if (!res.success) throw new Error(res.message);
+      token = res.token;
+      sessionStorage.setItem('leave_token', token);
+    }
 
     const params = new URLSearchParams({
-      token:    res.token,
+      token:    token,
       name:     u.name       || '',
       position: u.position   || '',
       dept:     u.dept       || currentDept?.deptId || '',
@@ -1225,7 +1240,12 @@ function doLogout() {
     msg: 'ต้องการออกจากระบบหรือไม่?',
     okText: 'ออกจากระบบ',
     okClass: 'btn-save' ,
-    onOk: () => {
+    onOk: async () => {
+      const savedToken = sessionStorage.getItem('leave_token');
+      if (savedToken) {
+        await callAPI({ action: 'revokeToken', token: savedToken }).catch(()=>{});
+        sessionStorage.removeItem('leave_token');
+      }
       clearSession();
       currentUser = null; userPermissions = null; currentDept = null;
       allUsers = []; allDepts = []; allMenus = [];
