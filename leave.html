@@ -1393,6 +1393,20 @@
 </nav>
 
 <!-- TOAST -->
+<!-- MODAL: REVOKE APPROVAL -->
+<div id="modal-revoke" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:400px;width:90%;text-align:center;">
+    <div style="font-size:40px;margin-bottom:12px;">⚠️</div>
+    <h3 style="margin-bottom:8px;color:var(--white);">ยกเลิกอนุมัติ</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">ใบลาจะกลับไปเป็น "รออนุมัติ" และระบบจะแจ้งพนักงานทาง Telegram</p>
+    <textarea id="revoke-reason" placeholder="ระบุเหตุผลการยกเลิก..." style="width:100%;min-height:80px;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;color:var(--white);padding:10px;font-size:13px;font-family:var(--font-body);resize:vertical;box-sizing:border-box;"></textarea>
+    <div style="display:flex;gap:12px;justify-content:center;margin-top:16px;">
+      <button onclick="closeRevokeModal()" style="padding:10px 20px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);cursor:pointer;">ยกเลิก</button>
+      <button onclick="confirmRevoke()" style="padding:10px 20px;background:rgba(224,82,82,0.2);border:1px solid rgba(224,82,82,0.4);border-radius:8px;color:#e05252;cursor:pointer;font-weight:600;">✓ ยืนยันยกเลิก</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast">
   <span class="toast-icon">✅</span>
   <span id="toast-msg">ดำเนินการสำเร็จ</span>
@@ -1723,7 +1737,10 @@ async function loadPendingApproval() {
               <div class="approver-role">ที่ปรึกษา</div>
             </div>
             ${s1done
-              ? `<div class="already-approved">✓ อนุมัติแล้ว</div>`
+              ? `<div style="display:flex;align-items:center;gap:8px;">
+                  <div class="already-approved">✓ อนุมัติแล้ว</div>
+                  <button onclick="openRevokeModal('${r['รหัสใบลา']}', 0)" style="padding:4px 10px;font-size:11px;background:rgba(224,82,82,0.15);border:1px solid rgba(224,82,82,0.3);border-radius:6px;color:#e05252;cursor:pointer;">ยกเลิก</button>
+                </div>`
               : `<div class="approver-action">
                   <button class="approve-btn" onclick="apiApprove('${r['รหัสใบลา']}', 0, 'approve', 'approver1-${cardId}')">✓ อนุมัติ</button>
                   <button class="reject-btn"  onclick="apiApprove('${r['รหัสใบลา']}', 0, 'reject',  'approver1-${cardId}')">✗ ไม่อนุมัติ</button>
@@ -1737,7 +1754,10 @@ async function loadPendingApproval() {
               <div class="approver-role">HR Manager</div>
             </div>
             ${s2done
-              ? `<div class="already-approved">✓ อนุมัติแล้ว</div>`
+              ? `<div style="display:flex;align-items:center;gap:8px;">
+                  <div class="already-approved">✓ อนุมัติแล้ว</div>
+                  <button onclick="openRevokeModal('${r['รหัสใบลา']}', 1)" style="padding:4px 10px;font-size:11px;background:rgba(224,82,82,0.15);border:1px solid rgba(224,82,82,0.3);border-radius:6px;color:#e05252;cursor:pointer;">ยกเลิก</button>
+                </div>`
               : `<div class="approver-action">
                   <button class="approve-btn" onclick="apiApprove('${r['รหัสใบลา']}', 1, 'approve', 'approver2-${cardId}')">✓ อนุมัติ</button>
                   <button class="reject-btn"  onclick="apiApprove('${r['รหัสใบลา']}', 1, 'reject',  'approver2-${cardId}')">✗ ไม่อนุมัติ</button>
@@ -2338,6 +2358,56 @@ function initReportPeriod() {
   loadReportData();
 }
 
+// ════════════════════════════════════════════════════
+//  REVOKE APPROVAL — ยกเลิกอนุมัติ
+// ════════════════════════════════════════════════════
+let _revokeLeaveId = null;
+let _revokeApproverIdx = null;
+
+function openRevokeModal(leaveId, approverIdx) {
+  _revokeLeaveId    = leaveId;
+  _revokeApproverIdx = approverIdx;
+  document.getElementById('revoke-reason').value = '';
+  const modal = document.getElementById('modal-revoke');
+  modal.style.display = 'flex';
+}
+
+function closeRevokeModal() {
+  document.getElementById('modal-revoke').style.display = 'none';
+  _revokeLeaveId    = null;
+  _revokeApproverIdx = null;
+}
+
+async function confirmRevoke() {
+  const reason = document.getElementById('revoke-reason').value.trim();
+  if (!reason) { showToast('⚠️ กรุณาระบุเหตุผลการยกเลิก'); return; }
+
+  const btn = document.querySelector('#modal-revoke button:last-child');
+  btn.disabled = true;
+  btn.textContent = '⏳ กำลังบันทึก...';
+
+  const res = await callAPI({
+    action:        'revokeApproval',
+    leaveId:       _revokeLeaveId,
+    approverIndex: _revokeApproverIdx,
+    reason
+  });
+
+  btn.disabled = false;
+  btn.textContent = '✓ ยืนยันยกเลิก';
+  closeRevokeModal();
+
+  if (res.success) {
+    showToast('✅ ยกเลิกอนุมัติเรียบร้อย แจ้งพนักงานแล้ว');
+    setTimeout(() => loadPendingApproval(), 800);
+  } else {
+    showToast('❌ ' + res.message);
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  TOAST
+// ════════════════════════════════════════════════════
 function showToast(msg) {
   const t = document.getElementById('toast');
   document.getElementById('toast-msg').textContent = msg;

@@ -833,6 +833,11 @@ function setupTopbar() {
 }
 
 function goToDept() {
+  // cs (approver) และ hr → เข้าหน้าใบลาตรงเลย
+  if (currentUser.role === 'approver' || currentUser.role === 'hr') {
+    openLeave();
+    return;
+  }
   renderDeptGrid();
   showScreen('dept');
 }
