@@ -1485,10 +1485,11 @@ function getThaiMonth() {
 }
 
 function updateChartsFromData(all, allTime) {
-  const data = allTime || all; // ใช้ allTime สำหรับ donut/staff ถ้ามี
-  // นับตามประเภทลา (ทั้งหมด)
+  const data = allTime || all;
   const typeCounts = { 'ลาป่วย':0,'ลากิจ':0,'ลาพักร้อน':0,'ลานักขัตฤกษ์':0,'เปลี่ยนวันหยุด':0,'เปลี่ยนรอบ':0 };
   data.forEach(r => { if (typeCounts[r['ประเภทลา']] !== undefined) typeCounts[r['ประเภทลา']]++; });
+  console.log('🔍 typeCounts:', typeCounts);
+  console.log('🔍 sample ประเภทลา:', data.slice(0,3).map(r => r['ประเภทลา']));
 
   // อัปเดต monthly bar chart
   if (window._monthlyChart) {
