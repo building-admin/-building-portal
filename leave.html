@@ -1794,10 +1794,11 @@ async function loadAllApproval() {
 }
 
 // ── อนุมัติผ่านเว็บ ───────────────────────────────────
-async function apiApprove(leaveId, approverIndex, action, rowId) {
+async function apiApprove(leaveId, approverIndex, actionType, rowId) {
   const row = document.getElementById(rowId);
   if (!row) return;
-  row.querySelector('.approver-action').innerHTML = `<span style="font-size:12px;color:var(--text-muted);">⏳ กำลังบันทึก...</span>`;
+  const actionEl = row.querySelector('.approver-action');
+  if (actionEl) actionEl.innerHTML = `<span style="font-size:12px;color:var(--text-muted);">⏳ กำลังบันทึก...</span>`;
 
   const approvers = await callAPI({ action: 'getApprovers' });
   const approverList = approvers.success ? approvers.data : [];
@@ -1805,27 +1806,25 @@ async function apiApprove(leaveId, approverIndex, action, rowId) {
   const telegramId = approver ? approver['Telegram ID'] : '';
 
   const res = await callAPI({
-    action: 'approve',
+    action:             'approve',
     leaveId,
+    approverIndex,
     approverTelegramId: telegramId,
-    action: action
+    approveAction:      actionType
   });
 
   if (res.success) {
-    const word = action === 'approve' ? 'อนุมัติ' : 'ไม่อนุมัติ';
-    row.querySelector('.approver-action') && row.querySelector('.approver-action').remove
-      ? row.innerHTML = row.innerHTML.replace(/<div class="approver-action">.*<\/div>/s,
-          `<div class="already-approved">${action === 'approve' ? '✓' : '✗'} ${word}แล้ว</div>`)
-      : null;
+    const word = actionType === 'approve' ? '✓ อนุมัติแล้ว' : '✗ ไม่อนุมัติ';
     row.innerHTML = `
       <div class="approver-name-role">
         <div class="approver-name">${approver ? approver['ชื่อ'] : 'ผู้อนุมัติ'}</div>
+        <div class="approver-role">${approver ? (approverIndex === 0 ? 'ที่ปรึกษา' : 'HR Manager') : ''}</div>
       </div>
-      <div class="already-approved">${action === 'approve' ? '✓ อนุมัติแล้ว' : '✗ ไม่อนุมัติ'}</div>`;
-    showToast(res.message);
+      <div class="already-approved">${word}</div>`;
+    showToast(res.message || word);
   } else {
-    showToast('เกิดข้อผิดพลาด: ' + res.message);
-    row.querySelector('.approver-action') && (row.innerHTML = `<div style="color:var(--danger);font-size:12px;">เกิดข้อผิดพลาด</div>`);
+    showToast('❌ เกิดข้อผิดพลาด: ' + res.message);
+    if (actionEl) actionEl.innerHTML = `<div style="color:var(--danger);font-size:12px;">❌ ลองใหม่</div>`;
   }
 }
 
@@ -2014,8 +2013,9 @@ function closeSidebar() {
 }
 
 function selectType(btn, type) {
-  document.querySelectorAll('.leave-type-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('.leave-type-btn').forEach(b => { b.classList.remove('selected'); b.removeAttribute('data-selected'); });
   btn.classList.add('selected');
+  btn.setAttribute('data-selected', type);
   const el = document.getElementById('summary-type');
   if (el) el.textContent = type;
 }
@@ -2057,7 +2057,7 @@ async function loadApprovers() {
 
 async function submitLeave() {
   const selectedBtn = document.querySelector('.leave-type-btn.selected');
-  const leaveType   = selectedBtn ? selectedBtn.getAttribute('onclick').match(/'([^']+)'\)$/)?.[1] || '' : '';
+  const leaveType   = selectedBtn ? (selectedBtn.getAttribute('data-selected') || '') : '';
   const startDate   = document.getElementById('date-start').value;
   const endDate     = document.getElementById('date-end').value;
   const days        = parseInt(document.getElementById('days-count').textContent) || 0;
