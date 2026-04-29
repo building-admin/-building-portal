@@ -1594,7 +1594,7 @@ async function loadMyLeaves() {
   if (!tbody) return;
   tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">⏳ กำลังโหลด...</td></tr>`;
 
-  const res = await callAPI({ action: 'getMyLeaves', employeeId: currentUser.employeeId });
+  const res = await callAPI({ action: 'getMyLeaves', employeeId: currentUser.id });
   if (!res.success || !res.data?.length) {
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">ไม่พบประวัติการลา</td></tr>`;
     return;
@@ -1856,8 +1856,12 @@ async function loadUserFromPortal() {
   const urlToken = params.get('token');
   const name     = params.get('name');
 
-  // ใช้ token จาก URL หรือจาก sessionStorage (กรณี refresh)
-  const token = urlToken || sessionStorage.getItem('leave_session_token');
+  // เช็คว่าเป็น refresh จริงหรือเปิดใหม่
+  const navType = performance.getEntriesByType('navigation')[0]?.type;
+  const isRefresh = navType === 'reload';
+
+  // ใช้ token จาก URL เสมอ หรือจาก sessionStorage เฉพาะกรณี refresh เท่านั้น
+  const token = urlToken || (isRefresh ? sessionStorage.getItem('leave_session_token') : null);
 
   if (!token) {
     showAccessDenied('🔒', 'ไม่มีสิทธิ์เข้าถึง', 'กรุณาเข้าผ่าน Building Portal');
@@ -2094,7 +2098,7 @@ async function submitLeave() {
 
   const res = await callAPI({
     action:       'submitLeave',
-    employeeId:   currentUser.employeeId,
+    employeeId:   currentUser.id,
     employeeName: currentUser.name,
     position:     currentUser.position,
     leaveType,
