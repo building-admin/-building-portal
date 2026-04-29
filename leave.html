@@ -1487,7 +1487,11 @@ function getThaiMonth() {
 function updateChartsFromData(all, allTime) {
   const data = allTime || all;
   const typeCounts = { 'ลาป่วย':0,'ลากิจ':0,'ลาพักร้อน':0,'ลานักขัตฤกษ์':0,'เปลี่ยนวันหยุด':0,'เปลี่ยนรอบ':0 };
-  data.forEach(r => { if (typeCounts[r['ประเภทลา']] !== undefined) typeCounts[r['ประเภทลา']]++; });
+  data.forEach(r => {
+    // ตัด emoji และ space นำหน้าออก เช่น "🤒 ลาป่วย" → "ลาป่วย"
+    const t = (r['ประเภทลา'] || '').replace(/^[\p{Emoji}\s]+/u, '').trim();
+    if (typeCounts[t] !== undefined) typeCounts[t]++;
+  });
   console.log('🔍 typeCounts:', typeCounts);
   console.log('🔍 sample ประเภทลา:', data.slice(0,3).map(r => r['ประเภทลา']));
 
@@ -1498,7 +1502,7 @@ function updateChartsFromData(all, allTime) {
       const d = new Date(r['วันเริ่มลา']);
       if (!isNaN(d)) {
         const m = d.getMonth();
-        const t = r['ประเภทลา'];
+        const t = (r['ประเภทลา'] || '').replace(/^[\p{Emoji}\s]+/u, '').trim();
         if (t === 'ลาป่วย') monthlyCounts['ลาป่วย'][m]++;
         else if (t === 'ลากิจ') monthlyCounts['ลากิจ'][m]++;
         else if (t === 'ลาพักร้อน') monthlyCounts['ลาพักร้อน'][m]++;
