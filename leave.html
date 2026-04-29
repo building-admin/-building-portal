@@ -1531,7 +1531,14 @@ function updateChartsFromData(all) {
 
   // อัปเดต donut chart
   if (window._typeChart) {
-    window._typeChart.data.datasets[0].data = Object.values(typeCounts);
+    window._typeChart.data.datasets[0].data = [
+      typeCounts['ลาป่วย']        || 0,
+      typeCounts['ลากิจ']         || 0,
+      typeCounts['ลาพักร้อน']     || 0,
+      typeCounts['ลานักขัตฤกษ์']  || 0,
+      typeCounts['เปลี่ยนวันหยุด'] || 0,
+      typeCounts['เปลี่ยนรอบ']    || 0
+    ];
     window._typeChart.update();
   }
 
@@ -2276,7 +2283,7 @@ function initCharts() {
   window._typeChart = new Chart(document.getElementById('typeChart'), {
     type: 'doughnut',
     data: {
-      labels: ['ลาป่วย','ลากิจ','พักร้อน','นักขัตฤกษ์','เปลี่ยนวัน','เปลี่ยนรอบ'],
+      labels: ['ลาป่วย','ลากิจ','ลาพักร้อน','ลานักขัตฤกษ์','เปลี่ยนวันหยุด','เปลี่ยนรอบ'],
       datasets: [{ data:[0,0,0,0,0,0], backgroundColor:['rgba(224,82,82,0.8)','rgba(200,145,42,0.8)','rgba(61,186,122,0.8)','rgba(74,144,217,0.8)','rgba(120,80,180,0.8)','rgba(80,160,200,0.8)'], borderWidth:0, hoverOffset:6 }]
     },
     options: { responsive:true, cutout:'65%', plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, padding:12, font:{size:11} } } } }
