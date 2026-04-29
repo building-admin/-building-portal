@@ -918,21 +918,29 @@ function openMenu(menuId, url) {
   alert(`เมนู: ${menuId}\n\nยังอยู่ระหว่างการพัฒนาครับ`);
 }
 
-function openLeave() {
+async function openLeave() {
   const u = currentUser;
   const leaveRole = (u.role === 'admin')                       ? 'admin'
                  : (u.role === 'approver' || u.role === 'hr') ? u.role
                  : 'employee';
-  const params = new URLSearchParams({
-    uid:      u.username   || '',
-    name:     u.name       || '',
-    role:     leaveRole,
-    position: u.position   || '',
-    dept:     u.dept       || currentDept?.deptId || '',
-    division: u.division   || '',
-    empId:    u.employeeId || '',
-  });
-  window.location.href = `leave.html?${params.toString()}`;
+
+  // สร้าง one-time token ก่อนเปิด leave.html
+  try {
+    const res = await callAPI({ action: 'generateToken', username: u.username, role: leaveRole });
+    if (!res.success) throw new Error(res.message);
+
+    const params = new URLSearchParams({
+      token:    res.token,
+      name:     u.name       || '',
+      position: u.position   || '',
+      dept:     u.dept       || currentDept?.deptId || '',
+      division: u.division   || '',
+      empId:    u.employeeId || '',
+    });
+    window.location.href = `leave.html?${params.toString()}`;
+  } catch(e) {
+    showToast('❌ เปิดระบบใบลาไม่ได้: ' + e.message);
+  }
 }
 
 // ════════════════════════════════════════════════════

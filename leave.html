@@ -1403,6 +1403,17 @@
 //  API CONFIG
 // ════════════════════════════════════════════════════
 const API_URL = 'https://script.google.com/macros/s/AKfycbz8Mu8UUKeGppQe0_WpoqMV28HcKaSSNJIPbDP2powRrZbLFgtHMqpSQ2zU-gBqYjI18w/exec';
+const PORTAL_API_URL = 'https://script.google.com/macros/s/AKfycbxiE7m_8DUMSw_8wTw1FqoS1OpD1_01-9WJEW0RGo-n5Gzk9NVsi4C3cMhr5bQEagSh/exec';
+
+async function callPortalAPI(payload) {
+  try {
+    const qs = new URLSearchParams({ payload: JSON.stringify(payload) }).toString();
+    const res = await fetch(`${PORTAL_API_URL}?${qs}`, { redirect: 'follow' });
+    return await res.json();
+  } catch(e) {
+    return { success: false, message: e.message };
+  }
+}
 
 async function callAPI(payload) {
   try {
@@ -1475,6 +1486,27 @@ function updateChartsFromData(all) {
   // นับตามประเภทลา
   const typeCounts = { 'ลาป่วย':0,'ลากิจ':0,'ลาพักร้อน':0,'ลานักขัตฤกษ์':0,'เปลี่ยนวันหยุด':0,'เปลี่ยนรอบ':0 };
   all.forEach(r => { if (typeCounts[r['ประเภทลา']] !== undefined) typeCounts[r['ประเภทลา']]++; });
+
+  // อัปเดต monthly bar chart
+  if (window._monthlyChart) {
+    const monthlyCounts = { 'ลาป่วย':Array(12).fill(0), 'ลากิจ':Array(12).fill(0), 'ลาพักร้อน':Array(12).fill(0), 'อื่นๆ':Array(12).fill(0) };
+    all.forEach(r => {
+      const d = new Date(r['วันเริ่มลา']);
+      if (!isNaN(d)) {
+        const m = d.getMonth();
+        const t = r['ประเภทลา'];
+        if (t === 'ลาป่วย') monthlyCounts['ลาป่วย'][m]++;
+        else if (t === 'ลากิจ') monthlyCounts['ลากิจ'][m]++;
+        else if (t === 'ลาพักร้อน') monthlyCounts['ลาพักร้อน'][m]++;
+        else monthlyCounts['อื่นๆ'][m]++;
+      }
+    });
+    window._monthlyChart.data.datasets[0].data = monthlyCounts['ลาป่วย'];
+    window._monthlyChart.data.datasets[1].data = monthlyCounts['ลากิจ'];
+    window._monthlyChart.data.datasets[2].data = monthlyCounts['ลาพักร้อน'];
+    window._monthlyChart.data.datasets[3].data = monthlyCounts['อื่นๆ'];
+    window._monthlyChart.update();
+  }
 
   // อัปเดต monthly bar chart
   if (window._monthlyChart) {
@@ -1790,12 +1822,26 @@ async function apiApprove(leaveId, approverIndex, action, rowId) {
 let currentUser = null;
 let currentRole  = 'employee'; // global role ใช้ได้ทุก function
 
-function loadUserFromPortal() {
+async function loadUserFromPortal() {
   const params = new URLSearchParams(window.location.search);
-  const uid      = params.get('uid');
+  const token    = params.get('token');
   const name     = params.get('name');
-  const role     = params.get('role');
-  currentRole    = role || 'employee'; // set global
+
+  // ตรวจสอบ token กับ Portal API
+  if (!token) {
+    document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#0a1628;color:#e05252;font-family:Sarabun,sans-serif;gap:16px;"><div style="font-size:48px;">🔒</div><div style="font-size:20px;font-weight:600;">ไม่มีสิทธิ์เข้าถึง</div><div style="font-size:14px;color:#5a7a9a;">กรุณาเข้าผ่าน Building Portal</div><a href="./index.html" style="margin-top:16px;padding:10px 24px;background:rgba(200,145,42,0.2);color:#c8912a;border:1px solid rgba(200,145,42,0.3);border-radius:8px;text-decoration:none;">← กลับ Portal</a></div>';
+    return;
+  }
+
+  const tokenRes = await callPortalAPI({ action: 'verifyToken', token });
+  if (!tokenRes.success) {
+    document.body.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#0a1628;color:#e05252;font-family:Sarabun,sans-serif;gap:16px;"><div style="font-size:48px;">⏰</div><div style="font-size:20px;font-weight:600;">Session หมดอายุ</div><div style="font-size:14px;color:#5a7a9a;">กรุณา Login ใหม่จาก Building Portal</div><a href="./index.html" style="margin-top:16px;padding:10px 24px;background:rgba(200,145,42,0.2);color:#c8912a;border:1px solid rgba(200,145,42,0.3);border-radius:8px;text-decoration:none;">← กลับ Portal</a></div>';
+    return;
+  }
+
+  const uid  = tokenRes.username;
+  const role = tokenRes.role;
+  currentRole = role || 'employee'; // set global
   const pos      = params.get('position');
   const dept     = params.get('dept');
   const division = params.get('division');
