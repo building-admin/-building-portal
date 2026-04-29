@@ -2041,12 +2041,13 @@ async function loadApprovers() {
 }
 
 async function submitLeave() {
-  const leaveType = document.querySelector('.leave-type-btn.selected')?.textContent?.trim()?.replace(/\s+/g,' ').split(' ').pop() || '';
-  const startDate = document.getElementById('date-start').value;
-  const endDate   = document.getElementById('date-end').value;
-  const days      = parseInt(document.getElementById('days-count').textContent) || 0;
-  const reason    = document.querySelector('.field-textarea')?.value || '';
-  const remark    = document.querySelectorAll('.field-textarea')[1]?.value || '';
+  const selectedBtn = document.querySelector('.leave-type-btn.selected');
+  const leaveType   = selectedBtn ? selectedBtn.getAttribute('onclick').match(/'([^']+)'\)$/)?.[1] || '' : '';
+  const startDate   = document.getElementById('date-start').value;
+  const endDate     = document.getElementById('date-end').value;
+  const days        = parseInt(document.getElementById('days-count').textContent) || 0;
+  const reason      = document.getElementById('leave-reason')?.value || '';
+  const remark      = document.getElementById('leave-remark')?.value || '';
 
   if (!leaveType) { showToast('กรุณาเลือกประเภทการลา'); return; }
   if (!startDate)  { showToast('กรุณาระบุวันที่ลา'); return; }
