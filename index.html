@@ -553,7 +553,12 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
     </div>
     <div class="form-group"><label>ชื่อ-สกุล <span class="req">*</span></label><div class="input-wrap"><span class="input-icon">📝</span><input type="text" id="u-name" placeholder="ชื่อ นามสกุล"></div></div>
     <div class="form-row">
-      <div class="form-group"><label>Role</label><div class="input-wrap"><span class="input-icon">🎭</span><select id="u-role"><option value="user">User</option><option value="admin">Admin</option></select></div></div>
+      <div class="form-group"><label>Role</label><div class="input-wrap"><span class="input-icon">🎭</span><select id="u-role">
+  <option value="user">User (พนักงานทั่วไป)</option>
+  <option value="approver">Approver (ที่ปรึกษา / CS)</option>
+  <option value="hr">HR (HR Manager)</option>
+  <option value="admin">Admin (ผู้ดูแลระบบ)</option>
+</select></div></div>
       <div class="form-group"><label>สถานะ</label><div class="input-wrap"><span class="input-icon">🔘</span><select id="u-active"><option value="true">Active</option><option value="false">Inactive</option></select></div></div>
     </div>
     <div id="pw-section">

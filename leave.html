@@ -1594,7 +1594,7 @@ async function loadMyLeaves() {
   if (!tbody) return;
   tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">⏳ กำลังโหลด...</td></tr>`;
 
-  const res = await callAPI({ action: 'getMyLeaves', employeeId: currentUser.id });
+  const res = await callAPI({ action: 'getMyLeaves', employeeId: currentUser.employeeId || currentUser.id });
   if (!res.success || !res.data?.length) {
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px;">ไม่พบประวัติการลา</td></tr>`;
     return;
@@ -2098,7 +2098,7 @@ async function submitLeave() {
 
   const res = await callAPI({
     action:       'submitLeave',
-    employeeId:   currentUser.id,
+    employeeId:   currentUser.employeeId || currentUser.id,
     employeeName: currentUser.name,
     position:     currentUser.position,
     leaveType,
