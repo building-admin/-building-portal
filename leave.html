@@ -1607,7 +1607,21 @@ async function loadMyLeaves() {
       </div></td>
     </tr>`;
   }).join('');
-}
+
+  // อัปเดต summary cards วันลาสะสม
+  const approved = res.data.filter(r => r['สถานะ'] === 'อนุมัติ');
+  const sumType = (type) => approved.filter(r => (r['ประเภทลา']||'').replace(/^[\p{Emoji}\s]+/u,'').trim() === type)
+                                    .reduce((s,r) => s + (parseFloat(r['จำนวนวัน'])||0), 0);
+  const sick    = sumType('ลาป่วย');
+  const biz     = sumType('ลากิจ');
+  const vac     = sumType('ลาพักร้อน');
+  const total   = approved.reduce((s,r) => s + (parseFloat(r['จำนวนวัน'])||0), 0);
+
+  const q = id => document.querySelector(id);
+  if (q('#sum-sick'))      q('#sum-sick').textContent      = sick;
+  if (q('#sum-personal'))  q('#sum-personal').textContent  = biz;
+  if (q('#sum-vacation'))  q('#sum-vacation').textContent  = vac;
+  if (q('#sum-total'))     q('#sum-total').textContent     = total;
 
 // ════════════════════════════════════════════════════
 //  LOAD ALL LEAVES (เจ้าหน้าที่/ผู้อนุมัติ)
@@ -2125,6 +2139,25 @@ function setFilter(btn) {
     } else if (filterText === 'ทั้งหมด') {
       loadAllApproval();
     }
+  }
+
+  // กรองหน้า my-leaves (table rows)
+  const myLeavesTable = document.querySelector('#section-my-leaves tbody');
+  if (myLeavesTable) {
+    myLeavesTable.querySelectorAll('tr').forEach(row => {
+      const statusCell = row.querySelector('td:nth-child(6)');
+      if (!statusCell) return;
+      const status = statusCell.textContent.trim();
+      if (filterText === 'ทั้งหมด') {
+        row.style.display = '';
+      } else if (filterText === 'รออนุมัติ') {
+        row.style.display = status.includes('รอ') ? '' : 'none';
+      } else if (filterText === 'อนุมัติแล้ว') {
+        row.style.display = status.includes('อนุมัติ') && !status.includes('รอ') && !status.includes('ไม่') ? '' : 'none';
+      } else if (filterText === 'ไม่อนุมัติ') {
+        row.style.display = status.includes('ไม่อนุมัติ') ? '' : 'none';
+      }
+    });
   }
 
   // กรองหน้า all-leaves (table rows)
