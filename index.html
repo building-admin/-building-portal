@@ -939,7 +939,8 @@ async function openLeave() {
     });
     window.location.href = `leave.html?${params.toString()}`;
   } catch(e) {
-    showToast('❌ เปิดระบบใบลาไม่ได้: ' + e.message);
+    console.error('openLeave error:', e);
+    alert('❌ เปิดระบบใบลาไม่ได้: ' + e.message);
   }
 }
 
