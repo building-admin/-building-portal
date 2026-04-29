@@ -2235,33 +2235,91 @@ async function loadReportData() {
   if (subtitle) subtitle.textContent = 'กำลังโหลด...';
 
   try {
-    const res = await callAPI({ action: 'getAllLeaves', month: parseInt(month), year: parseInt(year) });
-    const data = res.success ? (res.data || []) : [];
+    // โหลดข้อมูลเดือนนี้ + ทั้งหมด 12 เดือน
+    const [monthRes, allRes] = await Promise.all([
+      callAPI({ action: 'getAllLeaves', month: parseInt(month), year: parseInt(year) }),
+      callAPI({ action: 'getAllLeaves' })
+    ]);
 
-    // อัปเดต subtitle
-    const months = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-    if (subtitle) subtitle.textContent = `${months[parseInt(month)]} ${parseInt(year)+543} — รวม ${data.length} รายการ`;
+    const data   = monthRes.success ? (monthRes.data || []) : [];
+    const allData = allRes.success  ? (allRes.data  || []) : [];
 
-    // ตาราง
-    const tbody = document.querySelector('#section-report .table-wrap tbody');
+    // ── subtitle ──
+    const monthNames = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+    if (subtitle) subtitle.textContent = `${monthNames[parseInt(month)]} ${parseInt(year)+543} — รวม ${data.length} รายการ`;
+
+    // ── stat cards ──
+    const approved = data.filter(r => r['สถานะ'] === 'อนุมัติ');
+    const pending  = data.filter(r => r['สถานะ'] === 'รออนุมัติ');
+    const totalDays = approved.reduce((s,r) => s + (parseFloat(r['จำนวนวัน'])||0), 0);
+    document.getElementById('rpt-total')?.setAttribute('data-v', data.length);
+    document.getElementById('rpt-approved')?.setAttribute('data-v', approved.length);
+    document.getElementById('rpt-days')?.setAttribute('data-v', totalDays);
+    document.getElementById('rpt-pending')?.setAttribute('data-v', pending.length);
+    if (document.getElementById('rpt-total'))    document.getElementById('rpt-total').textContent    = data.length;
+    if (document.getElementById('rpt-approved')) document.getElementById('rpt-approved').textContent = approved.length;
+    if (document.getElementById('rpt-days'))     document.getElementById('rpt-days').textContent     = totalDays;
+    if (document.getElementById('rpt-pending'))  document.getElementById('rpt-pending').textContent  = pending.length;
+
+    // ── กราฟวันลาตามประเภท ──
+    const typeKeys = ['ลาป่วย','ลากิจ','ลาพักร้อน','ลานักขัตฤกษ์','เปลี่ยนวันหยุด','เปลี่ยนรอบ'];
+    const typeTotals = typeKeys.map(t =>
+      data.filter(r => (r['ประเภทลา']||'').replace(/^[\p{Emoji}\s]+/u,'').trim() === t)
+          .reduce((s,r) => s + (parseFloat(r['จำนวนวัน'])||0), 0)
+    );
+    const rptTypeChart = Chart.getChart('reportTypeChart');
+    if (rptTypeChart) { rptTypeChart.data.datasets[0].data = typeTotals; rptTypeChart.update(); }
+
+    // ── กราฟแนวโน้ม 12 เดือน ──
+    const trendData = Array(12).fill(0);
+    const now = new Date();
+    allData.filter(r => r['สถานะ'] === 'อนุมัติ').forEach(r => {
+      const d = new Date(r['วันเริ่มลา']);
+      if (!isNaN(d)) {
+        const diffMonths = (now.getFullYear() - d.getFullYear()) * 12 + (now.getMonth() - d.getMonth());
+        if (diffMonths >= 0 && diffMonths < 12) trendData[11 - diffMonths] += parseFloat(r['จำนวนวัน'])||0;
+      }
+    });
+    const rptTrendChart = Chart.getChart('reportTrendChart');
+    if (rptTrendChart) { rptTrendChart.data.datasets[0].data = trendData; rptTrendChart.update(); }
+
+    // ── ตารางสรุปรายบุคคล ──
+    const tbody = document.getElementById('report-summary-tbody');
     if (!tbody) return;
     if (!data.length) {
       tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:28px;">ไม่มีข้อมูลเดือนนี้</td></tr>`;
       return;
     }
-    tbody.innerHTML = data.map(r => `
-      <tr>
-        <td>${r['ชื่อพนักงาน'] || '—'}</td>
-        <td>${r['ตำแหน่ง'] || '—'}</td>
-        <td>${r['ประเภทลา'] || '—'}</td>
-        <td>${r['วันเริ่มลา'] ? new Date(r['วันเริ่มลา']).toLocaleDateString('th-TH') : '—'}</td>
-        <td>${r['วันสิ้นสุด'] ? new Date(r['วันสิ้นสุด']).toLocaleDateString('th-TH') : '—'}</td>
-        <td>${r['จำนวนวัน'] || '—'}</td>
-        <td>${r['เหตุผล'] || '—'}</td>
-        <td><span class="badge ${r['สถานะ']==='อนุมัติ'?'badge-approved':r['สถานะ']==='ไม่อนุมัติ'?'badge-rejected':'badge-pending'}">${r['สถานะ']||'—'}</span></td>
-      </tr>`).join('');
+    // รวมตามคน
+    const personMap = {};
+    data.forEach(r => {
+      const key = r['ชื่อพนักงาน'] || '—';
+      if (!personMap[key]) personMap[key] = { position: r['ตำแหน่ง']||'', sick:0, biz:0, vac:0, hol:0, swap:0, rot:0 };
+      const t = (r['ประเภทลา']||'').replace(/^[\p{Emoji}\s]+/u,'').trim();
+      const d = parseFloat(r['จำนวนวัน'])||0;
+      if (t === 'ลาป่วย') personMap[key].sick += d;
+      else if (t === 'ลากิจ') personMap[key].biz += d;
+      else if (t === 'ลาพักร้อน') personMap[key].vac += d;
+      else if (t === 'ลานักขัตฤกษ์') personMap[key].hol += d;
+      else if (t === 'เปลี่ยนวันหยุด') personMap[key].swap += d;
+      else if (t === 'เปลี่ยนรอบ') personMap[key].rot += d;
+    });
+    tbody.innerHTML = Object.entries(personMap).map(([name, p]) => {
+      const total = p.sick + p.biz + p.vac + p.hol + p.swap + p.rot;
+      return `<tr>
+        <td>${name}</td>
+        <td>${p.position}</td>
+        <td>${p.sick || '—'}</td>
+        <td>${p.biz  || '—'}</td>
+        <td>${p.vac  || '—'}</td>
+        <td>${p.hol  || '—'}</td>
+        <td>${p.swap || '—'}</td>
+        <td><strong>${total}</strong></td>
+      </tr>`;
+    }).join('');
+
   } catch(e) {
-    if (subtitle) subtitle.textContent = 'โหลดข้อมูลไม่สำเร็จ';
+    if (subtitle) subtitle.textContent = 'โหลดข้อมูลไม่สำเร็จ: ' + e.message;
   }
 }
 
