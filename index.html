@@ -931,10 +931,28 @@ function openMenu(menuId, url) {
 }
 
 async function openRoster() {
+  const u = currentUser;
+  if (!u) { showAlert('กรุณา login ก่อนครับ', 'ℹ️'); return; }
+
   try {
-    const token = currentUser?.token;
-    if (!token) { showAlert('กรุณา login ก่อนครับ', 'ℹ️'); return; }
-    const u = currentUser;
+    // ใช้ token เดียวกับ leave (generateToken จาก Portal API)
+    const savedToken = sessionStorage.getItem('leave_token');
+    let token = null;
+
+    if (savedToken) {
+      const vRes = await callAPI({ action: 'verifyToken', token: savedToken });
+      if (vRes.success) token = savedToken;
+    }
+
+    if (!token) {
+      const leaveRole = (u.role === 'admin') ? 'admin'
+                     : (u.role === 'approver' || u.role === 'hr') ? u.role : 'employee';
+      const res = await callAPI({ action: 'generateToken', username: u.username, role: leaveRole });
+      if (!res.success) throw new Error(res.message);
+      token = res.token;
+      sessionStorage.setItem('leave_token', token);
+    }
+
     const params = new URLSearchParams({
       token:    token,
       name:     u.name     || '',
