@@ -561,62 +561,210 @@ async function loadRoster() {
 // ── BUILD TABLE ──────────────────────────────────────
 function buildRosterTable() {
   const [yearTH, monthNum] = currentMonth.split('-').map(Number);
-  const yearAD  = yearTH - 543;
+  const yearAD      = yearTH - 543;
   const daysInMonth = new Date(yearAD, monthNum, 0).getDate();
-  const dayNames = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+  const dayNames    = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+  const monthNames  = ['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                       'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
-  // THEAD
-  const thead = document.getElementById('roster-thead');
-  let headHTML = `<tr>
-    <th class="col-name">พนักงาน</th>
-    <th class="col-off">วันหยุด</th>`;
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dow = new Date(yearAD, monthNum - 1, d).getDay();
-    const isWeekend = dow === 0 || dow === 6;
-    headHTML += `<th class="col-day" style="${isWeekend ? 'color:var(--gold-light);' : ''}">${d}<br><span style="font-size:9px;">${dayNames[dow]}</span></th>`;
-  }
-  headHTML += '</tr>';
-  thead.innerHTML = headHTML;
-
-  // TBODY
-  const tbody = document.getElementById('roster-tbody');
   if (!employees.length) {
-    tbody.innerHTML = `<tr><td colspan="99" style="text-align:center;padding:40px;color:var(--muted);">ไม่พบข้อมูลพนักงาน</td></tr>`;
+    document.getElementById('roster-tbody').innerHTML =
+      `<tr><td colspan="99" style="text-align:center;padding:40px;color:var(--muted);">ไม่พบข้อมูลพนักงาน</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = employees.map(emp => {
-    const id = String(emp['รหัสพนักงาน']);
+  // แบ่งกลุ่มตามคอลัมน์ กลุ่ม
+  const group1 = employees.filter(e => String(e['กลุ่ม']) === '1');
+  const group2 = employees.filter(e => String(e['กลุ่ม']) === '2');
+  const group3 = employees.filter(e => String(e['กลุ่ม']) === '3');
+
+  // หา shift หลักของพนักงานในเดือนนี้
+  function getDominantShift(empId) {
+    const empRoster = rosterData[String(empId)] || {};
+    const counts = {};
+    Object.values(empRoster).forEach(code => {
+      if (code && !['W','H','S','PL','VL','C','CH'].includes(code))
+        counts[code] = (counts[code]||0)+1;
+    });
+    return Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0] || '';
+  }
+
+  function getShiftGroupLabel(code) {
+    if (SHIFTS.morning.includes(code))   return 'เช้า';
+    if (SHIFTS.afternoon.includes(code)) return 'บ่าย';
+    if (SHIFTS.night.includes(code))     return 'ดึก';
+    return 'อื่นๆ';
+  }
+
+  // จัด group1 ย่อยตามรอบเช้า/บ่าย/ดึก
+  const subGroups = { 'เช้า':[], 'บ่าย':[], 'ดึก':[], 'อื่นๆ':[] };
+  group1.forEach(emp => {
+    const dominant = getDominantShift(emp['รหัสพนักงาน']);
+    const label    = getShiftGroupLabel(dominant);
+    subGroups[label].push(emp);
+  });
+
+  // สร้าง THEAD
+  const thead = document.getElementById('roster-thead');
+  let headHTML = `<tr style="background:var(--navy-light);">
+    <th style="width:36px;font-size:10px;border-right:1px solid var(--border);text-align:center;">รอบ</th>
+    <th style="width:70px;font-size:10px;border-right:1px solid var(--border);text-align:center;">รหัส</th>
+    <th style="min-width:130px;text-align:left;padding-left:8px;font-size:10px;border-right:1px solid var(--border);">ตำแหน่งงาน</th>
+    <th style="min-width:120px;text-align:left;padding-left:8px;font-size:10px;border-right:1px solid var(--border);">เจ้าหน้าที่</th>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dow = new Date(yearAD, monthNum - 1, d).getDay();
+    const isWeekend = dow === 0 || dow === 6;
+    headHTML += `<th class="col-day" style="${isWeekend?'background:rgba(200,145,42,.12);color:var(--gold-light);':''}font-size:10px;">
+      ${d}<br><span style="font-size:8px;">${dayNames[dow]}</span></th>`;
+  }
+  headHTML += `<th style="width:80px;font-size:10px;border-left:1px solid var(--border);text-align:center;">วันหยุด<br>ประจำ</th></tr>`;
+  thead.innerHTML = headHTML;
+
+  const tbody = document.getElementById('roster-tbody');
+  let html    = '';
+  const colSpan = daysInMonth + 5;
+
+  // ── RENDER ROW ────────────────────────────────────────
+  function renderRow(emp, shiftLabel, showShiftCell, shiftRowSpan) {
+    const id        = String(emp['รหัสพนักงาน']);
     const empRoster = rosterData[id] || {};
+
     let cells = '';
     for (let d = 1; d <= daysInMonth; d++) {
-      const code = empRoster[d] || '';
-      const cls  = getShiftClass(code);
-      const title = code ? `${code} — ${SHIFT_TIME[code] || ''}` : 'คลิกเพื่อกำหนด';
-      if (isAdmin) {
-        cells += `<td><div class="shift-cell ${cls}" title="${title}" onclick="openPicker(event,'${id}',${d})">${code}</div></td>`;
-      } else {
-        cells += `<td><div class="shift-cell ${cls} readonly" title="${title}">${code}</div></td>`;
-      }
+      const dow        = new Date(yearAD, monthNum - 1, d).getDay();
+      const isWeekend  = dow === 0 || dow === 6;
+      const code       = empRoster[d] || '';
+      const bg         = getCellBg(code, isWeekend);
+      const wkBg       = isWeekend ? 'background:rgba(200,145,42,.06);' : '';
+      const clickFn    = isAdmin ? `onclick="openPicker(event,'${id}',${d})"` : '';
+      cells += `<td style="padding:1px;${wkBg}">
+        <div class="shift-cell${isAdmin?'':' readonly'}" style="${bg}${isAdmin?'cursor:pointer;':''}"
+          title="${code||'คลิกเพื่อกำหนด'}" ${clickFn}>${code}</div></td>`;
     }
+
     const autofillBtn = isAdmin
-      ? `<button onclick="openAutofill('${id}')" title="Auto-fill ทั้งเดือน"
-           style="margin-left:6px;padding:2px 7px;font-size:11px;background:rgba(200,145,42,.15);border:1px solid rgba(200,145,42,.3);border-radius:5px;color:var(--gold);cursor:pointer;white-space:nowrap;">⚡ fill</button>`
+      ? `<button onclick="openAutofill('${id}')" title="Auto-fill"
+           style="margin-left:4px;padding:1px 5px;font-size:10px;background:rgba(200,145,42,.15);border:1px solid rgba(200,145,42,.3);border-radius:4px;color:var(--gold);cursor:pointer;flex-shrink:0;">⚡</button>`
       : '';
-    return `<tr>
-      <td class="col-name">
-        <div style="display:flex;align-items:center;gap:4px;">
-          <div>
-            <div class="emp-name">${emp['ชื่อ-นามสกุล']}</div>
-            <div class="emp-position">${emp['ตำแหน่ง']}</div>
-          </div>
-          ${autofillBtn}
+
+    const shiftCell = showShiftCell
+      ? `<td rowspan="${shiftRowSpan}" style="text-align:center;font-size:11px;font-weight:700;
+           color:var(--gold);border-right:1px solid var(--border);vertical-align:middle;
+           writing-mode:vertical-rl;letter-spacing:.1em;padding:4px 2px;">${shiftLabel}</td>`
+      : '';
+
+    return `<tr style="border-bottom:1px solid rgba(44,74,114,.25);">
+      ${shiftCell}
+      <td style="font-size:10px;color:var(--muted);text-align:center;font-family:var(--font-mono);
+          padding:4px 2px;border-right:1px solid rgba(44,74,114,.2);">${emp['รหัสพนักงาน']}</td>
+      <td style="font-size:11px;color:var(--silver);padding:4px 8px;
+          border-right:1px solid rgba(44,74,114,.2);">${emp['ตำแหน่ง']}</td>
+      <td style="font-size:12px;font-weight:600;padding:4px 8px;border-right:1px solid var(--border);">
+        <div style="display:flex;align-items:center;">
+          <span>${emp['ชื่อ-นามสกุล']}</span>${autofillBtn}
         </div>
       </td>
-      <td class="emp-off">${emp['วันหยุดประจำ'] || '-'}</td>
       ${cells}
+      <td style="font-size:11px;text-align:center;color:var(--muted);border-left:1px solid var(--border);">
+        ${emp['วันหยุดประจำ']||'-'}</td>
     </tr>`;
-  }).join('');
+  }
+
+  // ── SECTION HEADER ─────────────────────────────────────
+  function sectionHeader(label) {
+    return `<tr>
+      <td colspan="${colSpan}" style="padding:6px 12px;background:rgba(200,145,42,.08);
+          border-top:2px solid rgba(200,145,42,.3);border-bottom:1px solid rgba(200,145,42,.2);">
+        <span style="font-size:11px;font-weight:700;color:var(--gold);font-family:var(--font-label);
+          letter-spacing:.08em;text-transform:uppercase;">${label}</span>
+      </td>
+    </tr>`;
+  }
+
+  // ── GROUP 1: จป./ป้องกัน/จราจร แบ่งย่อยตามรอบ ─────────
+  html += sectionHeader('ส่วนที่ 1 — จป. / ป้องกัน / จราจร');
+  ['เช้า','บ่าย','ดึก','อื่นๆ'].forEach(label => {
+    const emps = subGroups[label];
+    if (!emps.length) return;
+    emps.forEach((emp, idx) => {
+      html += renderRow(emp, label, idx === 0, emps.length);
+    });
+  });
+
+  // ── GROUP 2: หัวหน้ากลยุทธ์ ────────────────────────────
+  if (group2.length) {
+    html += `<tr><td colspan="${colSpan}" style="height:4px;background:rgba(44,74,114,.4);"></td></tr>`;
+    html += sectionHeader('ส่วนที่ 2 — หัวหน้ากลยุทธ์');
+    group2.forEach(emp => {
+      html += renderRow(emp, '', false, 1);
+    });
+  }
+
+  // ── GROUP 3: บริการอาคาร/ทรัพย์สิน ────────────────────
+  if (group3.length) {
+    html += `<tr><td colspan="${colSpan}" style="height:4px;background:rgba(44,74,114,.4);"></td></tr>`;
+    html += sectionHeader('ส่วนที่ 3 — บริการอาคารและทรัพย์สิน');
+    group3.forEach(emp => {
+      html += renderRow(emp, '', false, 1);
+    });
+  }
+
+  // ── FOOTER: Legend + ลายเซ็น ────────────────────────────
+  html += `<tr><td colspan="${colSpan}" style="padding:20px 12px 12px;">
+    <div style="display:grid;grid-template-columns:1fr auto;gap:24px;border-top:1px solid var(--border);padding-top:16px;">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:var(--silver);margin-bottom:8px;
+          font-family:var(--font-label);letter-spacing:.06em;text-transform:uppercase;">รอบเวลาการทำงาน</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:3px 20px;margin-bottom:12px;">
+          ${Object.entries(SHIFT_TIME).filter(([k])=>!['W','H','S','PL','VL','C','CH'].includes(k)).map(([code,time])=>
+            `<div style="font-size:11px;color:var(--muted);">
+              <span style="font-family:var(--font-mono);font-weight:700;color:var(--white);">${code}</span> = ${time} น.
+            </div>`).join('')}
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:10px;">
+          ${[['W','วันหยุดประจำสัปดาห์'],['H','วันหยุดนักขัตฤกษ์'],['S','ลาป่วย'],
+             ['PL','ลากิจ'],['VL','ลาพักร้อน'],['C','เปลี่ยนวันหยุด'],['CH','สะสมวันหยุด']].map(([code,label])=>{
+            const bg = getCellBg(code, false);
+            return `<div style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--silver);">
+              <div style="width:22px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;
+                font-size:10px;font-weight:700;font-family:var(--font-mono);${bg}">${code}</div>
+              <span>${label}</span></div>`;
+          }).join('')}
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:end;">
+        <div style="text-align:center;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:28px;">ผู้จัดทำ</div>
+          <div style="border-top:1px solid var(--border);padding-top:6px;">
+            <div style="font-size:12px;font-weight:600;">รัฐกานต์ ขันทอง</div>
+            <div style="font-size:11px;color:var(--muted);">หัวหน้าแผนกกลยุทธ์ฯ</div>
+          </div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:28px;">อนุมัติ</div>
+          <div style="border-top:1px solid var(--border);padding-top:6px;">
+            <div style="font-size:12px;font-weight:600;">จาตุรงค์ สุริยาศศิน</div>
+            <div style="font-size:11px;color:var(--muted);">ผู้อำนวยการกลุ่มงานบริหาร</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </td></tr>`;
+
+  tbody.innerHTML = html;
+  document.getElementById('page-title').textContent = 'รอบการปฏิบัติงานฝ่ายอาคารและสถานที่';
+  document.getElementById('page-sub').textContent   = `${monthNames[monthNum]} ${yearTH}`;
+}
+
+// สีพื้นหลัง cell
+function getCellBg(code, isWeekend) {
+  if (!code) return isWeekend ? 'background:rgba(200,145,42,.06);' : '';
+  if (SHIFTS.morning.includes(code))   return 'background:rgba(61,186,122,.2);color:#3dba7a;border:1px solid rgba(61,186,122,.3);';
+  if (SHIFTS.afternoon.includes(code)) return 'background:rgba(240,160,48,.2);color:#f0a030;border:1px solid rgba(240,160,48,.3);';
+  if (SHIFTS.night.includes(code))     return 'background:rgba(100,140,255,.2);color:#6490ff;border:1px solid rgba(100,140,255,.3);';
+  if (code === 'W')  return 'background:rgba(224,82,82,.3);color:#ff6b6b;border:1px solid rgba(224,82,82,.5);font-weight:800;';
+  if (code === 'H')  return 'background:rgba(200,145,42,.25);color:#e8b84b;border:1px solid rgba(200,145,42,.4);';
+  return 'background:rgba(160,80,200,.2);color:#c080ff;border:1px solid rgba(160,80,200,.3);';
 }
 
 // ── SHIFT PICKER ─────────────────────────────────────
