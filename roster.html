@@ -438,6 +438,16 @@ const SHIFT_TIME = {
   'C':'เปลี่ยนวันหยุด','CH':'สะสมวันหยุด'
 };
 
+// แสดงรหัสกะให้ครบ 2 หลัก (02, 08, 11 ฯลฯ)
+function padShift(code) {
+  if (!code || code === '') return '';
+  const num = parseInt(code);
+  if (!isNaN(num) && ['01','02','03','04','08','11','16','20','21'].includes(String(num).padStart(2,'0'))) {
+    return String(num).padStart(2, '0');
+  }
+  return String(code);
+}
+
 function getShiftClass(code) {
   if (!code || code === '') return 'shift-off';
   if (SHIFTS.morning.includes(code))   return 'shift-morning';
@@ -602,10 +612,10 @@ function buildRosterTable() {
       const wkBg      = isWeekend ? 'background:rgba(200,145,42,.06);' : '';
       if (isAdmin) {
         cells += `<td style="padding:1px;${wkBg}">
-          <div class="shift-cell" style="${bg}cursor:pointer;" title="${code||'คลิกเพื่อกำหนด'}" onclick="openPicker(event,'${id}',${d})">${code}</div></td>`;
+          <div class="shift-cell" style="${bg}cursor:pointer;" title="${padShift(code)||'คลิกเพื่อกำหนด'}" onclick="openPicker(event,'${id}',${d})">${padShift(code)}</div></td>`;
       } else {
         cells += `<td style="padding:1px;${wkBg}">
-          <div class="shift-cell readonly" style="${bg}" title="${code}">${code}</div></td>`;
+          <div class="shift-cell readonly" style="${bg}" title="${padShift(code)}">${padShift(code)}</div></td>`;
       }
     }
     const autofillBtn = isAdmin
