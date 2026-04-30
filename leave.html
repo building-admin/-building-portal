@@ -1657,19 +1657,28 @@ async function loadAllLeaves() {
   tbody.innerHTML = res.data.map(r => {
     const s1 = r['ผู้อนุมัติ1-สถานะ'] === 'อนุมัติ'
       ? `<span class="badge badge-approved" style="font-size:10px;">✓</span>`
+      : r['ผู้อนุมัติ1-สถานะ'] === 'ไม่อนุมัติ'
+      ? `<span class="badge badge-rejected" style="font-size:10px;">✗</span>`
       : `<span class="badge badge-pending" style="font-size:10px;">⏳</span>`;
     const s2 = r['ผู้อนุมัติ2-สถานะ'] === 'อนุมัติ'
       ? `<span class="badge badge-approved" style="font-size:10px;">✓</span>`
+      : r['ผู้อนุมัติ2-สถานะ'] === 'ไม่อนุมัติ'
+      ? `<span class="badge badge-rejected" style="font-size:10px;">✗</span>`
       : `<span class="badge badge-pending" style="font-size:10px;">⏳</span>`;
     const overall = r['สถานะ'] === 'อนุมัติ'
       ? `<span class="badge badge-approved">อนุมัติ</span>`
       : r['สถานะ'] === 'ไม่อนุมัติ'
       ? `<span class="badge badge-rejected">ไม่อนุมัติ</span>`
       : `<span class="badge badge-pending">รออนุมัติ</span>`;
+    // เหตุผลยกเลิก (ถ้ามี)
+    const remarkNote = r['หมายเหตุผู้อนุมัติ']
+      ? `<div style="font-size:11px;color:#e05252;margin-top:2px;">📝 ${r['หมายเหตุผู้อนุมัติ']}</div>` : '';
+    // approverIndex ตาม role ของผู้ login
+    const myApproverIdx = currentUser.type === 'hr' ? 1 : 0;
     const canRevoke = r['สถานะ'] === 'อนุมัติ' &&
       (currentUser.type === 'approver' || currentUser.type === 'hr' || currentUser.type === 'admin');
     const revokeBtn = canRevoke
-      ? `<button onclick="openRevokeModal('${r['รหัสใบลา']}', 0)"
+      ? `<button onclick="openRevokeModal('${r['รหัสใบลา']}', ${myApproverIdx})"
            style="padding:3px 10px;font-size:11px;background:rgba(224,82,82,0.15);border:1px solid rgba(224,82,82,0.3);border-radius:6px;color:#e05252;cursor:pointer;">
            ยกเลิก</button>`
       : '';
@@ -1682,7 +1691,7 @@ async function loadAllLeaves() {
       <td>${formatDateShort(r['วันสิ้นสุด'])}</td>
       <td>${r['จำนวนวัน']} วัน</td>
       <td>${s1}</td><td>${s2}</td>
-      <td>${overall}</td>
+      <td>${overall}${remarkNote}</td>
       <td>${revokeBtn}</td>
     </tr>`;
   }).join('');
@@ -2402,7 +2411,8 @@ async function confirmRevoke() {
     action:        'revokeApproval',
     leaveId:       _revokeLeaveId,
     approverIndex: _revokeApproverIdx,
-    reason
+    remark:        reason,
+    revokedBy:     currentUser.name
   });
 
   btn.disabled = false;
