@@ -269,9 +269,9 @@
       </div>
 
       <div class="legend">
-        <div class="legend-item"><div class="legend-dot shift-morning" style="display:inline-block;"></div> เช้า (01-04, 08)</div>
-        <div class="legend-item"><div class="legend-dot shift-afternoon" style="display:inline-block;"></div> บ่าย (11, 13, 16, 21)</div>
-        <div class="legend-item"><div class="legend-dot shift-night" style="display:inline-block;"></div> ดึก (19, 20, 38)</div>
+        <div class="legend-item"><div class="legend-dot shift-morning" style="display:inline-block;"></div> เช้า (02, 03, 04, 08, 11, 21)</div>
+        <div class="legend-item"><div class="legend-dot shift-afternoon" style="display:inline-block;"></div> บ่าย (16)</div>
+        <div class="legend-item"><div class="legend-dot shift-night" style="display:inline-block;"></div> ดึก (20)</div>
         <div class="legend-item"><div class="legend-dot shift-off" style="display:inline-block;"></div> หยุด (W)</div>
         <div class="legend-item"><div class="legend-dot shift-holiday" style="display:inline-block;"></div> นักขัตฤกษ์ (H)</div>
         <div class="legend-item"><div class="legend-dot shift-leave" style="display:inline-block;"></div> ลา (S/PL/VL/C/CH)</div>
@@ -423,8 +423,8 @@ const LEAVE_URL  = 'https://building-admin.github.io/-building-portal/leave.html
 
 // ── SHIFT DEFINITIONS ───────────────────────────────
 const SHIFTS = {
-  morning:   ['02','03','04','08'],
-  afternoon: ['11','16','21'],
+  morning:   ['02','03','04','08','11','21'],
+  afternoon: ['16'],
   night:     ['20'],
   off:       ['W','H','S','PL','VL','C','CH']
 };
@@ -606,17 +606,14 @@ function buildRosterTable() {
       }
     }
     const autofillBtn = isAdmin
-      ? `<button onclick="openAutofill('${id}')" title="Auto-fill ทั้งเดือน"
-           style="margin-left:6px;padding:2px 7px;font-size:11px;background:rgba(200,145,42,.15);border:1px solid rgba(200,145,42,.3);border-radius:5px;color:var(--gold);cursor:pointer;white-space:nowrap;">⚡ fill</button>`
-      : '';
+      ? `` : '';
     return `<tr>
       <td class="col-name">
         <div style="display:flex;align-items:center;gap:4px;">
-          <div>
-            <div class="emp-name">${emp['ชื่อ-นามสกุล']}</div>
+          <div ${isAdmin ? `onclick="openAutofill('${id}')" title="คลิกเพื่อ Auto-fill" style="cursor:pointer;"` : ''}>
+            <div class="emp-name" style="${isAdmin ? 'color:var(--gold-light);' : ''}">${emp['ชื่อ-นามสกุล']}</div>
             <div class="emp-position">${emp['ตำแหน่ง']}</div>
           </div>
-          ${autofillBtn}
         </div>
       </td>
       <td class="emp-off">${emp['วันหยุดประจำ']||'-'}</td>
