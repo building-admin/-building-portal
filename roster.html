@@ -548,7 +548,9 @@ async function loadRoster() {
       const id = String(row['รหัสพนักงาน']);
       if (!rosterData[id]) rosterData[id] = {};
       for (let d = 1; d <= 31; d++) {
-        rosterData[id][d] = row[String(d)] || '';
+        // Sheet อาจส่งมาเป็น key ตัวเลขหรือ string ให้ลองทั้งสองแบบ
+        const val = row[d] !== undefined ? row[d] : (row[String(d)] !== undefined ? row[String(d)] : '');
+        rosterData[id][d] = String(val || '').trim();
       }
     });
   }
