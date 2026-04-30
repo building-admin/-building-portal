@@ -368,6 +368,19 @@
   </div>
 </div>
 
+<!-- ── MODAL: CONFIRM ── -->
+<div id="modal-roster-confirm" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9995;align-items:center;justify-content:center;">
+  <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:380px;width:90%;text-align:center;">
+    <div id="confirm-icon" style="font-size:44px;margin-bottom:14px;">⚠️</div>
+    <h3 id="confirm-title" style="margin-bottom:8px;"></h3>
+    <p id="confirm-msg" style="font-size:14px;color:var(--silver);line-height:1.6;margin-bottom:24px;"></p>
+    <div style="display:flex;gap:12px;justify-content:center;">
+      <button onclick="closeConfirm()" style="padding:10px 20px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--silver);cursor:pointer;">ยกเลิก</button>
+      <button id="confirm-ok-btn" style="padding:10px 20px;background:rgba(224,82,82,.2);border:1px solid rgba(224,82,82,.4);border-radius:8px;color:#e05252;cursor:pointer;font-weight:600;">ยืนยัน</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── TOAST ── -->
 <div class="toast" id="toast"><span id="toast-msg"></span></div>
 
@@ -763,15 +776,36 @@ async function saveEmployee() {
 }
 
 async function deleteEmployee(empId) {
-  if (!confirm(`ปิดใช้งานพนักงาน ${empId} ใช่ไหมครับ?`)) return;
-  const res = await callAPI({ action: 'deleteEmployee', employeeId: empId });
-  if (res.success) {
-    showToast('ปิดใช้งานเรียบร้อยแล้ว', 'success');
-    await loadEmployees();
-    buildRosterTable();
-  } else {
-    showToast(res.message, 'error');
-  }
+  showConfirm({
+    icon: '🗑️', title: 'ปิดใช้งานพนักงาน',
+    msg: `ต้องการปิดใช้งานพนักงาน ${empId} ใช่ไหมครับ?`,
+    okText: 'ยืนยัน', okClass: 'btn-danger',
+    onOk: async () => {
+      const res = await callAPI({ action: 'deleteEmployee', employeeId: empId });
+      if (res.success) {
+        showToast('ปิดใช้งานเรียบร้อยแล้ว', 'success');
+        await loadEmployees();
+        buildRosterTable();
+      } else {
+        showToast(res.message, 'error');
+      }
+    }
+  });
+}
+
+function showConfirm({ icon='⚠️', title='ยืนยัน', msg='', okText='ยืนยัน', okClass='btn-primary', onOk=()=>{} }) {
+  document.getElementById('confirm-icon').textContent  = icon;
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').textContent   = msg;
+  const okBtn = document.getElementById('confirm-ok-btn');
+  okBtn.textContent = okText;
+  okBtn.className   = okClass + ' btn-primary';
+  okBtn.onclick = () => { closeConfirm(); onOk(); };
+  document.getElementById('modal-roster-confirm').style.display = 'flex';
+}
+
+function closeConfirm() {
+  document.getElementById('modal-roster-confirm').style.display = 'none';
 }
 
 // ── EXPORT CSV ───────────────────────────────────────

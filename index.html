@@ -921,11 +921,30 @@ function openMenu(menuId, url) {
   };
   const reportMenus = ['bm_report','bs_report'];
   const leaveMenus  = ['bm_leave','bs_leave','leave'];
+  const rosterMenus = ['bm_roster','bs_roster','roster'];
 
-  if (jobMenus[menuId])          { openJobPanel(jobMenus[menuId], menuId); return; }
-  if (reportMenus.includes(menuId)) { alert('📊 หน้ารายงานอยู่ระหว่างพัฒนาครับ'); return; }
+  if (jobMenus[menuId])             { openJobPanel(jobMenus[menuId], menuId); return; }
+  if (reportMenus.includes(menuId)) { showAlert('หน้ารายงานอยู่ระหว่างพัฒนาครับ', '🚧'); return; }
   if (leaveMenus.includes(menuId))  { openLeave(); return; }
-  alert(`เมนู: ${menuId}\n\nยังอยู่ระหว่างการพัฒนาครับ`);
+  if (rosterMenus.includes(menuId)) { openRoster(); return; }
+  showAlert(`เมนู: ${menuId}\n\nยังอยู่ระหว่างการพัฒนาครับ`, '🚧');
+}
+
+async function openRoster() {
+  try {
+    const token = currentUser?.token;
+    if (!token) { showAlert('กรุณา login ก่อนครับ', 'ℹ️'); return; }
+    const u = currentUser;
+    const params = new URLSearchParams({
+      token:    token,
+      name:     u.name     || '',
+      position: u.position || '',
+      role:     u.role     || 'employee',
+    });
+    window.location.href = `roster.html?${params.toString()}`;
+  } catch(e) {
+    showAlert('เปิดระบบตารางรอบไม่ได้: ' + e.message, '❌');
+  }
 }
 
 async function openLeave() {
@@ -965,7 +984,7 @@ async function openLeave() {
     window.location.href = `leave.html?${params.toString()}`;
   } catch(e) {
     console.error('openLeave error:', e);
-    alert('❌ เปิดระบบใบลาไม่ได้: ' + e.message);
+    showAlert('เปิดระบบใบลาไม่ได้: ' + e.message, '❌');
   }
 }
 
@@ -1136,7 +1155,7 @@ async function quickUpdateStatus(id, newStatus) {
     const job = allJobs.find(j => j.id === id);
     if (job) job.status = newStatus;
     renderStatCards();
-  } catch(e) { alert('อัปเดตสถานะไม่สำเร็จ'); }
+  } catch(e) { showAlert('อัปเดตสถานะไม่สำเร็จ', '❌'); }
 }
 
 function openAddJob() {
@@ -1379,11 +1398,15 @@ async function saveUser() {
 }
 
 async function confirmDeleteUser(username) {
-  if (!confirm(`ต้องการลบผู้ใช้ "${username}" หรือไม่?\nสิทธิ์ทั้งหมดของผู้ใช้นี้จะถูกลบด้วย`)) return;
-  try {
-    const r = await callAPI({ action:'deleteUser', username, adminUser:currentUser.username });
-    if (r.success) loadUsers(); else alert('ลบไม่สำเร็จ: '+r.message);
-  } catch { alert('เชื่อมต่อไม่ได้'); }
+  showConfirm({
+    icon: '🗑️', title: 'ลบผู้ใช้',
+    msg: `ต้องการลบผู้ใช้ "${username}" หรือไม่?\nสิทธิ์ทั้งหมดของผู้ใช้นี้จะถูกลบด้วย`,
+    okText: 'ลบ', okClass: 'btn-danger',
+    onOk: async () => {
+      const r = await callAPI({ action:'deleteUser', username, adminUser:currentUser.username });
+      if (r.success) loadUsers(); else showAlert('ลบไม่สำเร็จ: ' + r.message, '❌');
+    }
+  });
 }
 
 // ════════════════════════════════════════════════════
@@ -1584,11 +1607,20 @@ async function saveDept() {
 }
 
 async function confirmDeleteDept(deptId) {
-  if (!confirm(`ต้องการลบแผนก "${deptId}" หรือไม่?`)) return;
+  showConfirm({
+    icon: '🗑️', title: 'ลบแผนก',
+    msg: `ต้องการลบแผนก "${deptId}" หรือไม่?`,
+    okText: 'ลบ', okClass: 'btn-danger',
+    onOk: async () => {
+      const r = await callAPI({ action:'deleteDepartment', deptId, adminUser:currentUser.username });
+      if (r.success) loadDepts(); else showAlert('ลบไม่สำเร็จ: ' + r.message, '❌');
+    }
+  });
+  return;
   try {
     const r = await callAPI({ action:'deleteDepartment', deptId, adminUser:currentUser.username });
-    if (r.success) loadDepts(); else alert('ลบไม่สำเร็จ: '+r.message);
-  } catch { alert('เชื่อมต่อไม่ได้'); }
+    if (r.success) loadDepts(); else showAlert('ลบไม่สำเร็จ: ' + r.message, '❌');
+  } catch { showAlert('เชื่อมต่อไม่ได้ กรุณาลองใหม่อีกครั้ง', '❌'); }
 }
 
 // ════════════════════════════════════════════════════
@@ -1700,11 +1732,20 @@ async function saveMenu() {
 }
 
 async function confirmDeleteMenu(menuId) {
-  if (!confirm(`ต้องการลบเมนู "${menuId}" หรือไม่?`)) return;
+  showConfirm({
+    icon: '🗑️', title: 'ลบเมนู',
+    msg: `ต้องการลบเมนู "${menuId}" หรือไม่?`,
+    okText: 'ลบ', okClass: 'btn-danger',
+    onOk: async () => {
+      const r = await callAPI({ action:'deleteMenu', menuId, adminUser:currentUser.username });
+      if (r.success) loadMenus(); else showAlert('ลบไม่สำเร็จ: ' + r.message, '❌');
+    }
+  });
+  return;
   try {
     const r = await callAPI({ action:'deleteMenu', menuId, adminUser:currentUser.username });
-    if (r.success) loadMenus(); else alert('ลบไม่สำเร็จ: '+r.message);
-  } catch { alert('เชื่อมต่อไม่ได้'); }
+    if (r.success) loadMenus(); else showAlert('ลบไม่สำเร็จ: ' + r.message, '❌');
+  } catch { showAlert('เชื่อมต่อไม่ได้ กรุณาลองใหม่อีกครั้ง', '❌'); }
 }
 
 // ════════════════════════════════════════════════════
@@ -1752,11 +1793,11 @@ function switchTab(tabId, btn) {
 function showSetup() { document.getElementById('api-url-input').value=getApiUrl(); openModal('setup-modal'); }
 async function saveApiUrl() {
   const url = document.getElementById('api-url-input').value.trim();
-  if (!url) { alert('กรุณากรอก URL'); return; }
+  if (!url) { showAlert('กรุณากรอก URL ของ Apps Script ครับ', 'ℹ️'); return; }
   localStorage.setItem(API_KEY, url);
   const ok = await pingAPI();
-  if (ok) { alert('✅ เชื่อมต่อสำเร็จ!'); closeModal('setup-modal'); }
-  else alert('❌ เชื่อมต่อไม่ได้ — ตรวจสอบ URL และ Permission ของ Web App');
+  if (ok) { showAlert('เชื่อมต่อสำเร็จ', '✅'); closeModal('setup-modal'); }
+  else showAlert('เชื่อมต่อไม่ได้ — ตรวจสอบ URL และ Permission ของ Web App', '❌');
 }
 
 // ════════════════════════════════════════════════════
@@ -1922,6 +1963,26 @@ function showConfirm({ icon='⚠️', title='ยืนยัน', msg='', okText
   okBtn.className = okClass;
   document.getElementById('confirm-cancel-btn').textContent = cancelText;
   okBtn.onclick = () => { closeModal('modal-confirm'); onOk(); };
+  openModal('modal-confirm');
+}
+
+function showAlert(msg, icon) {
+  // ใช้ modal-confirm แต่ซ่อนปุ่มยกเลิก
+  if (!icon) {
+    if (msg.includes('❌') || msg.includes('ไม่สำเร็จ') || msg.includes('ไม่ได้')) icon = '❌';
+    else if (msg.includes('✅') || msg.includes('สำเร็จ'))                         icon = '✅';
+    else if (msg.includes('📊') || msg.includes('ระหว่างพัฒนา'))                   icon = '🚧';
+    else                                                                            icon = 'ℹ️';
+  }
+  document.getElementById('confirm-icon').textContent  = icon;
+  document.getElementById('confirm-title').textContent = '';
+  document.getElementById('confirm-msg').textContent   = msg.replace(/^[✅❌⚠️ℹ️🚧]\s*/u, '');
+  const okBtn     = document.getElementById('confirm-ok-btn');
+  const cancelBtn = document.getElementById('confirm-cancel-btn');
+  okBtn.textContent     = 'ตกลง';
+  okBtn.className       = 'btn-save';
+  cancelBtn.style.display = 'none';
+  okBtn.onclick = () => { cancelBtn.style.display = ''; closeModal('modal-confirm'); };
   openModal('modal-confirm');
 }
 
