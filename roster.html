@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BFS Roster System</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy:        #0a1628;
+    --navy-mid:    #0f2044;
+    --navy-light:  #1a3460;
+    --steel:       #2c4a72;
+    --gold:        #c8912a;
+    --gold-light:  #e8b84b;
+    --gold-glow:   rgba(200,145,42,.18);
+    --white:       #eef2f8;
+    --silver:      #a8bbd4;
+    --muted:       #5a7a9a;
+    --success:     #3dba7a;
+    --warning:     #f0a030;
+    --danger:      #e05252;
+    --border:      rgba(44,74,114,.5);
+    --card-bg:     rgba(15,32,68,.7);
+    --input-bg:    rgba(10,22,40,.6);
+    --sidebar-w:   220px;
+    --font-body:   'Sarabun', sans-serif;
+    --font-label:  'Barlow Condensed', sans-serif;
+    --font-mono:   'Barlow Condensed', sans-serif;
+  }
+
+  /* ── SHIFT COLORS ── */
+  .shift-morning  { background:rgba(61,186,122,.18);  color:#3dba7a;  border:1px solid rgba(61,186,122,.3);  }
+  .shift-afternoon{ background:rgba(240,160,48,.18);  color:#f0a030;  border:1px solid rgba(240,160,48,.3);  }
+  .shift-night    { background:rgba(100,140,255,.18); color:#6490ff;  border:1px solid rgba(100,140,255,.3); }
+  .shift-off      { background:rgba(90,122,154,.12);  color:#5a7a9a;  border:1px solid rgba(90,122,154,.2);  }
+  .shift-leave    { background:rgba(224,82,82,.15);   color:#e05252;  border:1px solid rgba(224,82,82,.3);   }
+  .shift-holiday  { background:rgba(200,145,42,.15);  color:#c8912a;  border:1px solid rgba(200,145,42,.3);  }
+
+  * { margin:0; padding:0; box-sizing:border-box; min-width:0; }
+  body { font-family:var(--font-body); background:var(--navy); color:var(--white); min-height:100vh; overflow-x:hidden; }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    position:fixed; top:0; left:0; bottom:0; width:var(--sidebar-w);
+    background:var(--navy-mid); border-right:1px solid var(--border);
+    display:flex; flex-direction:column; z-index:100; overflow-y:auto;
+  }
+  .sidebar-logo { padding:20px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+  .logo-icon { width:36px; height:36px; background:linear-gradient(135deg,var(--gold),var(--gold-light)); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+  .logo-text { font-family:var(--font-label); font-size:16px; font-weight:700; letter-spacing:.05em; line-height:1.2; }
+  .logo-sub  { font-size:10px; color:var(--muted); font-family:var(--font-label); letter-spacing:.1em; text-transform:uppercase; }
+
+  .sidebar-user { padding:14px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+  .user-avatar  { width:34px; height:34px; border-radius:50%; background:linear-gradient(135deg,var(--gold),var(--gold-light)); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; color:var(--navy); flex-shrink:0; }
+  .user-name    { font-size:13px; font-weight:600; }
+  .user-role    { font-size:11px; color:var(--muted); }
+
+  .nav-section  { padding:16px 8px 4px; }
+  .nav-label    { font-size:11px; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; padding:4px 8px; font-weight:600; font-family:var(--font-label); }
+  .nav-item     { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:8px; cursor:pointer; font-size:13px; color:var(--silver); transition:all .2s; margin-bottom:2px; border:none; background:none; width:100%; text-align:left; }
+  .nav-item:hover  { background:var(--gold-glow); color:var(--white); }
+  .nav-item.active { background:linear-gradient(90deg,var(--gold-glow),transparent); color:var(--gold-light); border-left:2px solid var(--gold); }
+  .nav-icon { font-size:16px; width:20px; text-align:center; }
+
+  .sidebar-footer { margin-top:auto; padding:16px; border-top:1px solid var(--border); }
+  .btn-logout { width:100%; padding:9px; border-radius:8px; border:none; background:rgba(224,82,82,.1); color:var(--danger); cursor:pointer; font-family:var(--font-body); font-size:13px; display:flex; align-items:center; justify-content:center; gap:6px; transition:all .2s; }
+  .btn-logout:hover { background:rgba(224,82,82,.2); }
+
+  /* ── MAIN ── */
+  .main { margin-left:var(--sidebar-w); min-height:100vh; display:flex; flex-direction:column; }
+
+  .topbar { padding:16px 24px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; background:var(--navy-mid); position:sticky; top:0; z-index:50; }
+  .topbar-left h1  { font-size:20px; font-weight:700; }
+  .topbar-left p   { font-size:11px; color:var(--muted); margin-top:2px; font-family:var(--font-label); letter-spacing:.07em; text-transform:uppercase; }
+  .topbar-right    { display:flex; align-items:center; gap:10px; }
+  .topbar-date     { font-size:12px; color:var(--muted); font-family:var(--font-label); }
+
+  .btn-primary { padding:8px 16px; background:linear-gradient(135deg,var(--gold),var(--gold-light)); border:none; border-radius:8px; color:var(--navy); font-family:var(--font-body); font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all .2s; }
+  .btn-primary:hover { filter:brightness(1.1); transform:translateY(-1px); }
+  .btn-secondary { padding:8px 14px; background:transparent; border:1px solid var(--border); border-radius:8px; color:var(--silver); font-family:var(--font-body); font-size:13px; cursor:pointer; display:flex; align-items:center; gap:6px; transition:all .2s; }
+  .btn-secondary:hover { border-color:var(--gold); color:var(--gold-light); }
+
+  .content { padding:24px; flex:1; }
+
+  /* ── TOOLBAR ── */
+  .toolbar { display:flex; align-items:center; gap:12px; margin-bottom:20px; flex-wrap:wrap; }
+  .month-selector { display:flex; align-items:center; gap:8px; background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:8px 14px; }
+  .month-selector select { background:transparent; border:none; color:var(--white); font-family:var(--font-body); font-size:14px; cursor:pointer; outline:none; }
+  .month-selector select option { background:var(--navy-mid); }
+  .month-nav { width:28px; height:28px; border:none; background:rgba(200,145,42,.1); border-radius:6px; color:var(--gold); cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:all .2s; }
+  .month-nav:hover { background:var(--gold-glow); }
+
+  /* ── LEGEND ── */
+  .legend { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px; }
+  .legend-item { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--silver); font-family:var(--font-label); }
+  .legend-dot { width:10px; height:10px; border-radius:3px; }
+
+  /* ── ROSTER TABLE ── */
+  .table-wrapper { overflow-x:auto; border-radius:12px; border:1px solid var(--border); }
+  .roster-table { width:100%; border-collapse:collapse; min-width:900px; }
+  .roster-table th {
+    background:var(--navy-light); color:var(--silver);
+    font-family:var(--font-label); font-size:11px; letter-spacing:.05em;
+    padding:8px 4px; text-align:center; border-bottom:1px solid var(--border);
+    white-space:nowrap; position:sticky; top:0;
+  }
+  .roster-table th.col-name { text-align:left; padding-left:12px; min-width:160px; position:sticky; left:0; background:var(--navy-light); z-index:2; }
+  .roster-table th.col-off  { min-width:80px; }
+  .roster-table th.col-day  { min-width:36px; width:36px; }
+  .roster-table td { padding:4px; border-bottom:1px solid rgba(44,74,114,.3); vertical-align:middle; text-align:center; }
+  .roster-table td.col-name { text-align:left; padding:8px 12px; position:sticky; left:0; background:var(--navy-mid); z-index:1; border-right:1px solid var(--border); }
+  .roster-table tr:hover td { background:rgba(26,52,96,.4); }
+  .roster-table tr:hover td.col-name { background:rgba(26,52,96,.8); }
+
+  .emp-name     { font-size:13px; font-weight:600; }
+  .emp-position { font-size:11px; color:var(--muted); }
+  .emp-off      { font-size:11px; color:var(--muted); text-align:center; }
+
+  /* ── SHIFT CELL ── */
+  .shift-cell {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:30px; height:26px; border-radius:5px; font-size:11px;
+    font-family:var(--font-mono); font-weight:600; cursor:pointer;
+    transition:all .15s; user-select:none;
+  }
+  .shift-cell:hover { transform:scale(1.15); z-index:1; position:relative; }
+  .shift-cell.readonly { cursor:default; }
+  .shift-cell.readonly:hover { transform:none; }
+
+  /* ── SHIFT PICKER ── */
+  .shift-picker {
+    position:fixed; background:var(--navy-mid); border:1px solid var(--border);
+    border-radius:12px; padding:12px; z-index:9999; box-shadow:0 16px 48px rgba(0,0,0,.6);
+    min-width:220px;
+  }
+  .shift-picker-title { font-size:11px; color:var(--muted); font-family:var(--font-label); letter-spacing:.08em; text-transform:uppercase; margin-bottom:10px; }
+  .shift-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .shift-option {
+    padding:6px 4px; border-radius:6px; font-size:11px; font-weight:600;
+    font-family:var(--font-mono); cursor:pointer; text-align:center;
+    border:none; transition:all .15s;
+  }
+  .shift-option:hover { transform:scale(1.08); }
+  .picker-section { font-size:10px; color:var(--muted); font-family:var(--font-label); text-transform:uppercase; letter-spacing:.08em; margin:8px 0 4px; }
+
+  /* ── MODAL พนักงาน ── */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:9990; align-items:center; justify-content:center; }
+  .modal-overlay.show { display:flex; }
+  .modal-box { background:var(--navy-mid); border:1px solid var(--border); border-radius:16px; padding:28px; max-width:480px; width:90%; max-height:85vh; overflow-y:auto; }
+  .modal-title { font-size:18px; font-weight:700; margin-bottom:20px; }
+  .form-group { margin-bottom:14px; }
+  .form-label { font-size:11px; color:var(--silver); letter-spacing:.08em; text-transform:uppercase; margin-bottom:6px; display:block; }
+  .form-input { width:100%; padding:9px 12px; background:var(--input-bg); border:1px solid var(--border); border-radius:8px; color:var(--white); font-family:var(--font-body); font-size:13px; outline:none; transition:border-color .2s; }
+  .form-input:focus { border-color:var(--gold); }
+  .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+
+  /* ── TOAST ── */
+  .toast {
+    position:fixed; bottom:32px; left:50%; transform:translateX(-50%) translateY(100px);
+    opacity:0; padding:12px 22px; border-radius:50px; display:flex; align-items:center;
+    gap:8px; font-size:14px; font-weight:500; z-index:99999;
+    transition:all .35s cubic-bezier(.34,1.56,.64,1); white-space:nowrap;
+    box-shadow:0 8px 32px rgba(0,0,0,.5);
+  }
+  .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+  .toast.success { background:rgba(61,186,122,.15); border:1px solid rgba(61,186,122,.4); color:#3dba7a; }
+  .toast.error   { background:rgba(224,82,82,.15);  border:1px solid rgba(224,82,82,.4);  color:#e05252; }
+  .toast.warn    { background:rgba(240,160,48,.15); border:1px solid rgba(240,160,48,.4); color:#f0a030; }
+
+  /* ── SECTION ── */
+  .section { display:none; }
+  .section.active { display:block; }
+
+  /* ── EMP LIST ── */
+  .emp-table { width:100%; border-collapse:collapse; }
+  .emp-table th { background:var(--navy-light); color:var(--silver); font-family:var(--font-label); font-size:11px; letter-spacing:.05em; padding:10px 12px; text-align:left; border-bottom:1px solid var(--border); }
+  .emp-table td { padding:10px 12px; border-bottom:1px solid rgba(44,74,114,.3); font-size:13px; }
+  .emp-table tr:hover td { background:rgba(26,52,96,.3); }
+
+  .badge { display:inline-flex; align-items:center; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:600; }
+  .badge-active   { background:rgba(61,186,122,.15); color:#3dba7a; border:1px solid rgba(61,186,122,.3); }
+  .badge-inactive { background:rgba(90,122,154,.15); color:var(--muted); border:1px solid rgba(90,122,154,.3); }
+
+  .btn-icon { width:28px; height:28px; border:none; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-size:14px; transition:all .2s; }
+  .btn-edit   { background:rgba(200,145,42,.1); color:var(--gold); }
+  .btn-edit:hover { background:var(--gold-glow); }
+  .btn-delete { background:rgba(224,82,82,.1); color:var(--danger); }
+  .btn-delete:hover { background:rgba(224,82,82,.2); }
+
+  @media print {
+    .sidebar, .topbar, .toolbar, .legend, .no-print { display:none !important; }
+    .main { margin-left:0; }
+    .content { padding:0; }
+    .table-wrapper { border:none; }
+    .roster-table th, .roster-table td { font-size:10px; padding:4px 2px; }
+    .shift-cell { width:24px; height:20px; font-size:9px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">📅</div>
+    <div>
+      <div class="logo-text">BFS Roster</div>
+      <div class="logo-sub">WORK SCHEDULE</div>
+    </div>
+  </div>
+  <div class="sidebar-user">
+    <div class="user-avatar" id="sidebar-avatar">?</div>
+    <div>
+      <div class="user-name" id="sidebar-name">กำลังโหลด...</div>
+      <div class="user-role" id="sidebar-role">-</div>
+    </div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">เมนูหลัก</div>
+    <button class="nav-item active" id="nav-roster" onclick="showSection('roster')">
+      <span class="nav-icon">📋</span> ตารางรอบการทำงาน
+    </button>
+    <button class="nav-item" id="nav-employees" onclick="showSection('employees')">
+      <span class="nav-icon">👥</span> จัดการพนักงาน
+    </button>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">ระบบอื่น</div>
+    <button class="nav-item" onclick="goToPortal()">
+      <span class="nav-icon">🏠</span> Portal
+    </button>
+    <button class="nav-item" onclick="goToLeave()">
+      <span class="nav-icon">📝</span> ระบบใบลา
+    </button>
+  </div>
+  <div class="sidebar-footer">
+    <button class="btn-logout" onclick="logout()">🚪 ออกจากระบบ</button>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1 id="page-title">ตารางรอบการทำงาน</h1>
+      <p id="page-sub">รอบการปฏิบัติงานฝ่ายอาคารและสถานที่</p>
+    </div>
+    <div class="topbar-right">
+      <span class="topbar-date" id="topbar-date"></span>
+      <button class="btn-secondary no-print" onclick="exportCSV()">📥 CSV</button>
+      <button class="btn-secondary no-print" onclick="window.print()">🖨️ พิมพ์</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── SECTION: ROSTER ── -->
+    <div class="section active" id="section-roster">
+      <div class="toolbar">
+        <div class="month-selector">
+          <button class="month-nav" onclick="changeMonth(-1)">‹</button>
+          <select id="month-select" onchange="loadRoster()"></select>
+          <button class="month-nav" onclick="changeMonth(1)">›</button>
+        </div>
+        <button class="btn-primary no-print" id="btn-save" onclick="saveRoster()" style="display:none;">💾 บันทึก</button>
+        <span id="save-status" style="font-size:12px;color:var(--muted);"></span>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot shift-morning" style="display:inline-block;"></div> เช้า (01-04, 08)</div>
+        <div class="legend-item"><div class="legend-dot shift-afternoon" style="display:inline-block;"></div> บ่าย (11, 13, 16, 21)</div>
+        <div class="legend-item"><div class="legend-dot shift-night" style="display:inline-block;"></div> ดึก (19, 20, 38)</div>
+        <div class="legend-item"><div class="legend-dot shift-off" style="display:inline-block;"></div> หยุด (W)</div>
+        <div class="legend-item"><div class="legend-dot shift-holiday" style="display:inline-block;"></div> นักขัตฤกษ์ (H)</div>
+        <div class="legend-item"><div class="legend-dot shift-leave" style="display:inline-block;"></div> ลา (S/PL/VL/C/CH)</div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="roster-table" id="roster-table">
+          <thead id="roster-thead"></thead>
+          <tbody id="roster-tbody">
+            <tr><td colspan="99" style="text-align:center;padding:40px;color:var(--muted);">⏳ กำลังโหลด...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── SECTION: EMPLOYEES ── -->
+    <div class="section" id="section-employees">
+      <div class="toolbar">
+        <button class="btn-primary" id="btn-add-emp" onclick="openEmpModal()" style="display:none;">➕ เพิ่มพนักงาน</button>
+      </div>
+      <div class="table-wrapper">
+        <table class="emp-table">
+          <thead>
+            <tr>
+              <th>ลำดับ</th><th>รหัส</th><th>ชื่อ-นามสกุล</th>
+              <th>ตำแหน่ง</th><th>วันหยุดประจำ</th><th>สถานะ</th><th class="no-print"></th>
+            </tr>
+          </thead>
+          <tbody id="emp-tbody">
+            <tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted);">⏳ กำลังโหลด...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── SHIFT PICKER ── -->
+<div class="shift-picker" id="shift-picker" style="display:none;">
+  <div class="shift-picker-title">เลือกรอบการทำงาน</div>
+  <div class="picker-section">กะเช้า</div>
+  <div class="shift-grid" id="picker-morning"></div>
+  <div class="picker-section">กะบ่าย</div>
+  <div class="shift-grid" id="picker-afternoon"></div>
+  <div class="picker-section">กะดึก</div>
+  <div class="shift-grid" id="picker-night"></div>
+  <div class="picker-section">หยุด / ลา</div>
+  <div class="shift-grid" id="picker-off"></div>
+</div>
+
+<!-- ── MODAL: พนักงาน ── -->
+<div class="modal-overlay" id="modal-emp">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-emp-title">เพิ่มพนักงาน</div>
+    <input type="hidden" id="emp-edit-id">
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">รหัสพนักงาน</label>
+        <input class="form-input" id="f-emp-id" placeholder="เช่น 1011372">
+      </div>
+      <div class="form-group">
+        <label class="form-label">ลำดับ</label>
+        <input class="form-input" id="f-emp-order" type="number" placeholder="1">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">ชื่อ-นามสกุล</label>
+      <input class="form-input" id="f-emp-name" placeholder="ชื่อ นามสกุล">
+    </div>
+    <div class="form-group">
+      <label class="form-label">ตำแหน่ง</label>
+      <input class="form-input" id="f-emp-pos" placeholder="ตำแหน่ง">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">แผนก</label>
+        <input class="form-input" id="f-emp-dept" placeholder="แผนก">
+      </div>
+      <div class="form-group">
+        <label class="form-label">วันหยุดประจำ</label>
+        <select class="form-input" id="f-emp-off">
+          <option value="">-- เลือก --</option>
+          <option>จันทร์</option><option>อังคาร</option><option>พุธ</option>
+          <option>พฤหัสบดี</option><option>ศุกร์</option><option>เสาร์</option>
+          <option>อาทิตย์</option><option>เสาร์/อาทิตย์</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeEmpModal()">ยกเลิก</button>
+      <button class="btn-primary" onclick="saveEmployee()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div class="toast" id="toast"><span id="toast-msg"></span></div>
+
+<script>
+// ── CONFIG ───────────────────────────────────────────
+const API_URL = 'https://script.google.com/macros/s/AKfycbw50de1f2CgEBlC6Jvbc9J_C1E07UUeKy44ZJdlkznRqPxuDXXdmgxErIfEPyYWETCQ6g/exec';
+const PORTAL_URL = 'https://building-admin.github.io/-building-portal/';
+const LEAVE_URL  = 'https://building-admin.github.io/-building-portal/leave.html';
+
+// ── SHIFT DEFINITIONS ───────────────────────────────
+const SHIFTS = {
+  morning:   ['01','02','03','04','08'],
+  afternoon: ['11','13','16','21'],
+  night:     ['19','20','38'],
+  off:       ['W','H','S','PL','VL','C','CH']
+};
+
+const SHIFT_TIME = {
+  '01':'06:00-15:00','02':'07:00-16:00','03':'08:00-17:00','04':'09:00-18:00',
+  '08':'10:00-19:00','11':'11:00-20:00','13':'12:00-21:00','16':'13:00-22:00',
+  '19':'21:00-06:00','20':'22:00-07:00','21':'08:30-19:00','38':'20:00-05:00',
+  'W':'วันหยุด','H':'นักขัตฤกษ์','S':'ลาป่วย','PL':'ลากิจ','VL':'ลาพักร้อน',
+  'C':'เปลี่ยนวันหยุด','CH':'สะสมวันหยุด'
+};
+
+function getShiftClass(code) {
+  if (!code || code === '') return 'shift-off';
+  if (SHIFTS.morning.includes(code))   return 'shift-morning';
+  if (SHIFTS.afternoon.includes(code)) return 'shift-afternoon';
+  if (SHIFTS.night.includes(code))     return 'shift-night';
+  if (code === 'W')                    return 'shift-off';
+  if (code === 'H')                    return 'shift-holiday';
+  return 'shift-leave';
+}
+
+// ── STATE ────────────────────────────────────────────
+let currentUser  = null;
+let isAdmin      = false;
+let employees    = [];
+let rosterData   = {};  // { empId: { 1:'02', 2:'W', ... } }
+let currentMonth = '';
+let pickerTarget = null; // { empId, day }
+let hasChanges   = false;
+
+// ── INIT ─────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  initDateDisplay();
+  loadUserFromPortal();
+  buildMonthSelector();
+  buildShiftPicker();
+});
+
+function initDateDisplay() {
+  const d = new Date();
+  document.getElementById('topbar-date').textContent =
+    d.toLocaleDateString('th-TH', { weekday:'short', year:'numeric', month:'long', day:'numeric' });
+}
+
+function loadUserFromPortal() {
+  const params = new URLSearchParams(window.location.search);
+  const token  = params.get('token');
+  const name   = params.get('name');
+  const role   = params.get('role') || 'employee';
+  const pos    = params.get('position') || '';
+
+  if (!token) {
+    // ถ้าไม่มี token → redirect Portal
+    window.location.href = PORTAL_URL;
+    return;
+  }
+
+  currentUser = { token, name: name || 'ผู้ใช้', role, position: pos };
+  isAdmin = role === 'admin';
+
+  document.getElementById('sidebar-name').textContent   = currentUser.name;
+  document.getElementById('sidebar-role').textContent   = pos || role;
+  document.getElementById('sidebar-avatar').textContent = name ? name.substring(0,2) : '?';
+
+  // แสดงปุ่มเฉพาะ admin
+  if (isAdmin) {
+    document.getElementById('btn-save').style.display    = 'flex';
+    document.getElementById('btn-add-emp').style.display = 'flex';
+  }
+
+  loadRoster();
+  loadEmployees();
+}
+
+// ── MONTH SELECTOR ───────────────────────────────────
+function buildMonthSelector() {
+  const sel = document.getElementById('month-select');
+  const now = new Date();
+  const thYear = now.getFullYear() + 543;
+  const months = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                  'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+  // สร้าง options ±6 เดือน
+  for (let i = -3; i <= 6; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    const y = d.getFullYear() + 543;
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const val = `${y}-${m}`;
+    const opt = document.createElement('option');
+    opt.value = val;
+    opt.textContent = `${months[d.getMonth()]} ${y}`;
+    if (i === 0) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  currentMonth = sel.value;
+}
+
+function changeMonth(dir) {
+  const sel = document.getElementById('month-select');
+  const idx = sel.selectedIndex + dir;
+  if (idx >= 0 && idx < sel.options.length) {
+    sel.selectedIndex = idx;
+    loadRoster();
+  }
+}
+
+// ── LOAD ROSTER ──────────────────────────────────────
+async function loadRoster() {
+  currentMonth = document.getElementById('month-select').value;
+  const tbody  = document.getElementById('roster-tbody');
+  tbody.innerHTML = `<tr><td colspan="99" style="text-align:center;padding:40px;color:var(--muted);">⏳ กำลังโหลด...</td></tr>`;
+
+  // ดึงข้อมูลจาก API
+  const res = await callAPI({ action: 'getRoster', month: currentMonth });
+
+  // สร้าง rosterData จาก response
+  rosterData = {};
+  if (res.success && res.data.length) {
+    res.data.forEach(row => {
+      const id = String(row['รหัสพนักงาน']);
+      if (!rosterData[id]) rosterData[id] = {};
+      for (let d = 1; d <= 31; d++) {
+        rosterData[id][d] = row[String(d)] || '';
+      }
+    });
+  }
+
+  buildRosterTable();
+  hasChanges = false;
+  document.getElementById('save-status').textContent = '';
+}
+
+// ── BUILD TABLE ──────────────────────────────────────
+function buildRosterTable() {
+  const [yearTH, monthNum] = currentMonth.split('-').map(Number);
+  const yearAD  = yearTH - 543;
+  const daysInMonth = new Date(yearAD, monthNum, 0).getDate();
+  const dayNames = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+
+  // THEAD
+  const thead = document.getElementById('roster-thead');
+  let headHTML = `<tr>
+    <th class="col-name">พนักงาน</th>
+    <th class="col-off">วันหยุด</th>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dow = new Date(yearAD, monthNum - 1, d).getDay();
+    const isWeekend = dow === 0 || dow === 6;
+    headHTML += `<th class="col-day" style="${isWeekend ? 'color:var(--gold-light);' : ''}">${d}<br><span style="font-size:9px;">${dayNames[dow]}</span></th>`;
+  }
+  headHTML += '</tr>';
+  thead.innerHTML = headHTML;
+
+  // TBODY
+  const tbody = document.getElementById('roster-tbody');
+  if (!employees.length) {
+    tbody.innerHTML = `<tr><td colspan="99" style="text-align:center;padding:40px;color:var(--muted);">ไม่พบข้อมูลพนักงาน</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = employees.map(emp => {
+    const id = String(emp['รหัสพนักงาน']);
+    const empRoster = rosterData[id] || {};
+    let cells = '';
+    for (let d = 1; d <= daysInMonth; d++) {
+      const code = empRoster[d] || '';
+      const cls  = getShiftClass(code);
+      const title = code ? `${code} — ${SHIFT_TIME[code] || ''}` : 'คลิกเพื่อกำหนด';
+      if (isAdmin) {
+        cells += `<td><div class="shift-cell ${cls}" title="${title}" onclick="openPicker(event,'${id}',${d})">${code}</div></td>`;
+      } else {
+        cells += `<td><div class="shift-cell ${cls} readonly" title="${title}">${code}</div></td>`;
+      }
+    }
+    return `<tr>
+      <td class="col-name">
+        <div class="emp-name">${emp['ชื่อ-นามสกุล']}</div>
+        <div class="emp-position">${emp['ตำแหน่ง']}</div>
+      </td>
+      <td class="emp-off">${emp['วันหยุดประจำ'] || '-'}</td>
+      ${cells}
+    </tr>`;
+  }).join('');
+}
+
+// ── SHIFT PICKER ─────────────────────────────────────
+function buildShiftPicker() {
+  const groups = [
+    { id:'picker-morning',   codes: SHIFTS.morning },
+    { id:'picker-afternoon', codes: SHIFTS.afternoon },
+    { id:'picker-night',     codes: SHIFTS.night },
+    { id:'picker-off',       codes: SHIFTS.off }
+  ];
+  groups.forEach(g => {
+    document.getElementById(g.id).innerHTML = g.codes.map(code => {
+      const cls = getShiftClass(code);
+      return `<button class="shift-option ${cls}" onclick="selectShift('${code}')" title="${SHIFT_TIME[code] || ''}">${code}</button>`;
+    }).join('') +
+    (g.id === 'picker-off' ? `<button class="shift-option" style="background:rgba(90,122,154,.1);color:var(--muted);border:1px solid rgba(90,122,154,.2);" onclick="selectShift('')">ลบ</button>` : '');
+  });
+}
+
+function openPicker(e, empId, day) {
+  if (!isAdmin) return;
+  e.stopPropagation();
+  pickerTarget = { empId, day };
+  const picker = document.getElementById('shift-picker');
+  picker.style.display = 'block';
+
+  // จัดตำแหน่ง picker ไม่ให้เกินขอบจอ
+  const rect = e.target.getBoundingClientRect();
+  let top  = rect.bottom + 8;
+  let left = rect.left;
+  if (left + 220 > window.innerWidth) left = window.innerWidth - 230;
+  if (top + 300  > window.innerHeight) top = rect.top - 310;
+  picker.style.top  = top  + 'px';
+  picker.style.left = left + 'px';
+}
+
+function selectShift(code) {
+  if (!pickerTarget) return;
+  const { empId, day } = pickerTarget;
+  if (!rosterData[empId]) rosterData[empId] = {};
+  rosterData[empId][day] = code;
+
+  // อัปเดต cell ทันที
+  buildRosterTable();
+
+  hasChanges = true;
+  document.getElementById('save-status').textContent = '● มีการเปลี่ยนแปลง (ยังไม่บันทึก)';
+  document.getElementById('save-status').style.color = 'var(--warning)';
+
+  closePicker();
+}
+
+function closePicker() {
+  document.getElementById('shift-picker').style.display = 'none';
+  pickerTarget = null;
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#shift-picker') && !e.target.closest('.shift-cell')) {
+    closePicker();
+  }
+});
+
+// ── SAVE ROSTER ──────────────────────────────────────
+async function saveRoster() {
+  if (!isAdmin) return;
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true;
+  btn.textContent = '⏳ กำลังบันทึก...';
+
+  // แปลง rosterData → array
+  const data = employees.map(emp => {
+    const id = String(emp['รหัสพนักงาน']);
+    const row = {
+      'รหัสพนักงาน':  id,
+      'ชื่อ':          emp['ชื่อ-นามสกุล'],
+      'ตำแหน่ง':      emp['ตำแหน่ง'],
+      'วันหยุดประจำ': emp['วันหยุดประจำ']
+    };
+    for (let d = 1; d <= 31; d++) {
+      row[String(d)] = (rosterData[id] || {})[d] || '';
+    }
+    return row;
+  });
+
+  const res = await callAPI({ action: 'saveRoster', month: currentMonth, data });
+
+  btn.disabled = false;
+  btn.innerHTML = '💾 บันทึก';
+
+  if (res.success) {
+    showToast('บันทึกเรียบร้อยแล้ว', 'success');
+    hasChanges = false;
+    document.getElementById('save-status').textContent = '✓ บันทึกแล้ว';
+    document.getElementById('save-status').style.color = 'var(--success)';
+  } else {
+    showToast('เกิดข้อผิดพลาด: ' + res.message, 'error');
+  }
+}
+
+// ── EMPLOYEES ────────────────────────────────────────
+async function loadEmployees() {
+  const res = await callAPI({ action: 'getEmployees' });
+  if (res.success) {
+    employees = res.data;
+    renderEmpTable();
+  }
+}
+
+function renderEmpTable() {
+  const tbody = document.getElementById('emp-tbody');
+  if (!employees.length) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted);">ไม่พบข้อมูลพนักงาน</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = employees.map(emp => {
+    const actions = isAdmin ? `
+      <button class="btn-icon btn-edit" onclick="openEmpModal('${emp['รหัสพนักงาน']}')" title="แก้ไข">✏️</button>
+      <button class="btn-icon btn-delete" onclick="deleteEmployee('${emp['รหัสพนักงาน']}')" title="ปิดใช้งาน">🗑️</button>
+    ` : '';
+    return `<tr>
+      <td>${emp['ลำดับ']}</td>
+      <td style="font-family:var(--font-mono);font-size:12px;">${emp['รหัสพนักงาน']}</td>
+      <td>${emp['ชื่อ-นามสกุล']}</td>
+      <td style="color:var(--silver);">${emp['ตำแหน่ง']}</td>
+      <td style="color:var(--muted);">${emp['วันหยุดประจำ'] || '-'}</td>
+      <td><span class="badge badge-active">active</span></td>
+      <td class="no-print">${actions}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── EMP MODAL ────────────────────────────────────────
+function openEmpModal(empId) {
+  document.getElementById('modal-emp-title').textContent = empId ? 'แก้ไขพนักงาน' : 'เพิ่มพนักงาน';
+  document.getElementById('emp-edit-id').value = empId || '';
+
+  if (empId) {
+    const emp = employees.find(e => String(e['รหัสพนักงาน']) === String(empId));
+    if (emp) {
+      document.getElementById('f-emp-id').value    = emp['รหัสพนักงาน'];
+      document.getElementById('f-emp-id').disabled = true;
+      document.getElementById('f-emp-name').value  = emp['ชื่อ-นามสกุล'];
+      document.getElementById('f-emp-pos').value   = emp['ตำแหน่ง'];
+      document.getElementById('f-emp-dept').value  = emp['แผนก'] || '';
+      document.getElementById('f-emp-off').value   = emp['วันหยุดประจำ'] || '';
+      document.getElementById('f-emp-order').value = emp['ลำดับ'] || '';
+    }
+  } else {
+    document.getElementById('f-emp-id').value    = '';
+    document.getElementById('f-emp-id').disabled = false;
+    document.getElementById('f-emp-name').value  = '';
+    document.getElementById('f-emp-pos').value   = '';
+    document.getElementById('f-emp-dept').value  = '';
+    document.getElementById('f-emp-off').value   = '';
+    document.getElementById('f-emp-order').value = '';
+  }
+  document.getElementById('modal-emp').classList.add('show');
+}
+
+function closeEmpModal() {
+  document.getElementById('modal-emp').classList.remove('show');
+}
+
+async function saveEmployee() {
+  const editId = document.getElementById('emp-edit-id').value;
+  const emp = {
+    'รหัสพนักงาน':  document.getElementById('f-emp-id').value.trim(),
+    'ชื่อ-นามสกุล': document.getElementById('f-emp-name').value.trim(),
+    'ตำแหน่ง':      document.getElementById('f-emp-pos').value.trim(),
+    'แผนก':         document.getElementById('f-emp-dept').value.trim(),
+    'วันหยุดประจำ': document.getElementById('f-emp-off').value,
+    'ลำดับ':        parseInt(document.getElementById('f-emp-order').value) || 99,
+    'สถานะ':        'active'
+  };
+
+  if (!emp['รหัสพนักงาน'] || !emp['ชื่อ-นามสกุล']) {
+    showToast('กรุณากรอกรหัสและชื่อพนักงาน', 'warn');
+    return;
+  }
+
+  let res;
+  if (editId) {
+    res = await callAPI({ action: 'updateEmployee', employeeId: editId, employee: emp });
+  } else {
+    res = await callAPI({ action: 'addEmployee', employee: emp });
+  }
+
+  if (res.success) {
+    showToast(res.message, 'success');
+    closeEmpModal();
+    await loadEmployees();
+    buildRosterTable();
+  } else {
+    showToast(res.message, 'error');
+  }
+}
+
+async function deleteEmployee(empId) {
+  if (!confirm(`ปิดใช้งานพนักงาน ${empId} ใช่ไหมครับ?`)) return;
+  const res = await callAPI({ action: 'deleteEmployee', employeeId: empId });
+  if (res.success) {
+    showToast('ปิดใช้งานเรียบร้อยแล้ว', 'success');
+    await loadEmployees();
+    buildRosterTable();
+  } else {
+    showToast(res.message, 'error');
+  }
+}
+
+// ── EXPORT CSV ───────────────────────────────────────
+function exportCSV() {
+  const [yearTH, monthNum] = currentMonth.split('-').map(Number);
+  const yearAD = yearTH - 543;
+  const daysInMonth = new Date(yearAD, monthNum, 0).getDate();
+
+  let csv = 'เดือน,รหัสพนักงาน,ชื่อ,ตำแหน่ง,วันหยุดประจำ';
+  for (let d = 1; d <= daysInMonth; d++) csv += `,${d}`;
+  csv += '\n';
+
+  employees.forEach(emp => {
+    const id = String(emp['รหัสพนักงาน']);
+    csv += `${currentMonth},${id},"${emp['ชื่อ-นามสกุล']}","${emp['ตำแหน่ง']}","${emp['วันหยุดประจำ'] || ''}"`;
+    for (let d = 1; d <= daysInMonth; d++) {
+      csv += `,${(rosterData[id] || {})[d] || ''}`;
+    }
+    csv += '\n';
+  });
+
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ตารางรอบ_${currentMonth}.csv`;
+  a.click();
+}
+
+// ── NAVIGATION ───────────────────────────────────────
+function showSection(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`section-${name}`).classList.add('active');
+  document.getElementById(`nav-${name}`).classList.add('active');
+
+  const titles = { roster: 'ตารางรอบการทำงาน', employees: 'จัดการพนักงาน' };
+  document.getElementById('page-title').textContent = titles[name] || '';
+}
+
+function goToPortal() { window.location.href = PORTAL_URL; }
+function goToLeave()  { window.location.href = LEAVE_URL + '?token=' + (currentUser?.token || ''); }
+function logout()     { window.location.href = PORTAL_URL; }
+
+// ── API CALL ─────────────────────────────────────────
+async function callAPI(payload) {
+  try {
+    const qs  = new URLSearchParams({ payload: JSON.stringify(payload) });
+    const res = await fetch(`${API_URL}?${qs}`, { redirect: 'follow' });
+    return await res.json();
+  } catch (err) {
+    console.error('API error:', err);
+    return { success: false, message: err.message };
+  }
+}
+
+// ── TOAST ────────────────────────────────────────────
+function showToast(msg, type = 'success') {
+  const t = document.getElementById('toast');
+  t.className = `toast ${type}`;
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── WARN บันทึกก่อนออก ──────────────────────────────
+window.addEventListener('beforeunload', e => {
+  if (hasChanges) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+</script>
+</body>
+</html>
