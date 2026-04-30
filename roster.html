@@ -966,6 +966,17 @@ function logout()     { window.location.href = PORTAL_URL; }
 // ── API CALL ─────────────────────────────────────────
 async function callAPI(payload) {
   try {
+    // POST สำหรับ saveRoster เพราะข้อมูลเยอะเกิน URL limit
+    if (payload.action === 'saveRoster') {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload),
+        redirect: 'follow'
+      });
+      return await res.json();
+    }
+    // GET สำหรับ action ทั่วไป
     const qs  = new URLSearchParams({ payload: JSON.stringify(payload) });
     const res = await fetch(`${API_URL}?${qs}`, { redirect: 'follow' });
     return await res.json();
