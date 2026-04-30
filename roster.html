@@ -33,9 +33,9 @@
   .shift-morning  { background:rgba(61,186,122,.18);  color:#3dba7a;  border:1px solid rgba(61,186,122,.3);  }
   .shift-afternoon{ background:rgba(240,160,48,.18);  color:#f0a030;  border:1px solid rgba(240,160,48,.3);  }
   .shift-night    { background:rgba(100,140,255,.18); color:#6490ff;  border:1px solid rgba(100,140,255,.3); }
-  .shift-off      { background:rgba(90,122,154,.12);  color:#5a7a9a;  border:1px solid rgba(90,122,154,.2);  }
-  .shift-leave    { background:rgba(224,82,82,.15);   color:#e05252;  border:1px solid rgba(224,82,82,.3);   }
-  .shift-holiday  { background:rgba(200,145,42,.15);  color:#c8912a;  border:1px solid rgba(200,145,42,.3);  }
+  .shift-off      { background:rgba(224,82,82,.3);   color:#ff4444;  border:2px solid rgba(224,82,82,.7);  font-weight:800; }
+  .shift-leave    { background:rgba(160,80,200,.3);  color:#cc44ff;  border:2px solid rgba(160,80,200,.7); font-weight:700; }
+  .shift-holiday  { background:rgba(200,145,42,.35); color:#ffaa00;  border:2px solid rgba(200,145,42,.8); font-weight:700; }
 
   * { margin:0; padding:0; box-sizing:border-box; min-width:0; }
   body { font-family:var(--font-body); background:var(--navy); color:var(--white); min-height:100vh; overflow-x:hidden; }
@@ -810,9 +810,9 @@ function getCellBg(code, isWeekend) {
   if (SHIFTS.morning.includes(code))   return 'background:rgba(61,186,122,.2);color:#3dba7a;border:1px solid rgba(61,186,122,.3);';
   if (SHIFTS.afternoon.includes(code)) return 'background:rgba(240,160,48,.2);color:#f0a030;border:1px solid rgba(240,160,48,.3);';
   if (SHIFTS.night.includes(code))     return 'background:rgba(100,140,255,.2);color:#6490ff;border:1px solid rgba(100,140,255,.3);';
-  if (code === 'W')  return 'background:rgba(224,82,82,.3);color:#ff6b6b;border:1px solid rgba(224,82,82,.5);font-weight:800;';
-  if (code === 'H')  return 'background:rgba(200,145,42,.25);color:#e8b84b;border:1px solid rgba(200,145,42,.4);';
-  return 'background:rgba(160,80,200,.2);color:#c080ff;border:1px solid rgba(160,80,200,.3);';
+  if (code === 'W')  return 'background:rgba(224,82,82,.35);color:#ff4444;border:2px solid rgba(224,82,82,.7);font-weight:800;';
+  if (code === 'H')  return 'background:rgba(200,145,42,.35);color:#ffaa00;border:2px solid rgba(200,145,42,.8);font-weight:700;';
+  return 'background:rgba(160,80,200,.3);color:#cc44ff;border:2px solid rgba(160,80,200,.7);font-weight:700;';
 }
 
 // ── SHIFT PICKER ─────────────────────────────────────
