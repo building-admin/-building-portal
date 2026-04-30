@@ -714,7 +714,7 @@ function openPrintView(autoPrint = true) {
   }
   html += `<th style="width:60px;">วันหยุด<br>ประจำ</th></tr></thead><tbody>`;
 
-  function renderPrintRow(emp, shiftLabel, showShift, rowspan) {
+  function renderPrintRow(emp, shiftLabel, showShift, rowspan, rowStyle='') {
     const id = String(emp['รหัสพนักงาน']);
     const r  = rosterData[id] || {};
     let cells = '';
@@ -734,11 +734,11 @@ function openPrintView(autoPrint = true) {
     const shiftCell = showShift
       ? `<td class="shift-label" rowspan="${rowspan}">${shiftLabel}</td>`
       : (rowspan === 0 ? '' : `<td style="background:#f0f4fa;"></td>`);
-    return `<tr>
+    return `<tr style="${rowStyle}">
       ${shiftCell}
-      <td style="font-size:8px;color:#555;">${emp['รหัสพนักงาน']}</td>
-      <td class="pos-cell">${emp['ตำแหน่ง']}</td>
-      <td class="name-cell" style="font-weight:600;">${emp['ชื่อ-นามสกุล']}</td>
+      <td style="font-size:8px;color:#555;${rowStyle}">${emp['รหัสพนักงาน']}</td>
+      <td class="pos-cell" style="${rowStyle}">${emp['ตำแหน่ง']}</td>
+      <td class="name-cell" style="font-weight:600;${rowStyle}">${emp['ชื่อ-นามสกุล']}</td>
       ${cells}
       <td style="font-size:8px;">${emp['วันหยุดประจำ']||'-'}</td>
     </tr>`;
@@ -752,7 +752,16 @@ function openPrintView(autoPrint = true) {
   ['เช้า','บ่าย','ดึก','อื่นๆ'].forEach(label => {
     const emps = subGroups[label];
     if (!emps.length) return;
-    emps.forEach((emp, i) => { html += renderPrintRow(emp, label, i===0, i===0 ? emps.length : 0); });
+    emps.forEach((emp, i) => {
+      const isFirst = i === 0;
+      const isLast  = i === emps.length - 1;
+      // เพิ่ม border เข้มครอบแต่ละกลุ่มรอบ
+      const rowStyle = `
+        ${isFirst ? 'border-top:2px solid #555;' : ''}
+        ${isLast  ? 'border-bottom:2px solid #555;' : ''}
+      `;
+      html += renderPrintRow(emp, label, isFirst, isFirst ? emps.length : 0, rowStyle);
+    });
   });
 
   if (group2.length) {
