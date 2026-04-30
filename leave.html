@@ -1601,20 +1601,24 @@ async function loadMyLeaves() {
   }
 
   tbody.innerHTML = res.data.map(r => {
-    const s1 = r['ผู้อนุมัติ1-สถานะ'] === 'อนุมัติ' ? 'dot-green' : 'dot-gray';
-    const s2 = r['ผู้อนุมัติ2-สถานะ'] === 'อนุมัติ' ? 'dot-green' : r['ผู้อนุมัติ2-สถานะ'] === 'ไม่อนุมัติ' ? 'dot-red' : 'dot-gray';
+    const s1 = r['ผู้อนุมัติ1-สถานะ'] === 'อนุมัติ' ? 'dot-green'
+      : r['ผู้อนุมัติ1-สถานะ'] === 'ไม่อนุมัติ' ? 'dot-red' : 'dot-gray';
+    const s2 = r['ผู้อนุมัติ2-สถานะ'] === 'อนุมัติ' ? 'dot-green'
+      : r['ผู้อนุมัติ2-สถานะ'] === 'ไม่อนุมัติ' ? 'dot-red' : 'dot-gray';
     const statusBadge = r['สถานะ'] === 'อนุมัติ'
       ? `<span class="badge badge-approved">✓ อนุมัติ</span>`
       : r['สถานะ'] === 'ไม่อนุมัติ'
       ? `<span class="badge badge-rejected">✗ ไม่อนุมัติ</span>`
       : `<span class="badge badge-pending">⏳ รออนุมัติ</span>`;
+    const remarkNote = r['หมายเหตุผู้อนุมัติ']
+      ? `<div style="font-size:11px;color:#e05252;margin-top:4px;">📝 ${r['หมายเหตุผู้อนุมัติ']}</div>` : '';
     return `<tr>
       <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">${r['รหัสใบลา']}</td>
       <td><span class="badge badge-type">${r['ประเภทลา']}</span></td>
       <td>${formatDateShort(r['วันเริ่มลา'])}</td>
       <td>${formatDateShort(r['วันสิ้นสุด'])}</td>
       <td>${r['จำนวนวัน']} วัน</td>
-      <td>${statusBadge}</td>
+      <td>${statusBadge}${remarkNote}</td>
       <td><div class="approver-status">
         <div class="approver-row"><div class="dot ${s1}"></div><span>ท่านที่ 1: ${r['ผู้อนุมัติ1-สถานะ'] || 'รอ'}</span></div>
         <div class="approver-row"><div class="dot ${s2}"></div><span>ท่านที่ 2: ${r['ผู้อนุมัติ2-สถานะ'] || 'รอ'}</span></div>
