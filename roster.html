@@ -368,6 +368,37 @@
   </div>
 </div>
 
+<!-- ── MODAL: AUTO-FILL ── -->
+<div id="modal-autofill" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9993;align-items:center;justify-content:center;">
+  <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:420px;width:90%;">
+    <div style="font-size:32px;text-align:center;margin-bottom:8px;">⚡</div>
+    <h3 style="text-align:center;margin-bottom:4px;" id="autofill-emp-name">Auto-fill</h3>
+    <p style="text-align:center;font-size:12px;color:var(--muted);margin-bottom:20px;">วันหยุดประจำจะขึ้น W อัตโนมัติ</p>
+
+    <div style="margin-bottom:16px;">
+      <label style="font-size:11px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:8px;">เลือกรอบการทำงาน</label>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;" id="autofill-shift-grid"></div>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <label style="font-size:11px;color:var(--silver);letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:8px;">ช่วงวันที่</label>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <input type="number" id="autofill-from" value="1" min="1" max="31"
+          style="width:70px;padding:8px;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-family:var(--font-body);text-align:center;">
+        <span style="color:var(--muted);">—</span>
+        <input type="number" id="autofill-to" value="31" min="1" max="31"
+          style="width:70px;padding:8px;background:var(--input-bg);border:1px solid var(--border);border-radius:8px;color:var(--white);font-family:var(--font-body);text-align:center;">
+        <span style="font-size:12px;color:var(--muted);">วันที่หยุดประจำขึ้น W อัตโนมัติ</span>
+      </div>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="closeAutofill()" style="padding:10px 20px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--silver);cursor:pointer;">ยกเลิก</button>
+      <button onclick="applyAutofill()" style="padding:10px 20px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:8px;color:var(--navy);font-weight:700;cursor:pointer;">⚡ Fill ทั้งเดือน</button>
+    </div>
+  </div>
+</div>
+
 <!-- ── MODAL: CONFIRM ── -->
 <div id="modal-roster-confirm" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9995;align-items:center;justify-content:center;">
   <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:380px;width:90%;text-align:center;">
@@ -568,10 +599,19 @@ function buildRosterTable() {
         cells += `<td><div class="shift-cell ${cls} readonly" title="${title}">${code}</div></td>`;
       }
     }
+    const autofillBtn = isAdmin
+      ? `<button onclick="openAutofill('${id}')" title="Auto-fill ทั้งเดือน"
+           style="margin-left:6px;padding:2px 7px;font-size:11px;background:rgba(200,145,42,.15);border:1px solid rgba(200,145,42,.3);border-radius:5px;color:var(--gold);cursor:pointer;white-space:nowrap;">⚡ fill</button>`
+      : '';
     return `<tr>
       <td class="col-name">
-        <div class="emp-name">${emp['ชื่อ-นามสกุล']}</div>
-        <div class="emp-position">${emp['ตำแหน่ง']}</div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <div>
+            <div class="emp-name">${emp['ชื่อ-นามสกุล']}</div>
+            <div class="emp-position">${emp['ตำแหน่ง']}</div>
+          </div>
+          ${autofillBtn}
+        </div>
       </td>
       <td class="emp-off">${emp['วันหยุดประจำ'] || '-'}</td>
       ${cells}
@@ -791,6 +831,80 @@ async function deleteEmployee(empId) {
       }
     }
   });
+}
+
+// ── AUTO-FILL ─────────────────────────────────────────
+let autofillEmpId = null;
+let autofillShift = null;
+
+const DAY_OFF_MAP = {
+  'จันทร์':'1','อังคาร':'2','พุธ':'3','พฤหัสบดี':'4',
+  'ศุกร์':'5','เสาร์':'6','อาทิตย์':'0',
+  'เสาร์/อาทิตย์':'6/0'
+};
+
+function openAutofill(empId) {
+  autofillEmpId = empId;
+  autofillShift = null;
+  const emp = employees.find(e => String(e['รหัสพนักงาน']) === String(empId));
+  document.getElementById('autofill-emp-name').textContent = emp ? emp['ชื่อ-นามสกุล'] : '';
+
+  const allShifts = [...SHIFTS.morning, ...SHIFTS.afternoon, ...SHIFTS.night];
+  document.getElementById('autofill-shift-grid').innerHTML = allShifts.map(code => `
+    <button onclick="selectAutofillShift('${code}', this)"
+      class="shift-option ${getShiftClass(code)}"
+      title="${SHIFT_TIME[code] || ''}"
+      style="padding:8px 4px;border-radius:6px;font-size:12px;font-weight:600;font-family:var(--font-mono);cursor:pointer;text-align:center;border:1px solid transparent;transition:all .15s;">
+      ${code}
+    </button>`).join('');
+
+  const [yearTH, monthNum] = currentMonth.split('-').map(Number);
+  const daysInMonth = new Date(yearTH - 543, monthNum, 0).getDate();
+  document.getElementById('autofill-from').value = 1;
+  document.getElementById('autofill-to').value   = daysInMonth;
+  document.getElementById('modal-autofill').style.display = 'flex';
+}
+
+function selectAutofillShift(code, btn) {
+  autofillShift = code;
+  document.querySelectorAll('#autofill-shift-grid button').forEach(b => b.style.outline = '');
+  btn.style.outline = '2px solid var(--gold)';
+}
+
+function closeAutofill() {
+  document.getElementById('modal-autofill').style.display = 'none';
+  autofillEmpId = null;
+  autofillShift = null;
+}
+
+function applyAutofill() {
+  if (!autofillEmpId || !autofillShift) {
+    showToast('กรุณาเลือกรอบการทำงานก่อนครับ', 'warn');
+    return;
+  }
+
+  const emp     = employees.find(e => String(e['รหัสพนักงาน']) === String(autofillEmpId));
+  const offDay  = emp ? String(emp['วันหยุดประจำ'] || '') : '';
+  const offDays = offDay.split('/').map(d => DAY_OFF_MAP[d] || DAY_OFF_MAP[offDay] || '').filter(Boolean);
+
+  const from   = parseInt(document.getElementById('autofill-from').value) || 1;
+  const to     = parseInt(document.getElementById('autofill-to').value)   || 31;
+  const [yearTH, monthNum] = currentMonth.split('-').map(Number);
+  const yearAD = yearTH - 543;
+
+  if (!rosterData[autofillEmpId]) rosterData[autofillEmpId] = {};
+
+  for (let d = from; d <= to; d++) {
+    const dow = String(new Date(yearAD, monthNum - 1, d).getDay());
+    rosterData[autofillEmpId][d] = offDays.includes(dow) ? 'W' : autofillShift;
+  }
+
+  closeAutofill();
+  buildRosterTable();
+  hasChanges = true;
+  document.getElementById('save-status').textContent = '● มีการเปลี่ยนแปลง (ยังไม่บันทึก)';
+  document.getElementById('save-status').style.color = 'var(--warning)';
+  showToast(`Fill ${autofillShift} เรียบร้อย — วันหยุดขึ้น W อัตโนมัติ`, 'success');
 }
 
 function showConfirm({ icon='⚠️', title='ยืนยัน', msg='', okText='ยืนยัน', okClass='btn-primary', onOk=()=>{} }) {
