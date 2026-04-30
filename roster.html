@@ -732,7 +732,8 @@ function openPrintView(autoPrint = true) {
       cells += `<td class="${cls}">${code}</td>`;
     }
     const shiftCell = showShift
-      ? `<td class="shift-label" rowspan="${rowspan}">${shiftLabel}</td>` : '';
+      ? `<td class="shift-label" rowspan="${rowspan}">${shiftLabel}</td>`
+      : (rowspan === 0 ? '' : `<td style="background:#f0f4fa;"></td>`);
     return `<tr>
       ${shiftCell}
       <td style="font-size:8px;color:#555;">${emp['รหัสพนักงาน']}</td>
@@ -751,7 +752,7 @@ function openPrintView(autoPrint = true) {
   ['เช้า','บ่าย','ดึก','อื่นๆ'].forEach(label => {
     const emps = subGroups[label];
     if (!emps.length) return;
-    emps.forEach((emp, i) => { html += renderPrintRow(emp, label, i===0, emps.length); });
+    emps.forEach((emp, i) => { html += renderPrintRow(emp, label, i===0, i===0 ? emps.length : 0); });
   });
 
   if (group2.length) {
