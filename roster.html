@@ -250,7 +250,8 @@
     <div class="topbar-right">
       <span class="topbar-date" id="topbar-date"></span>
       <button class="btn-secondary no-print" onclick="exportCSV()">📥 CSV</button>
-      <button class="btn-secondary no-print" onclick="openPrintView()">🖨️ พิมพ์/PDF</button>
+      <button class="btn-secondary no-print" onclick="openPrintView(false)">👁️ ดูตัวอย่าง</button>
+      <button class="btn-secondary no-print" onclick="openPrintView(true)">🖨️ พิมพ์/PDF</button>
     </div>
   </div>
 
@@ -625,7 +626,7 @@ function buildRosterTable() {
 }
 
 // ── PRINT VIEW (layout แบบ PDF — 3 ส่วน) ─────────────
-function openPrintView() {
+function openPrintView(autoPrint = true) {
   const [yearTH, monthNum] = currentMonth.split('-').map(Number);
   const yearAD      = yearTH - 543;
   const daysInMonth = new Date(yearAD, monthNum, 0).getDate();
@@ -779,7 +780,9 @@ function openPrintView() {
   const win = window.open('', '_blank', 'width=1200,height=800');
   win.document.write(html);
   win.document.close();
-  win.onload = () => win.print();
+  if (autoPrint) {
+    win.onload = () => win.print();
+  }
 }
 // สีพื้นหลัง cell
 function getCellBg(code, isWeekend) {
