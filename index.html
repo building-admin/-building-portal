@@ -180,15 +180,30 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
 /* PERMISSIONS UI */
 .perm-section{margin-bottom:20px}
 .perm-section-title{font-family:'Barlow',sans-serif;font-size:13px;font-weight:700;color:var(--silver);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-.perm-dept-block{background:rgba(10,22,40,.4);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px}
-.perm-dept-header{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.perm-dept-block{background:rgba(10,22,40,.4);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:10px}
+.perm-dept-header{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;user-select:none;transition:background .15s}
+.perm-dept-header:hover{background:rgba(44,74,114,.3)}
 .perm-dept-header input[type=checkbox]{width:18px;height:18px;cursor:pointer;accent-color:var(--gold)}
-.perm-dept-label{font-size:14px;font-weight:600;cursor:pointer}
+.perm-dept-label{font-size:14px;font-weight:600;flex:1}
 .perm-dept-icon{font-size:18px}
-.perm-menus{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;padding-left:28px}
-.perm-menu-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(255,255,255,.04);border-radius:7px;border:1px solid var(--border)}
-.perm-menu-item input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:var(--gold-lt)}
-.perm-menu-item label{font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px}
+.perm-dept-arrow{font-size:11px;color:var(--muted);transition:transform .2s;margin-left:auto}
+.perm-dept-arrow.open{transform:rotate(180deg)}
+.perm-dept-body{display:none;padding:0 14px 12px;border-top:1px solid rgba(44,74,114,.3)}
+.perm-dept-body.open{display:block}
+/* parent menu accordion row */
+.perm-acc-row{display:flex;align-items:center;gap:8px;padding:8px 10px;margin-top:8px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;cursor:pointer;transition:background .15s;user-select:none}
+.perm-acc-row:hover{background:rgba(44,74,114,.4)}
+.perm-acc-label{font-size:13px;font-weight:600;flex:1}
+.perm-acc-arrow{font-size:10px;color:var(--muted);transition:transform .2s}
+.perm-acc-arrow.open{transform:rotate(180deg)}
+.perm-acc-count{font-size:10px;background:rgba(44,74,114,.6);color:var(--silver);padding:2px 7px;border-radius:10px;font-family:'Barlow Condensed'}
+/* sub-menus chips */
+.perm-subs{display:none;flex-wrap:wrap;gap:6px;padding:8px 10px 4px 28px}
+.perm-subs.open{display:flex}
+.perm-sub-chip{display:flex;align-items:center;gap:5px;background:rgba(44,74,114,.35);border:1px solid rgba(44,74,114,.6);border-radius:6px;padding:4px 10px;font-size:12px;transition:background .15s}
+.perm-sub-chip:hover{background:rgba(44,74,114,.6)}
+.perm-sub-chip input[type=checkbox]{width:14px;height:14px;cursor:pointer;accent-color:var(--gold,#c8912a)}
+.perm-sub-chip label{cursor:pointer;white-space:nowrap}
 .perm-all-badge{font-size:10px;background:rgba(200,145,42,.15);color:var(--gold-lt);padding:1px 6px;border-radius:8px;font-family:'Barlow Condensed';letter-spacing:.05em}
 /* LOG */
 .log-card{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:18px 20px;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);max-height:500px;overflow-y:auto}
@@ -597,7 +612,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
     <p class="modal-sub" id="perm-sub">กำหนดแผนกและเมนูที่ผู้ใช้เข้าถึงได้</p>
     <div id="modal-perm-alert" class="alert-box alert-error"><span>⚠️</span><span id="modal-perm-alert-msg"></span></div>
     <div id="modal-perm-success" class="alert-box alert-success" style="display:none"><span>✅</span><span>บันทึกสิทธิ์สำเร็จ!</span></div>
-    <div id="perm-container">
+    <div id="perm-container" style="max-height:60vh;overflow-y:auto;padding-right:4px;">
       <div style="text-align:center;color:var(--muted);padding:28px">กำลังโหลด...</div>
     </div>
     <div class="modal-footer"><button class="btn-cancel" onclick="closeModal('modal-perm')">ปิด</button><button class="btn-save" id="perm-save-btn" onclick="savePermissions()">💾 บันทึกสิทธิ์</button></div>
@@ -1451,95 +1466,144 @@ function renderPermUI(currentPerms) {
   const container = document.getElementById('perm-container');
   const raw = currentPerms.raw || {};
 
-  // แยก top-level menus และ sub-menus
   const topMenus = allMenus.filter(m => !m.parentId && String(m.active) !== 'false');
   const subMenus = allMenus.filter(m =>  m.parentId && String(m.active) !== 'false');
 
   let html = '';
-  allDepts.filter(d => String(d.active)==='true')
+  allDepts.filter(d => String(d.active) === 'true')
     .sort((a,b) => (a.order||99)-(b.order||99))
     .forEach(dept => {
       const deptGranted  = raw[dept.deptId+'::'] === true;
       const deptTopMenus = topMenus.filter(m => m.deptId === dept.deptId)
         .sort((a,b) => (a.order||99)-(b.order||99));
+      const deptId = dept.deptId;
 
+      // dept header (คลิกพับ/펼)
       html += `<div class="perm-dept-block">
-        <div class="perm-dept-header">
-          <input type="checkbox" id="perm-dept-${dept.deptId}" ${deptGranted?'checked':''}
-            onchange="toggleDeptPerm('${dept.deptId}',this.checked)">
+        <div class="perm-dept-header" onclick="toggleDeptAcc('${deptId}')">
+          <input type="checkbox" id="perm-dept-${deptId}" ${deptGranted?'checked':''}
+            onclick="event.stopPropagation();"
+            onchange="toggleDeptPerm('${deptId}',this.checked)">
           <span class="perm-dept-icon">${dept.icon||'🏢'}</span>
-          <label class="perm-dept-label" for="perm-dept-${dept.deptId}">${dept.deptName}</label>
-        </div>`;
+          <label class="perm-dept-label" for="perm-dept-${deptId}" onclick="event.stopPropagation();">${dept.deptName}</label>
+          <span class="perm-dept-arrow" id="perm-dept-arrow-${deptId}">▼</span>
+        </div>
+        <div class="perm-dept-body" id="perm-dept-body-${deptId}">`;
 
       if (deptTopMenus.length) {
-        html += `<div class="perm-menus">`;
         deptTopMenus.forEach(menu => {
-          const menuKey     = dept.deptId+'::'+menu.menuId;
+          const menuKey     = deptId+'::'+menu.menuId;
           const menuGranted = menu.defaultForAll || raw[menuKey] === true;
-          const children    = subMenus.filter(s => s.deptId === dept.deptId && s.parentId === menu.menuId)
+          const children    = subMenus.filter(s => s.deptId === deptId && s.parentId === menu.menuId)
             .sort((a,b) => (a.order||99)-(b.order||99));
+          const checkedCount = children.filter(s => {
+            const sk = deptId+'::'+s.menuId;
+            return s.defaultForAll || raw[sk] === true;
+          }).length;
 
-          html += `<div class="perm-menu-item" style="flex-direction:column;align-items:flex-start;gap:6px;">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <input type="checkbox" id="perm-menu-${dept.deptId}-${menu.menuId}"
-                ${menuGranted?'checked':''} ${menu.defaultForAll?'disabled':''}
-                data-deptid="${dept.deptId}" data-menuid="${menu.menuId}"
-                onchange="toggleParentMenu('${dept.deptId}','${menu.menuId}',this.checked)">
-              <label for="perm-menu-${dept.deptId}-${menu.menuId}" style="font-weight:600;font-size:13px;cursor:pointer;">
-                ${menu.icon||'📋'} ${menu.menuName}
-                ${menu.defaultForAll?'<span class="perm-all-badge">ทุกคน</span>':''}
-              </label>
-            </div>`;
+          // parent menu row (คลิกขยาย sub-menus)
+          html += `<div class="perm-acc-row" onclick="toggleMenuAcc('${deptId}','${menu.menuId}')">
+            <input type="checkbox" id="perm-menu-${deptId}-${menu.menuId}"
+              ${menuGranted?'checked':''} ${menu.defaultForAll?'disabled':''}
+              data-deptid="${deptId}" data-menuid="${menu.menuId}"
+              onclick="event.stopPropagation();"
+              onchange="toggleParentMenu('${deptId}','${menu.menuId}',this.checked)">
+            <span>${menu.icon||'📋'}</span>
+            <span class="perm-acc-label">${menu.menuName}
+              ${menu.defaultForAll?'<span class="perm-all-badge">ทุกคน</span>':''}
+            </span>
+            ${children.length ? `<span class="perm-acc-count">${checkedCount}/${children.length}</span>` : ''}
+            ${children.length ? `<span class="perm-acc-arrow" id="perm-acc-arrow-${deptId}-${menu.menuId}">▶</span>` : ''}
+          </div>`;
 
+          // sub-menus (ซ่อนเริ่มต้น)
           if (children.length) {
-            html += `<div style="display:flex;flex-wrap:wrap;gap:6px;padding-left:26px;margin-top:2px;">`;
+            html += `<div class="perm-subs" id="perm-subs-${deptId}-${menu.menuId}">`;
             children.forEach(sub => {
-              const subKey     = dept.deptId+'::'+sub.menuId;
+              const subKey     = deptId+'::'+sub.menuId;
               const subGranted = sub.defaultForAll || raw[subKey] === true;
-              html += `<div style="display:flex;align-items:center;gap:5px;
-                background:rgba(44,74,114,.35);border:1px solid rgba(44,74,114,.6);
-                border-radius:6px;padding:4px 10px;">
-                <input type="checkbox" id="perm-sub-${dept.deptId}-${sub.menuId}"
+              html += `<div class="perm-sub-chip">
+                <input type="checkbox" id="perm-sub-${deptId}-${sub.menuId}"
                   ${subGranted?'checked':''} ${sub.defaultForAll?'disabled':''}
-                  data-deptid="${dept.deptId}" data-menuid="${sub.menuId}"
+                  data-deptid="${deptId}" data-menuid="${sub.menuId}"
                   data-parentid="${menu.menuId}"
-                  style="cursor:pointer;width:14px;height:14px;accent-color:var(--gold,#c8912a);">
-                <label for="perm-sub-${dept.deptId}-${sub.menuId}"
-                  style="cursor:pointer;white-space:nowrap;font-size:12px;">
-                  ${sub.icon||''} ${sub.menuName}
-                </label>
+                  onchange="updateMenuCount('${deptId}','${menu.menuId}')">
+                <label for="perm-sub-${deptId}-${sub.menuId}">${sub.icon||''} ${sub.menuName}</label>
               </div>`;
             });
             html += `</div>`;
           }
-          html += `</div>`; // end perm-menu-item
         });
-        html += `</div>`; // end perm-menus
       } else {
-        html += `<div style="padding-left:28px;font-size:12px;color:var(--muted)">ยังไม่มีเมนูในแผนกนี้</div>`;
+        html += `<div style="padding:10px;font-size:12px;color:var(--muted);">ยังไม่มีเมนูในแผนกนี้</div>`;
       }
-      html += `</div>`; // end perm-dept-block
+
+      html += `</div></div>`; // end body + block
     });
 
   container.innerHTML = html || `<div style="color:var(--muted);padding:20px;text-align:center">ยังไม่มีแผนกในระบบ</div>`;
 }
 
+// ── Accordion toggles ────────────────────────────────
+function toggleDeptAcc(deptId) {
+  const body  = document.getElementById(`perm-dept-body-${deptId}`);
+  const arrow = document.getElementById(`perm-dept-arrow-${deptId}`);
+  if (!body) return;
+  const open = body.classList.toggle('open');
+  if (arrow) arrow.classList.toggle('open', open);
+}
+
+function toggleMenuAcc(deptId, menuId) {
+  const subs  = document.getElementById(`perm-subs-${deptId}-${menuId}`);
+  const arrow = document.getElementById(`perm-acc-arrow-${deptId}-${menuId}`);
+  if (!subs) return;
+  const open = subs.classList.toggle('open');
+  if (arrow) arrow.classList.toggle('open', open);
+}
+
+function updateMenuCount(deptId, menuId) {
+  const subs = document.querySelectorAll(`[data-deptid="${deptId}"][data-parentid="${menuId}"]`);
+  const checked = [...subs].filter(cb => cb.checked).length;
+  const countEl = document.querySelector(`#perm-subs-${deptId}-${menuId}`)
+    ?.closest('.perm-acc-row + *')?.previousElementSibling
+    ?.querySelector('.perm-acc-count');
+  // re-render count badge
+  const badge = document.querySelector(`#perm-acc-arrow-${deptId}-${menuId}`)
+    ?.previousElementSibling;
+  if (badge && badge.classList.contains('perm-acc-count')) {
+    badge.textContent = `${checked}/${subs.length}`;
+  }
+}
+
 function toggleDeptPerm(deptId, checked) {
-  // uncheck dept → uncheck เมนูและ sub-menus ทั้งหมดในแผนก
   if (!checked) {
     document.querySelectorAll(`[data-deptid="${deptId}"]`).forEach(cb => cb.checked = false);
+  } else {
+    // เปิด dept body ด้วย
+    const body  = document.getElementById(`perm-dept-body-${deptId}`);
+    const arrow = document.getElementById(`perm-dept-arrow-${deptId}`);
+    if (body) { body.classList.add('open'); arrow?.classList.add('open'); }
   }
 }
 
 function toggleParentMenu(deptId, menuId, checked) {
-  // uncheck parent menu → uncheck sub-menus ทั้งหมด
   if (!checked) {
+    // uncheck → ซ่อน sub-menus + uncheck ลูก
     document.querySelectorAll(`[data-deptid="${deptId}"][data-parentid="${menuId}"]`)
       .forEach(cb => cb.checked = false);
+    const subs  = document.getElementById(`perm-subs-${deptId}-${menuId}`);
+    const arrow = document.getElementById(`perm-acc-arrow-${deptId}-${menuId}`);
+    if (subs) { subs.classList.remove('open'); arrow?.classList.remove('open'); }
   } else {
-    // check parent → check dept ด้วย
+    // check → เปิด dept +펼 sub-menus อัตโนมัติ
     const deptCb = document.getElementById(`perm-dept-${deptId}`);
     if (deptCb) deptCb.checked = true;
+    const body  = document.getElementById(`perm-dept-body-${deptId}`);
+    const dArrow = document.getElementById(`perm-dept-arrow-${deptId}`);
+    if (body) { body.classList.add('open'); dArrow?.classList.add('open'); }
+    const subs  = document.getElementById(`perm-subs-${deptId}-${menuId}`);
+    const arrow = document.getElementById(`perm-acc-arrow-${deptId}-${menuId}`);
+    if (subs) { subs.classList.add('open'); arrow?.classList.add('open'); }
   }
 }
 
