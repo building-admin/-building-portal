@@ -531,7 +531,7 @@ function initDateDisplay() {
     d.toLocaleDateString('th-TH', { weekday:'short', year:'numeric', month:'long', day:'numeric' });
 }
 
-function loadUserFromPortal() {
+async function loadUserFromPortal() {
   const params = new URLSearchParams(window.location.search);
   const token  = params.get('token');
   const name   = params.get('name');
