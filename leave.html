@@ -2289,8 +2289,9 @@ async function loadAllLeaves() {
       ? `<div style="font-size:11px;color:#e05252;margin-top:2px;cursor:pointer;" onclick="showInfoModal('${r['หมายเหตุผู้อนุมัติ'].replace(/'/g, '\\\'').replace(/"/g, '&quot;')}')">📝 คลิกดูรายละเอียด</div>` : '';
     // approverIndex ดูจากสถานะใบลา — ยกเลิกท่านสุดท้ายที่อนุมัติ
     const myApproverIdx = (r['ผู้อนุมัติ1-สถานะ'] === 'อนุมัติ' && r['ผู้อนุมัติ2-สถานะ'] === 'อนุมัติ') ? 1 : 0;
+    const userType = currentUser.type || currentUser.role || '';
     const canRevoke = r['สถานะ'] === 'อนุมัติ' &&
-      (currentUser.type === 'approver' || currentUser.type === 'hr' || currentUser.type === 'admin');
+      ['approver','hr','admin'].includes(userType);
     const revokeBtn = canRevoke
       ? `<button onclick="openRevokeModal('${r['รหัสใบลา']}', ${myApproverIdx})"
            style="padding:3px 10px;font-size:11px;background:rgba(224,82,82,0.15);border:1px solid rgba(224,82,82,0.3);border-radius:6px;color:#e05252;cursor:pointer;">
@@ -2630,8 +2631,13 @@ async function loadUserFromPortal() {
     d.toLocaleDateString('th-TH', { weekday:'short', year:'numeric', month:'long', day:'numeric' });
   document.getElementById('today-date').value = d.toISOString().split('T')[0];
 
-  // หน้าแรกตาม role
-  var firstPage = (role === 'approver') ? 'approval' : 'dashboard';
+  // หน้าแรกตาม role + เช็ค menuPerms
+  var firstPage = 'dashboard';
+  if (role === 'approver' || role === 'hr') {
+    firstPage = (window._menuPerms && window._menuPerms['approval']) ? 'approval'
+              : (window._menuPerms && window._menuPerms['all-leaves']) ? 'all-leaves'
+              : 'dashboard';
+  }
   setTimeout(function() { showPage(firstPage); initCharts(); loadDashboardData(); }, 100);
 }
 
@@ -3099,7 +3105,6 @@ async function confirmRevoke() {
 function showToast(msg, type) {
   const t   = document.getElementById('toast');
   const ico = document.getElementById('toast-icon');
-  // ตรวจจับ type อัตโนมัติจากข้อความถ้าไม่ได้ระบุ
   if (!type) {
     if (msg.includes('❌') || msg.includes('ผิดพลาด') || msg.includes('ไม่')) type = 'error';
     else if (msg.includes('⚠️') || msg.includes('กรุณา'))                    type = 'warn';
@@ -3111,7 +3116,8 @@ function showToast(msg, type) {
   if (ico) ico.textContent = icons[type] || '✅';
   document.getElementById('toast-msg').textContent = msg.replace(/^[✅❌⚠️ℹ️]\s*/u, '');
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
 // โหลด user จาก Portal ทันทีที่เปิดหน้า

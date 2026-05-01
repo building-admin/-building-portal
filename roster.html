@@ -431,14 +431,23 @@
         <input class="form-input" id="f-emp-dept" placeholder="แผนก">
       </div>
       <div class="form-group">
-        <label class="form-label">วันหยุดประจำ</label>
-        <select class="form-input" id="f-emp-off">
-          <option value="">-- เลือก --</option>
-          <option>จันทร์</option><option>อังคาร</option><option>พุธ</option>
-          <option>พฤหัสบดี</option><option>ศุกร์</option><option>เสาร์</option>
-          <option>อาทิตย์</option><option>เสาร์/อาทิตย์</option>
+        <label class="form-label">กลุ่ม</label>
+        <select class="form-input" id="f-emp-group">
+          <option value="">-- เลือกกลุ่ม --</option>
+          <option value="1">1 — จป./ป้องกัน/จราจร</option>
+          <option value="2">2 — กลยุทธ์</option>
+          <option value="3">3 — บริการอาคารและทรัพย์สิน</option>
         </select>
       </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">วันหยุดประจำ</label>
+      <select class="form-input" id="f-emp-off">
+        <option value="">-- เลือก --</option>
+        <option>จันทร์</option><option>อังคาร</option><option>พุธ</option>
+        <option>พฤหัสบดี</option><option>ศุกร์</option><option>เสาร์</option>
+        <option>อาทิตย์</option><option>เสาร์/อาทิตย์</option>
+      </select>
     </div>
     <div class="modal-actions">
       <button class="btn-secondary" onclick="closeEmpModal()">ยกเลิก</button>
@@ -492,7 +501,7 @@
 </div>
 
 <!-- ── TOAST ── -->
-<div class="toast" id="toast"><span id="toast-msg"></span></div>
+<div class="toast" id="toast"><span class="toast-icon" id="toast-icon">✅</span><span id="toast-msg"></span></div>
 
 <script>
 // ── CONFIG ───────────────────────────────────────────
@@ -1294,22 +1303,24 @@ function openEmpModal(empId) {
   if (empId) {
     const emp = employees.find(e => String(e['รหัสพนักงาน']) === String(empId));
     if (emp) {
-      document.getElementById('f-emp-id').value    = emp['รหัสพนักงาน'];
-      document.getElementById('f-emp-id').disabled = true;
-      document.getElementById('f-emp-name').value  = emp['ชื่อ-นามสกุล'];
-      document.getElementById('f-emp-pos').value   = emp['ตำแหน่ง'];
-      document.getElementById('f-emp-dept').value  = emp['แผนก'] || '';
-      document.getElementById('f-emp-off').value   = emp['วันหยุดประจำ'] || '';
-      document.getElementById('f-emp-order').value = emp['ลำดับ'] || '';
+      document.getElementById('f-emp-id').value     = emp['รหัสพนักงาน'];
+      document.getElementById('f-emp-id').disabled  = true;
+      document.getElementById('f-emp-name').value   = emp['ชื่อ-นามสกุล'];
+      document.getElementById('f-emp-pos').value    = emp['ตำแหน่ง'];
+      document.getElementById('f-emp-dept').value   = emp['แผนก'] || '';
+      document.getElementById('f-emp-off').value    = emp['วันหยุดประจำ'] || '';
+      document.getElementById('f-emp-order').value  = emp['ลำดับ'] || '';
+      document.getElementById('f-emp-group').value  = emp['กลุ่ม'] || '';
     }
   } else {
-    document.getElementById('f-emp-id').value    = '';
-    document.getElementById('f-emp-id').disabled = false;
-    document.getElementById('f-emp-name').value  = '';
-    document.getElementById('f-emp-pos').value   = '';
-    document.getElementById('f-emp-dept').value  = '';
-    document.getElementById('f-emp-off').value   = '';
-    document.getElementById('f-emp-order').value = '';
+    document.getElementById('f-emp-id').value     = '';
+    document.getElementById('f-emp-id').disabled  = false;
+    document.getElementById('f-emp-name').value   = '';
+    document.getElementById('f-emp-pos').value    = '';
+    document.getElementById('f-emp-dept').value   = '';
+    document.getElementById('f-emp-off').value    = '';
+    document.getElementById('f-emp-order').value  = '';
+    document.getElementById('f-emp-group').value  = '';
   }
   document.getElementById('modal-emp').classList.add('show');
 }
@@ -1327,6 +1338,7 @@ async function saveEmployee() {
     'แผนก':         document.getElementById('f-emp-dept').value.trim(),
     'วันหยุดประจำ': document.getElementById('f-emp-off').value,
     'ลำดับ':        parseInt(document.getElementById('f-emp-order').value) || 99,
+    'กลุ่ม':        document.getElementById('f-emp-group').value || '',
     'สถานะ':        'active'
   };
 
@@ -1671,18 +1683,21 @@ async function applyRosterPermissions(role) {
 
 // ── TOAST ────────────────────────────────────────────
 function showToast(msg, type) {
-  const t = document.getElementById('toast');
-  // ตรวจ type อัตโนมัติถ้าไม่ระบุ
+  const t   = document.getElementById('toast');
+  const ico = document.getElementById('toast-icon');
   if (!type) {
-    if (msg.includes('❌') || msg.includes('ผิดพลาด') || msg.includes('ไม่'))  type = 'error';
-    else if (msg.includes('⚠️') || msg.includes('กรุณา'))                      type = 'warn';
-    else if (msg.includes('ℹ️'))                                                type = 'info';
-    else                                                                        type = 'success';
+    if (msg.includes('❌') || msg.includes('ผิดพลาด') || msg.includes('ไม่')) type = 'error';
+    else if (msg.includes('⚠️') || msg.includes('กรุณา'))                    type = 'warn';
+    else if (msg.includes('ℹ️'))                                               type = 'info';
+    else                                                                       type = 'success';
   }
   t.className = `toast ${type}`;
+  const icons = { success:'✅', error:'❌', warn:'⚠️', info:'ℹ️' };
+  if (ico) ico.textContent = icons[type] || '✅';
   document.getElementById('toast-msg').textContent = msg.replace(/^[✅❌⚠️ℹ️]\s*/u, '');
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
 }
 
 // ── WARN บันทึกก่อนออก ──────────────────────────────
