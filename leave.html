@@ -2562,30 +2562,43 @@ async function loadUserFromPortal() {
   let permData = null;
   try {
     const permRes = await callAPI({ action: 'getLeavePermissions' });
-    if (permRes.success && permRes.data?.length) {
-      permData = permRes.data;
-    }
-  } catch(e) { /* fallback ด้านล่าง */ }
+    if (permRes.success && permRes.data?.length) permData = permRes.data;
+  } catch(e) {}
 
-  // Default fallback ถ้าโหลดไม่ได้
   const DEFAULT_PERMS = [
-    { menu:'dashboard',          employee:true,  approver:true,  hr:true,  admin:true  },
-    { menu:'roster-view',        employee:false, approver:true,  hr:true,  admin:true  },
-    { menu:'leave-form',         employee:true,  approver:false, hr:false, admin:true  },
-    { menu:'my-leaves',          employee:true,  approver:false, hr:false, admin:true  },
-    { menu:'approval',           employee:false, approver:true,  hr:true,  admin:true  },
-    { menu:'all-leaves',         employee:false, approver:true,  hr:true,  admin:true  },
-    { menu:'report',             employee:false, approver:false, hr:false, admin:true  },
-    { menu:'settings',           employee:false, approver:false, hr:false, admin:true  },
+    { menu:'dashboard',   employee:true,  approver:true,  hr:true,  admin:true },
+    { menu:'roster-view', employee:false, approver:true,  hr:true,  admin:true },
+    { menu:'leave-form',  employee:true,  approver:false, hr:false, admin:true },
+    { menu:'my-leaves',   employee:true,  approver:false, hr:false, admin:true },
+    { menu:'approval',    employee:false, approver:true,  hr:true,  admin:true },
+    { menu:'all-leaves',  employee:false, approver:true,  hr:true,  admin:true },
+    { menu:'report',      employee:false, approver:false, hr:false, admin:true },
+    { menu:'settings',    employee:false, approver:false, hr:false, admin:true },
   ];
   const perms = permData || DEFAULT_PERMS;
 
-  // แปลงเป็น map { menu: bool } สำหรับ role ปัจจุบัน
+  // ① role-based permissions
   const menuPerms = {};
-  perms.forEach(p => {
-    // admin เข้าได้ทุกอย่างเสมอ
-    menuPerms[p.menu] = role === 'admin' ? true : !!p[role];
-  });
+  perms.forEach(p => { menuPerms[p.menu] = role === 'admin' ? true : !!p[role]; });
+
+  // ② override ด้วย per-user allowedMenuIds จาก Portal (ถ้ามี)
+  const allowedMenuIds = tokenRes.allowedMenuIds || null;
+  if (allowedMenuIds && allowedMenuIds.length > 0 && role !== 'admin') {
+    const PORTAL_TO_PAGE = {
+      'bm_leave_dashboard':  'dashboard',   'bs_leave_dashboard':  'dashboard',
+      'bm_leave_roster_view':'roster-view', 'bs_leave_roster_view':'roster-view',
+      'bm_leave_leave_form': 'leave-form',  'bs_leave_leave_form': 'leave-form',
+      'bm_leave_my_leaves':  'my-leaves',   'bs_leave_my_leaves':  'my-leaves',
+      'bm_leave_approval':   'approval',    'bs_leave_approval':   'approval',
+      'bm_leave_all_leaves': 'all-leaves',  'bs_leave_all_leaves': 'all-leaves',
+      'bm_leave_report':     'report',      'bs_leave_report':     'report',
+    };
+    // รีเซ็ตก่อน แล้วเปิดเฉพาะที่มีสิทธิ์
+    Object.values(PORTAL_TO_PAGE).forEach(page => { menuPerms[page] = false; });
+    allowedMenuIds.forEach(mid => {
+      if (PORTAL_TO_PAGE[mid]) menuPerms[PORTAL_TO_PAGE[mid]] = true;
+    });
+  }
 
   // apply ซ่อน/แสดง nav items
   Object.keys(menuPerms).forEach(function(page) {

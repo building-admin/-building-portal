@@ -1450,47 +1450,96 @@ async function openPermissions(username) {
 function renderPermUI(currentPerms) {
   const container = document.getElementById('perm-container');
   const raw = currentPerms.raw || {};
-  // raw key = "deptId::menuId" or "deptId::"
+
+  // แยก top-level menus และ sub-menus
+  const topMenus = allMenus.filter(m => !m.parentId && String(m.active) !== 'false');
+  const subMenus = allMenus.filter(m =>  m.parentId && String(m.active) !== 'false');
 
   let html = '';
-  allDepts.filter(d => String(d.active)==='true').sort((a,b)=>(a.order||99)-(b.order||99)).forEach(dept => {
-    const deptGranted = raw[dept.deptId+'::'] === true;
-    const deptMenus = allMenus.filter(m => m.deptId === dept.deptId && String(m.active)==='true').sort((a,b)=>(a.order||99)-(b.order||99));
+  allDepts.filter(d => String(d.active)==='true')
+    .sort((a,b) => (a.order||99)-(b.order||99))
+    .forEach(dept => {
+      const deptGranted  = raw[dept.deptId+'::'] === true;
+      const deptTopMenus = topMenus.filter(m => m.deptId === dept.deptId)
+        .sort((a,b) => (a.order||99)-(b.order||99));
 
-    html += `<div class="perm-dept-block">
-      <div class="perm-dept-header">
-        <input type="checkbox" id="perm-dept-${dept.deptId}" ${deptGranted?'checked':''} onchange="toggleDeptPerm('${dept.deptId}',this.checked)">
-        <span class="perm-dept-icon">${dept.icon||'🏢'}</span>
-        <label class="perm-dept-label" for="perm-dept-${dept.deptId}">${dept.deptName}</label>
-      </div>`;
-
-    if (deptMenus.length) {
-      html += `<div class="perm-menus">`;
-      deptMenus.forEach(menu => {
-        const menuKey = dept.deptId+'::'+menu.menuId;
-        const menuGranted = menu.defaultForAll || raw[menuKey] === true;
-        html += `<div class="perm-menu-item">
-          <input type="checkbox" id="perm-menu-${menu.menuId}" ${menuGranted?'checked':''} ${menu.defaultForAll?'disabled':''} data-deptid="${dept.deptId}" data-menuid="${menu.menuId}">
-          <label for="perm-menu-${menu.menuId}">
-            ${menu.icon||'📋'} ${menu.menuName}
-            ${menu.defaultForAll?'<span class="perm-all-badge">ทุกคน</span>':''}
-          </label>
+      html += `<div class="perm-dept-block">
+        <div class="perm-dept-header">
+          <input type="checkbox" id="perm-dept-${dept.deptId}" ${deptGranted?'checked':''}
+            onchange="toggleDeptPerm('${dept.deptId}',this.checked)">
+          <span class="perm-dept-icon">${dept.icon||'🏢'}</span>
+          <label class="perm-dept-label" for="perm-dept-${dept.deptId}">${dept.deptName}</label>
         </div>`;
-      });
-      html += `</div>`;
-    } else {
-      html += `<div style="padding-left:28px;font-size:12px;color:var(--muted)">ยังไม่มีเมนูในแผนกนี้</div>`;
-    }
-    html += `</div>`;
-  });
 
-  container.innerHTML = html || `<div style="color:var(--muted);padding:20px;text-align:center">ยังไม่มีแผนกในระบบ — เพิ่มในแท็บ "แผนก" ก่อน</div>`;
+      if (deptTopMenus.length) {
+        html += `<div class="perm-menus">`;
+        deptTopMenus.forEach(menu => {
+          const menuKey     = dept.deptId+'::'+menu.menuId;
+          const menuGranted = menu.defaultForAll || raw[menuKey] === true;
+          const children    = subMenus.filter(s => s.deptId === dept.deptId && s.parentId === menu.menuId)
+            .sort((a,b) => (a.order||99)-(b.order||99));
+
+          html += `<div class="perm-menu-item" style="flex-direction:column;align-items:flex-start;gap:6px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <input type="checkbox" id="perm-menu-${dept.deptId}-${menu.menuId}"
+                ${menuGranted?'checked':''} ${menu.defaultForAll?'disabled':''}
+                data-deptid="${dept.deptId}" data-menuid="${menu.menuId}"
+                onchange="toggleParentMenu('${dept.deptId}','${menu.menuId}',this.checked)">
+              <label for="perm-menu-${dept.deptId}-${menu.menuId}" style="font-weight:600;font-size:13px;cursor:pointer;">
+                ${menu.icon||'📋'} ${menu.menuName}
+                ${menu.defaultForAll?'<span class="perm-all-badge">ทุกคน</span>':''}
+              </label>
+            </div>`;
+
+          if (children.length) {
+            html += `<div style="display:flex;flex-wrap:wrap;gap:6px;padding-left:26px;margin-top:2px;">`;
+            children.forEach(sub => {
+              const subKey     = dept.deptId+'::'+sub.menuId;
+              const subGranted = sub.defaultForAll || raw[subKey] === true;
+              html += `<div style="display:flex;align-items:center;gap:5px;
+                background:rgba(44,74,114,.35);border:1px solid rgba(44,74,114,.6);
+                border-radius:6px;padding:4px 10px;">
+                <input type="checkbox" id="perm-sub-${dept.deptId}-${sub.menuId}"
+                  ${subGranted?'checked':''} ${sub.defaultForAll?'disabled':''}
+                  data-deptid="${dept.deptId}" data-menuid="${sub.menuId}"
+                  data-parentid="${menu.menuId}"
+                  style="cursor:pointer;width:14px;height:14px;accent-color:var(--gold,#c8912a);">
+                <label for="perm-sub-${dept.deptId}-${sub.menuId}"
+                  style="cursor:pointer;white-space:nowrap;font-size:12px;">
+                  ${sub.icon||''} ${sub.menuName}
+                </label>
+              </div>`;
+            });
+            html += `</div>`;
+          }
+          html += `</div>`; // end perm-menu-item
+        });
+        html += `</div>`; // end perm-menus
+      } else {
+        html += `<div style="padding-left:28px;font-size:12px;color:var(--muted)">ยังไม่มีเมนูในแผนกนี้</div>`;
+      }
+      html += `</div>`; // end perm-dept-block
+    });
+
+  container.innerHTML = html || `<div style="color:var(--muted);padding:20px;text-align:center">ยังไม่มีแผนกในระบบ</div>`;
 }
 
 function toggleDeptPerm(deptId, checked) {
-  // เมื่อ uncheck dept ให้ uncheck เมนูใน dept นั้นด้วย
+  // uncheck dept → uncheck เมนูและ sub-menus ทั้งหมดในแผนก
   if (!checked) {
     document.querySelectorAll(`[data-deptid="${deptId}"]`).forEach(cb => cb.checked = false);
+  }
+}
+
+function toggleParentMenu(deptId, menuId, checked) {
+  // uncheck parent menu → uncheck sub-menus ทั้งหมด
+  if (!checked) {
+    document.querySelectorAll(`[data-deptid="${deptId}"][data-parentid="${menuId}"]`)
+      .forEach(cb => cb.checked = false);
+  } else {
+    // check parent → check dept ด้วย
+    const deptCb = document.getElementById(`perm-dept-${deptId}`);
+    if (deptCb) deptCb.checked = true;
   }
 }
 
