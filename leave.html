@@ -1773,9 +1773,24 @@ async function loadRosterView() {
     dayStats[d] = { morning:0, afternoon:0, night:0, leaveNames:[], pendingNames:[] };
   }
 
-  // TBODY rows
-  let rowsHTML = '';
-  rvEmployees.forEach(emp => {
+  // ── helpers จัดกลุ่ม ───────────────────────────────
+  function rvDominantShift(empId) {
+    const r = rvRosterData[String(empId)] || {};
+    const c = {};
+    Object.values(r).forEach(code => {
+      if (code && !['W','H','S','PL','VL','C','CH'].includes(code)) c[code] = (c[code]||0)+1;
+    });
+    return Object.entries(c).sort((a,b)=>b[1]-a[1])[0]?.[0] || '';
+  }
+  function rvShiftGroup(code) {
+    if (RV_SHIFTS.morning.includes(code))   return 'เช้า';
+    if (RV_SHIFTS.afternoon.includes(code)) return 'บ่าย';
+    if (RV_SHIFTS.night.includes(code))     return 'ดึก';
+    return 'อื่นๆ';
+  }
+
+  // ── render แถวพนักงาน 1 คน ────────────────────────
+  function rvRenderRow(emp) {
     const id        = String(emp['รหัสพนักงาน']);
     const empRoster = rvRosterData[id] || {};
     const empLeave  = leaveLookup[id] || {};
@@ -1787,29 +1802,23 @@ async function loadRosterView() {
       const isToday = isThisMonth && d === todayDate;
       const code  = empRoster[d] || '';
       const cls   = rvGetShiftClass(code);
-      const leaveStatus = empLeave[d]; // 'pending'|'approved'|undefined
+      const leaveStatus = empLeave[d];
 
       // สถิติ
       if (code && !['W','H','C','CH',''].includes(code)) {
-        if (['S','PL','VL'].includes(code)) {
-          dayStats[d].leaveNames.push(emp['ชื่อ-นามสกุล']);
-        } else if (RV_SHIFTS.morning.includes(code))   dayStats[d].morning++;
+        if (['S','PL','VL'].includes(code))             dayStats[d].leaveNames.push(emp['ชื่อ-นามสกุล']);
+        else if (RV_SHIFTS.morning.includes(code))   dayStats[d].morning++;
         else if (RV_SHIFTS.afternoon.includes(code)) dayStats[d].afternoon++;
         else if (RV_SHIFTS.night.includes(code))     dayStats[d].night++;
       }
-      // ใบลารออนุมัติ / อนุมัติแล้ว
-      if (leaveStatus === 'pending') {
-        dayStats[d].pendingNames.push(emp['ชื่อ-นามสกุล']);
-      } else if (leaveStatus === 'approved' && !['S','PL','VL'].includes(code)) {
-        dayStats[d].leaveNames.push(emp['ชื่อ-นามสกุล'] + '(ลา)');
-      }
+      if (leaveStatus === 'pending')                      dayStats[d].pendingNames.push(emp['ชื่อ-นามสกุล']);
+      else if (leaveStatus === 'approved' && !['S','PL','VL'].includes(code))
+                                                          dayStats[d].leaveNames.push(emp['ชื่อ-นามสกุล'] + '(ลา)');
 
-      // dot overlay
       let dot = '';
-      if (leaveStatus === 'pending')  dot = `<div class="rv-dot-pending" title="รออนุมัติ"></div>`;
+      if (leaveStatus === 'pending')       dot = `<div class="rv-dot-pending" title="รออนุมัติ"></div>`;
       else if (leaveStatus === 'approved') dot = `<div class="rv-dot-approved" title="อนุมัติแล้ว"></div>`;
 
-      // tooltip
       const tip = (SHIFT_TIME_RV[code] || code || '—') + (leaveStatus ? (leaveStatus==='pending'?' ⏳ลารออนุมัติ':' ✅ลาอนุมัติ') : '');
 
       cells += `<td style="padding:1px;text-align:center;
@@ -1820,8 +1829,7 @@ async function loadRosterView() {
         <div class="rv-cell ${cls}" title="${tip}">${rvPad(code)}</div>
       </td>`;
     }
-
-    rowsHTML += `<tr>
+    return `<tr>
       <td class="col-name-d">
         <div class="emp-n">${emp['ชื่อ-นามสกุล']}</div>
         <div class="emp-p">${emp['ตำแหน่ง']}</div>
@@ -1829,7 +1837,66 @@ async function loadRosterView() {
       <td class="col-off-d">${emp['วันหยุดประจำ']||'-'}</td>
       ${cells}
     </tr>`;
-  });
+  }
+
+  // ── section / sub-group header rows ────────────────
+  function rvSectionRow(icon, label, color='var(--gold-light)') {
+    return `<tr><td colspan="${daysInMonth + 2}" style="
+      background:rgba(26,52,96,.98);
+      border-top:2px solid rgba(200,145,42,.5);
+      border-bottom:1px solid rgba(200,145,42,.25);
+      padding:7px 14px; font-size:12px; font-weight:700;
+      color:${color}; font-family:var(--font-label); letter-spacing:.06em;
+      position:sticky; left:0;">${icon} ${label}</td></tr>`;
+  }
+  function rvSubRow(icon, label, rgb) {
+    return `<tr><td colspan="${daysInMonth + 2}" style="
+      background:rgba(15,32,68,.7);
+      border-top:1px solid rgba(${rgb},.25);
+      padding:3px 24px; font-size:10px;
+      color:rgba(${rgb},1); font-family:var(--font-label); letter-spacing:.05em;">
+      ▸ ${icon} ${label}</td></tr>`;
+  }
+
+  // ── จัดกลุ่มพนักงาน ───────────────────────────────
+  const rvG1 = rvEmployees.filter(e => String(e['กลุ่ม']) === '1');
+  const rvG2 = rvEmployees.filter(e => String(e['กลุ่ม']) === '2');
+  const rvG3 = rvEmployees.filter(e => String(e['กลุ่ม']) === '3');
+  const rvGX = rvEmployees.filter(e => !['1','2','3'].includes(String(e['กลุ่ม'])));
+
+  const rvSub1 = { 'เช้า':[], 'บ่าย':[], 'ดึก':[], 'อื่นๆ':[] };
+  rvG1.forEach(emp => rvSub1[rvShiftGroup(rvDominantShift(emp['รหัสพนักงาน']))].push(emp));
+
+  const SUB_CFG = [
+    { key:'เช้า',  icon:'🌅', rgb:'61,186,122' },
+    { key:'บ่าย',  icon:'🌇', rgb:'240,160,48' },
+    { key:'ดึก',   icon:'🌙', rgb:'100,140,255' },
+    { key:'อื่นๆ', icon:'📋', rgb:'168,187,212' },
+  ];
+
+  let allRows = '';
+
+  if (rvG1.length) {
+    allRows += rvSectionRow('🛡️', 'ส่วนที่ 1 — จป. / ป้องกัน / จราจร');
+    SUB_CFG.forEach(({ key, icon, rgb }) => {
+      const emps = rvSub1[key];
+      if (!emps.length) return;
+      allRows += rvSubRow(icon, `กะ${key} (${emps.length} คน)`, rgb);
+      emps.forEach(emp => { allRows += rvRenderRow(emp); });
+    });
+  }
+  if (rvG2.length) {
+    allRows += rvSectionRow('📊', 'ส่วนที่ 2 — หัวหน้ากลยุทธ์', '#e8b84b');
+    rvG2.forEach(emp => { allRows += rvRenderRow(emp); });
+  }
+  if (rvG3.length) {
+    allRows += rvSectionRow('🏢', 'ส่วนที่ 3 — บริการอาคารและทรัพย์สิน', '#a8bbd4');
+    rvG3.forEach(emp => { allRows += rvRenderRow(emp); });
+  }
+  if (rvGX.length) {
+    allRows += rvSectionRow('❓', 'ยังไม่ได้จัดกลุ่ม', 'var(--muted)');
+    rvGX.forEach(emp => { allRows += rvRenderRow(emp); });
+  }
 
   // Summary row
   let sumRow = `<tr class="rv-summary">
@@ -1855,7 +1922,7 @@ async function loadRosterView() {
   }
   sumRow += '</tr>';
 
-  tbody.innerHTML = rowsHTML + sumRow;
+  tbody.innerHTML = allRows + sumRow;
 
   // leave summary text
   const pendingCount  = rvLeaveData.filter(r => r['สถานะ'] === 'รออนุมัติ').length;
