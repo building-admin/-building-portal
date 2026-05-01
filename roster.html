@@ -496,7 +496,8 @@
 
 <script>
 // ── CONFIG ───────────────────────────────────────────
-const API_URL = 'https://script.google.com/macros/s/AKfycbw50de1f2CgEBlC6Jvbc9J_C1E07UUeKy44ZJdlkznRqPxuDXXdmgxErIfEPyYWETCQ6g/exec';
+const API_URL   = 'https://script.google.com/macros/s/AKfycbw50de1f2CgEBlC6Jvbc9J_C1E07UUeKy44ZJdlkznRqPxuDXXdmgxErIfEPyYWETCQ6g/exec';
+const LEAVE_API_URL = 'https://script.google.com/macros/s/AKfycbz8Mu8UUKeGppQe0_WpoqMV28HcKaSSNJIPbDP2powRrZbLFgtHMqpSQ2zU-gBqYjI18w/exec';
 const PORTAL_URL = 'https://building-admin.github.io/-building-portal/';
 const LEAVE_URL  = 'https://building-admin.github.io/-building-portal/leave.html';
 
@@ -579,19 +580,13 @@ async function loadUserFromPortal() {
   document.getElementById('sidebar-role').textContent   = pos || role;
   document.getElementById('sidebar-avatar').textContent = name ? name.substring(0,2) : '?';
 
-  // แสดงปุ่มเฉพาะ admin
+  // แสดงปุ่ม save เฉพาะ admin (permissions จะจัดการที่เหลือ)
   if (isAdmin) {
-    document.getElementById('btn-save').style.display      = 'flex';
-    document.getElementById('btn-add-emp').style.display   = 'flex';
-    document.getElementById('nav-employees').style.display = 'flex';
-    // Admin: แสดง tab bar และเริ่มที่ "คีย์ข้อมูล"
-    document.getElementById('roster-tab-bar').style.display = 'flex';
-    switchRosterTab('input');
-  } else {
-    // Staff: ซ่อน input panel, แสดง summary อย่างเดียว
-    document.getElementById('roster-panel-input').style.display   = 'none';
-    document.getElementById('roster-panel-summary').style.display = 'block';
+    document.getElementById('btn-save').style.display = 'flex';
   }
+
+  // ดึง permissions จาก Leave API แล้ว apply
+  await applyRosterPermissions(role);
 
   await loadEmployees();
   loadRoster();
@@ -1602,6 +1597,76 @@ async function callAPI(payload) {
     console.error('API error:', err);
     return { success: false, message: err.message };
   }
+}
+
+// ── LEAVE API (ดึง Permissions จาก Leave System) ─────
+async function callLeaveAPI(payload) {
+  try {
+    const qs  = new URLSearchParams({ payload: JSON.stringify(payload) });
+    const res = await fetch(`${LEAVE_API_URL}?${qs}`, { redirect: 'follow' });
+    return await res.json();
+  } catch(err) {
+    return { success: false, message: err.message };
+  }
+}
+
+// DEFAULT Roster permissions (fallback ถ้าโหลดไม่ได้)
+const ROSTER_DEFAULT_PERMS = {
+  'roster-tab-summary':  { employee:true,  approver:true,  hr:true,  admin:true },
+  'roster-tab-input':    { employee:false, approver:false, hr:false, admin:true },
+  'roster-employees':    { employee:false, approver:false, hr:false, admin:true },
+};
+
+async function applyRosterPermissions(role) {
+  let perms = ROSTER_DEFAULT_PERMS;
+  try {
+    const res = await callLeaveAPI({ action: 'getLeavePermissions' });
+    if (res.success && res.data?.length) {
+      const map = {};
+      res.data.forEach(p => { map[p.menu] = p; });
+      // merge กับ default (เฉพาะ roster keys)
+      Object.keys(ROSTER_DEFAULT_PERMS).forEach(key => {
+        if (map[key]) perms[key] = map[key];
+      });
+    }
+  } catch(e) { /* ใช้ default */ }
+
+  const r = role === 'admin' ? 'admin' : role;
+
+  // Tab คีย์ข้อมูล
+  const canInput = role === 'admin' || !!perms['roster-tab-input']?.[r];
+  const tabBar   = document.getElementById('roster-tab-bar');
+  const panelInput = document.getElementById('roster-panel-input');
+  if (canInput) {
+    if (tabBar) tabBar.style.display = 'flex';
+    switchRosterTab('input'); // admin/ผู้มีสิทธิ์ เริ่มที่ tab คีย์
+  } else {
+    if (tabBar) tabBar.style.display = 'none';
+    if (panelInput) panelInput.style.display = 'none';
+    document.getElementById('roster-panel-summary').style.display = 'block';
+  }
+
+  // Tab สรุปตาราง (ถ้าไม่มีสิทธิ์เลย → redirect กลับ portal)
+  const canSummary = role === 'admin' || !!perms['roster-tab-summary']?.[r];
+  if (!canSummary && !canInput) {
+    document.getElementById('app').innerHTML = `
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+        height:100vh;background:#0a1628;color:#e05252;font-family:Sarabun,sans-serif;gap:16px;">
+        <div style="font-size:48px;">🔒</div>
+        <div style="font-size:20px;font-weight:600;">ไม่มีสิทธิ์เข้าถึง</div>
+        <a href="${PORTAL_URL}" style="margin-top:16px;padding:10px 24px;
+          background:rgba(200,145,42,0.2);color:#c8912a;border:1px solid rgba(200,145,42,0.3);
+          border-radius:8px;text-decoration:none;">← กลับ Portal</a>
+      </div>`;
+    return;
+  }
+
+  // เมนูจัดการพนักงาน
+  const canEmp = role === 'admin' || !!perms['roster-employees']?.[r];
+  const navEmp = document.getElementById('nav-employees');
+  if (navEmp) navEmp.style.display = canEmp ? 'flex' : 'none';
+  const btnAddEmp = document.getElementById('btn-add-emp');
+  if (btnAddEmp && !canEmp) btnAddEmp.style.display = 'none';
 }
 
 // ── TOAST ────────────────────────────────────────────

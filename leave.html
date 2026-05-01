@@ -1411,7 +1411,18 @@
       <div class="page-section" id="section-settings">
         <div class="settings-grid">
 
-          <!-- ผู้อนุมัติ — ดึงจาก Sheets จริง -->
+          <!-- ── สิทธิ์การเข้าถึง (Permission Matrix) ── -->
+          <div class="settings-card" style="grid-column:1/-1;">
+            <div class="settings-card-title">🔐 สิทธิ์การเข้าถึงเมนูและหน้าต่างๆ</div>
+            <div class="settings-card-sub">กำหนดว่า role ไหนเห็นเมนู/หน้าไหนได้บ้าง — admin เข้าได้ทุกอย่างเสมอ (ล็อค)</div>
+            <div id="perm-table-wrap" style="overflow-x:auto;">
+              <div style="text-align:center;padding:20px;color:var(--muted);">⏳ กำลังโหลด...</div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:14px;justify-content:flex-end;">
+              <button class="btn-cancel" onclick="loadPermissions()">↺ รีเซ็ต</button>
+              <button class="btn-submit" onclick="savePermissions()">💾 บันทึกสิทธิ์</button>
+            </div>
+          </div>
           <div class="settings-card">
             <div class="settings-card-title">ผู้มีสิทธิ์อนุมัติ</div>
             <div class="settings-card-sub">ดึงข้อมูลจาก Google Sheets แผ่น "ผู้อนุมัติ"</div>
@@ -1940,6 +1951,107 @@ const SHIFT_TIME_RV = {
 };
 
 // ════════════════════════════════════════════════════
+//  PERMISSION MANAGEMENT
+// ════════════════════════════════════════════════════
+const ROLES_EDITABLE = ['employee','approver','hr'];
+const ROLE_LABELS    = { employee:'เจ้าหน้าที่', approver:'ที่ปรึกษา', hr:'HR', admin:'Admin' };
+let _permCache = [];
+
+async function loadPermissions() {
+  const wrap = document.getElementById('perm-table-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);">⏳ กำลังโหลด...</div>';
+  try {
+    const res = await callAPI({ action: 'getLeavePermissions' });
+    if (!res.success) throw new Error(res.message);
+    _permCache = res.data;
+    renderPermTable(res.data);
+  } catch(e) {
+    wrap.innerHTML = `<div style="color:var(--error);padding:16px;">❌ โหลดไม่ได้: ${e.message}</div>`;
+  }
+}
+
+function renderPermTable(perms) {
+  const wrap = document.getElementById('perm-table-wrap');
+  if (!wrap) return;
+
+  // แบ่งกลุ่ม
+  const leavePerms  = perms.filter(p => !p.menu.startsWith('roster-'));
+  const rosterPerms = perms.filter(p => p.menu.startsWith('roster-'));
+
+  function buildSection(title, items) {
+    if (!items.length) return '';
+    let rows = items.map(p => {
+      const cells = ROLES_EDITABLE.map(r => {
+        const checked  = p[r] ? 'checked' : '';
+        return `<td style="text-align:center;padding:6px 4px;">
+          <input type="checkbox" ${checked} data-menu="${p.menu}" data-role="${r}"
+            style="width:16px;height:16px;cursor:pointer;accent-color:var(--gold);">
+        </td>`;
+      }).join('');
+      return `<tr style="border-bottom:1px solid rgba(44,74,114,.3);">
+        <td style="padding:8px 12px;font-size:12px;">${p.label}</td>
+        ${cells}
+        <td style="text-align:center;padding:6px 4px;">
+          <span style="font-size:16px;" title="Admin เข้าได้เสมอ">🔒</span>
+        </td>
+      </tr>`;
+    }).join('');
+
+    const headers = [...ROLES_EDITABLE, 'admin'].map(r =>
+      `<th style="text-align:center;padding:8px 6px;font-size:11px;font-family:var(--font-label);
+        color:var(--gold-light);min-width:72px;">${ROLE_LABELS[r]}</th>`
+    ).join('');
+
+    return `
+      <div style="font-size:11px;font-weight:700;color:var(--muted);
+        letter-spacing:.07em;text-transform:uppercase;padding:12px 12px 4px;
+        font-family:var(--font-label);">${title}</div>
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr style="background:var(--navy-light);">
+          <th style="text-align:left;padding:8px 12px;font-size:11px;color:var(--silver);font-family:var(--font-label);">เมนู / หน้า</th>
+          ${headers}
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  wrap.innerHTML = `
+    <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--navy-mid);">
+      ${buildSection('ระบบใบลา (Leave)', leavePerms)}
+      ${rosterPerms.length ? `<div style="border-top:2px solid rgba(200,145,42,.3);"></div>` : ''}
+      ${buildSection('ระบบตารางรอบ (Roster)', rosterPerms)}
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px;padding:0 2px;">
+      💡 ติ๊ก = เห็นเมนูได้ · ไม่ติ๊ก = ซ่อนและเข้าไม่ได้ · Admin ล็อคเสมอ
+    </div>`;
+}
+
+async function savePermissions() {
+  if (!_permCache.length) { showToast('ยังไม่ได้โหลดสิทธิ์', 'error'); return; }
+
+  // อ่านค่าจาก checkbox ทั้งหมด
+  const updated = _permCache.map(p => {
+    const clone = { ...p };
+    ROLES_EDITABLE.forEach(r => {
+      const cb = document.querySelector(`input[data-menu="${p.menu}"][data-role="${r}"]`);
+      if (cb) clone[r] = cb.checked;
+      clone['admin'] = true; // admin ล็อคเสมอ
+    });
+    return clone;
+  });
+
+  try {
+    const res = await callAPI({ action: 'saveLeavePermissions', permissions: updated });
+    if (!res.success) throw new Error(res.message);
+    _permCache = updated;
+    showToast('✅ บันทึกสิทธิ์เรียบร้อยแล้ว — มีผลครั้งถัดไปที่ Login', 'success');
+  } catch(e) {
+    showToast('❌ บันทึกไม่ได้: ' + e.message, 'error');
+  }
+}
+
+// ════════════════════════════════════════════════════
 //  LOAD DASHBOARD DATA
 // ════════════════════════════════════════════════════
 async function loadDashboardData() {
@@ -2446,41 +2558,56 @@ async function loadUserFromPortal() {
     if (el) el.value = val;
   });
 
-  // ── สิทธิ์เมนูตาม role ──────────────────────────────
-  // role ใช้ตัวแปรที่ประกาศไว้แล้วบรรทัด 1736
-  // employee : dashboard, leave-form, my-leaves
-  // approver : approval, all-leaves
-  // hr       : dashboard, approval, all-leaves
-  // admin    : ทุกเมนู
+  // ── โหลด Permissions จาก API แล้ว apply ──────────────
+  let permData = null;
+  try {
+    const permRes = await callAPI({ action: 'getLeavePermissions' });
+    if (permRes.success && permRes.data?.length) {
+      permData = permRes.data;
+    }
+  } catch(e) { /* fallback ด้านล่าง */ }
 
-  // nav item แต่ละอัน
-  const menuPerms = {
-    'dashboard':  ['employee','hr','admin'],
-    'leave-form': ['employee','admin'],
-    'my-leaves':  ['employee','admin'],
-    'approval':   ['approver','hr','admin'],
-    'all-leaves': ['approver','hr','admin'],
-    'roster-view': ['approver','hr','admin'],
-    'report':     ['admin'],
-    'settings':   ['admin']
-  };
+  // Default fallback ถ้าโหลดไม่ได้
+  const DEFAULT_PERMS = [
+    { menu:'dashboard',          employee:true,  approver:true,  hr:true,  admin:true  },
+    { menu:'roster-view',        employee:false, approver:true,  hr:true,  admin:true  },
+    { menu:'leave-form',         employee:true,  approver:false, hr:false, admin:true  },
+    { menu:'my-leaves',          employee:true,  approver:false, hr:false, admin:true  },
+    { menu:'approval',           employee:false, approver:true,  hr:true,  admin:true  },
+    { menu:'all-leaves',         employee:false, approver:true,  hr:true,  admin:true  },
+    { menu:'report',             employee:false, approver:false, hr:false, admin:true  },
+    { menu:'settings',           employee:false, approver:false, hr:false, admin:true  },
+  ];
+  const perms = permData || DEFAULT_PERMS;
+
+  // แปลงเป็น map { menu: bool } สำหรับ role ปัจจุบัน
+  const menuPerms = {};
+  perms.forEach(p => {
+    // admin เข้าได้ทุกอย่างเสมอ
+    menuPerms[p.menu] = role === 'admin' ? true : !!p[role];
+  });
+
+  // apply ซ่อน/แสดง nav items
   Object.keys(menuPerms).forEach(function(page) {
-    var allowed = menuPerms[page];
-    var navItem = document.querySelector('[onclick="showPage(\'' + page + '\')"]');
-    if (navItem) navItem.style.display = allowed.indexOf(role) >= 0 ? '' : 'none';
+    const navItem = document.querySelector('[onclick="showPage(\'' + page + '\')"]');
+    if (navItem) navItem.style.display = menuPerms[page] ? '' : 'none';
   });
 
   // section labels
   var navApprovalSec = document.getElementById('nav-approval-section');
-  if (navApprovalSec) navApprovalSec.style.display = (['approver','hr','admin'].indexOf(role) >= 0) ? '' : 'none';
+  if (navApprovalSec) navApprovalSec.style.display =
+    (menuPerms['approval'] || menuPerms['all-leaves']) ? '' : 'none';
   var navAdminSec = document.getElementById('nav-admin-section');
   if (navAdminSec) navAdminSec.style.display = (role === 'admin') ? '' : 'none';
 
-  // bottom nav approval (mobile)
+  // bottom nav (mobile)
   var bnavApproval = document.getElementById('bnav-approval');
-  if (bnavApproval) bnavApproval.style.display = (['approver','hr','admin'].indexOf(role) >= 0) ? 'flex' : 'none';
+  if (bnavApproval) bnavApproval.style.display = menuPerms['approval'] ? 'flex' : 'none';
   var bnavRosterView = document.getElementById('bnav-roster-view');
-  if (bnavRosterView) bnavRosterView.style.display = (['approver','hr','admin'].indexOf(role) >= 0) ? 'flex' : 'none';
+  if (bnavRosterView) bnavRosterView.style.display = menuPerms['roster-view'] ? 'flex' : 'none';
+
+  // เก็บ perms ไว้ใช้ใน showPage (กัน direct URL)
+  window._menuPerms = menuPerms;
 
   document.getElementById('app').style.display       = 'flex';
   document.getElementById('app').style.flexDirection = 'row';
@@ -2528,6 +2655,11 @@ function setBnav(page) {
 }
 
 function showPage(page) {
+  // ตรวจสิทธิ์ก่อน (ป้องกัน direct navigation)
+  if (window._menuPerms && window._menuPerms[page] === false) {
+    showToast('คุณไม่มีสิทธิ์เข้าถึงหน้านี้', 'error');
+    return;
+  }
   document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   const activeNav = document.querySelector('[onclick="showPage(\''+page+'\')"]');
@@ -2547,7 +2679,7 @@ function showPage(page) {
   if (page === 'approval')   loadPendingApproval();
   if (page === 'roster-view') loadRosterView();
   if (page === 'leave-form') loadApprovers();
-  if (page === 'settings')   { loadSettingsApprovers(); testConnection(); }
+  if (page === 'settings')   { loadSettingsApprovers(); testConnection(); loadPermissions(); }
   if (page === 'report')     { setTimeout(initReportCharts, 100); initReportPeriod(); }
 }
 
