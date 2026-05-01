@@ -752,6 +752,55 @@
   }
   .bnav-item { position: relative; }
 
+  /* ─── ROSTER VIEW (ตารางรอบใน leave.html) ─── */
+  .roster-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+  .roster-month-nav { display:flex; align-items:center; gap:6px; }
+  .roster-month-btn { background:rgba(44,74,114,.5); border:1px solid var(--border); color:var(--silver); padding:5px 12px; border-radius:6px; cursor:pointer; font-size:13px; transition:.15s; }
+  .roster-month-btn:hover { background:var(--steel); color:var(--white); }
+  .roster-month-label { font-size:14px; font-weight:600; color:var(--white); min-width:120px; text-align:center; }
+  .roster-legend { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .roster-legend-item { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--silver); font-family:var(--font-label); }
+  .roster-legend-dot { width:10px; height:10px; border-radius:3px; flex-shrink:0; }
+
+  /* shift cell */
+  .rv-cell { width:28px; height:24px; border-radius:4px; font-size:10px; font-weight:700; font-family:var(--font-mono); display:flex; align-items:center; justify-content:center; cursor:default; position:relative; transition:transform .1s; letter-spacing:0; }
+  .rv-cell:hover { transform:scale(1.2); z-index:2; }
+  .rv-morning   { background:rgba(61,186,122,.18);  color:#3dba7a;  border:1px solid rgba(61,186,122,.3);  }
+  .rv-afternoon { background:rgba(240,160,48,.18);  color:#f0a030;  border:1px solid rgba(240,160,48,.3);  }
+  .rv-night     { background:rgba(100,140,255,.18); color:#6490ff;  border:1px solid rgba(100,140,255,.3); }
+  .rv-off       { background:rgba(224,82,82,.18);   color:#e05252;  border:1px solid rgba(224,82,82,.3);  font-weight:800; }
+  .rv-holiday   { background:rgba(200,145,42,.25);  color:#ffaa00;  border:1px solid rgba(200,145,42,.5); }
+  .rv-leave     { background:rgba(160,80,200,.25);  color:#cc44ff;  border:1px solid rgba(160,80,200,.5); }
+  .rv-empty     { background:transparent; border:1px dashed rgba(44,74,114,.3); color:var(--muted); }
+
+  /* leave overlay dots */
+  .rv-dot-pending  { position:absolute; top:1px; right:1px; width:6px; height:6px; border-radius:50%; background:#f0a030; border:1px solid rgba(0,0,0,.3); }
+  .rv-dot-approved { position:absolute; top:1px; right:1px; width:6px; height:6px; border-radius:50%; background:#e05252; border:1px solid rgba(0,0,0,.3); }
+
+  /* table */
+  .rv-table-wrap { overflow-x:auto; border-radius:10px; border:1px solid var(--border); background:var(--card-bg); }
+  .rv-table { border-collapse:collapse; min-width:100%; }
+  .rv-table th, .rv-table td { padding:2px 3px; border-right:1px solid rgba(44,74,114,.25); border-bottom:1px solid rgba(44,74,114,.2); white-space:nowrap; }
+  .rv-table thead th { background:var(--navy-light); font-size:10px; color:var(--silver); text-align:center; padding:5px 3px; position:sticky; top:0; z-index:3; font-family:var(--font-label); }
+  .rv-table th.col-name-h { min-width:130px; text-align:left; padding-left:10px; position:sticky; left:0; z-index:4; background:var(--navy-light); }
+  .rv-table td.col-name-d { min-width:130px; font-size:11px; padding:4px 10px; position:sticky; left:0; background:var(--navy-mid); z-index:2; border-right:1px solid var(--steel); }
+  .rv-table td.col-name-d .emp-n { font-weight:600; color:var(--white); font-size:11px; }
+  .rv-table td.col-name-d .emp-p { font-size:10px; color:var(--muted); }
+  .rv-table td.col-off-d { font-size:10px; color:var(--muted); text-align:center; min-width:50px; }
+  .rv-table .weekend-col { background:rgba(200,145,42,.05); }
+  .rv-table .today-col th, .rv-table .today-col td { background:rgba(61,186,122,.06) !important; }
+
+  /* summary row */
+  .rv-summary { background:rgba(13,30,53,.95); border-top:2px solid rgba(200,145,42,.4); position:sticky; bottom:0; z-index:3; }
+  .rv-summary td { padding:4px 2px; text-align:center; font-size:9px; font-family:var(--font-label); }
+  .rv-stat-morning   { color:#3dba7a; font-weight:700; }
+  .rv-stat-afternoon { color:#f0a030; font-weight:700; }
+  .rv-stat-night     { color:#6490ff; font-weight:700; }
+  .rv-stat-leave     { color:#ff44aa; font-weight:700; }
+
+  /* pending leave highlight */
+  .rv-pending-row td { background:rgba(240,160,48,.04) !important; }
+
   /* ─── PRINT ─── */
   @media print {
     .sidebar, .topbar, .no-print, .btn-print, .approval-filters, .bottom-nav { display: none !important; }
@@ -942,6 +991,9 @@
         </a>
         <a class="nav-item" onclick="showPage('all-leaves')">
           <span class="nav-icon">📋</span> ใบลาทั้งหมด
+        </a>
+        <a class="nav-item" id="nav-roster-view" onclick="showPage('roster-view')">
+          <span class="nav-icon">📅</span> ตารางรอบ
         </a>
       </div>
       <div class="nav-section" id="nav-admin-section">
@@ -1257,6 +1309,50 @@
         </div>
       </div>
 
+      <!-- ROSTER VIEW (ตารางรอบ — read-only สำหรับผู้อนุมัติ) -->
+      <div class="page-section" id="section-roster-view">
+        <!-- toolbar -->
+        <div class="roster-toolbar no-print">
+          <div class="roster-month-nav">
+            <button class="roster-month-btn" onclick="rvChangeMonth(-1)">◀</button>
+            <div class="roster-month-label" id="rv-month-label">กำลังโหลด...</div>
+            <button class="roster-month-btn" onclick="rvChangeMonth(1)">▶</button>
+          </div>
+          <select class="period-select" id="rv-month-select" onchange="loadRosterView()" style="min-width:160px;"></select>
+          <button class="roster-month-btn" onclick="loadRosterView()" title="รีเฟรช">⟳ รีเฟรช</button>
+          <div style="flex:1;"></div>
+          <div id="rv-leave-summary" style="font-size:11px;color:var(--muted);"></div>
+        </div>
+
+        <!-- legend -->
+        <div class="roster-legend no-print">
+          <div class="roster-legend-item"><div class="roster-legend-dot rv-morning" style="border:1px solid rgba(61,186,122,.4);"></div> เช้า</div>
+          <div class="roster-legend-item"><div class="roster-legend-dot rv-afternoon" style="border:1px solid rgba(240,160,48,.4);"></div> บ่าย</div>
+          <div class="roster-legend-item"><div class="roster-legend-dot rv-night" style="border:1px solid rgba(100,140,255,.4);"></div> ดึก</div>
+          <div class="roster-legend-item"><div class="roster-legend-dot rv-off"></div> วันหยุด (W)</div>
+          <div class="roster-legend-item"><div class="roster-legend-dot rv-holiday"></div> นักขัตฤกษ์ (H)</div>
+          <div class="roster-legend-item"><div class="roster-legend-dot rv-leave"></div> ลา (S/PL/VL)</div>
+          <div class="roster-legend-item">
+            <div style="width:8px;height:8px;border-radius:50%;background:#f0a030;border:1px solid rgba(0,0,0,.3);flex-shrink:0;"></div>
+            ลารออนุมัติ
+          </div>
+          <div class="roster-legend-item">
+            <div style="width:8px;height:8px;border-radius:50%;background:#e05252;border:1px solid rgba(0,0,0,.3);flex-shrink:0;"></div>
+            ลาอนุมัติแล้ว
+          </div>
+        </div>
+
+        <!-- table -->
+        <div class="rv-table-wrap">
+          <table class="rv-table">
+            <thead id="rv-thead"></thead>
+            <tbody id="rv-tbody">
+              <tr><td colspan="99" style="text-align:center;padding:40px;color:var(--muted);">⏳ กำลังโหลด...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <!-- REPORT -->
       <div class="page-section" id="section-report">
         <div class="report-header no-print">
@@ -1445,6 +1541,7 @@
 // ════════════════════════════════════════════════════
 const API_URL = 'https://script.google.com/macros/s/AKfycbz8Mu8UUKeGppQe0_WpoqMV28HcKaSSNJIPbDP2powRrZbLFgtHMqpSQ2zU-gBqYjI18w/exec';
 const PORTAL_API_URL = 'https://script.google.com/macros/s/AKfycbxiE7m_8DUMSw_8wTw1FqoS1OpD1_01-9WJEW0RGo-n5Gzk9NVsi4C3cMhr5bQEagSh/exec';
+const ROSTER_API_URL = 'https://script.google.com/macros/s/AKfycbw50de1f2CgEBlC6Jvbc9J_C1E07UUeKy44ZJdlkznRqPxuDXXdmgxErIfEPyYWETCQ6g/exec';
 
 async function callPortalAPI(payload) {
   try {
@@ -1467,6 +1564,309 @@ async function callAPI(payload) {
     return { success: false, message: err.message };
   }
 }
+
+async function callAPI(payload) {
+  try {
+    const qs = new URLSearchParams({ payload: JSON.stringify(payload) }).toString();
+    const res = await fetch(`${API_URL}?${qs}`, { redirect: 'follow' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (err) {
+    console.error('API Error:', err);
+    return { success: false, message: err.message };
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  ROSTER VIEW — ตารางรอบสำหรับผู้อนุมัติ
+// ════════════════════════════════════════════════════
+async function callRosterAPI(payload) {
+  try {
+    const qs = new URLSearchParams({ payload: JSON.stringify(payload) }).toString();
+    const res = await fetch(`${ROSTER_API_URL}?${qs}`, { redirect: 'follow' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (err) {
+    console.error('Roster API Error:', err);
+    return { success: false, message: err.message };
+  }
+}
+
+const RV_SHIFTS = {
+  morning:   ['02','03','04','08','11','21'],
+  afternoon: ['16'],
+  night:     ['20'],
+};
+const RV_MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+                       'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+let rvCurrentMonth = '';   // '2568-05'
+let rvEmployees    = [];
+let rvRosterData   = {};   // { empId: { 1:'02', ... } }
+let rvLeaveData    = [];   // leave rows for month
+
+function rvBuildMonthSelector() {
+  const sel = document.getElementById('rv-month-select');
+  if (!sel || sel.options.length > 0) return;
+  const now = new Date();
+  for (let i = -2; i <= 6; i++) {
+    const d  = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    const y  = d.getFullYear() + 543;
+    const m  = String(d.getMonth() + 1).padStart(2, '0');
+    const val = `${y}-${m}`;
+    const opt = document.createElement('option');
+    opt.value = val;
+    opt.textContent = `${RV_MONTHS_TH[d.getMonth()]} ${y}`;
+    if (i === 0) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  rvCurrentMonth = sel.value;
+}
+
+function rvChangeMonth(dir) {
+  const sel = document.getElementById('rv-month-select');
+  const idx = sel.selectedIndex + dir;
+  if (idx >= 0 && idx < sel.options.length) {
+    sel.selectedIndex = idx;
+    loadRosterView();
+  }
+}
+
+function rvGetShiftClass(code) {
+  if (!code || code === '') return 'rv-empty';
+  if (RV_SHIFTS.morning.includes(code))   return 'rv-morning';
+  if (RV_SHIFTS.afternoon.includes(code)) return 'rv-afternoon';
+  if (RV_SHIFTS.night.includes(code))     return 'rv-night';
+  if (code === 'W')  return 'rv-off';
+  if (code === 'H')  return 'rv-holiday';
+  return 'rv-leave';
+}
+
+function rvPad(code) {
+  if (!code) return '';
+  const n = parseInt(code);
+  if (!isNaN(n) && n < 100) return String(n).padStart(2,'0');
+  return String(code);
+}
+
+// แปลงวันที่ leave เป็น set ของวันในเดือน
+function rvGetLeaveDays(leave, yearAD, monthNum) {
+  try {
+    const start = new Date(leave['วันเริ่มลา']);
+    const end   = new Date(leave['วันสิ้นสุด'] || leave['วันเริ่มลา']);
+    const days  = new Set();
+    const cur   = new Date(start);
+    while (cur <= end) {
+      if (cur.getFullYear() === yearAD && cur.getMonth() + 1 === monthNum) {
+        days.add(cur.getDate());
+      }
+      cur.setDate(cur.getDate() + 1);
+    }
+    return days;
+  } catch (e) { return new Set(); }
+}
+
+async function loadRosterView() {
+  rvBuildMonthSelector();
+  const sel = document.getElementById('rv-month-select');
+  rvCurrentMonth = sel ? sel.value : rvCurrentMonth;
+  const label = document.getElementById('rv-month-label');
+  if (label && sel) label.textContent = sel.options[sel.selectedIndex]?.textContent || rvCurrentMonth;
+
+  const tbody = document.getElementById('rv-tbody');
+  const thead = document.getElementById('rv-thead');
+  tbody.innerHTML = `<tr><td colspan="99" style="text-align:center;padding:40px;color:var(--muted);">⏳ กำลังโหลด ตาราง + ใบลา...</td></tr>`;
+
+  // parse month
+  const [yearTH, monthNum] = rvCurrentMonth.split('-').map(Number);
+  const yearAD = yearTH - 543;
+  const daysInMonth = new Date(yearAD, monthNum, 0).getDate();
+
+  // ดึงข้อมูลพร้อมกัน
+  const [empRes, rosterRes, leaveAllRes] = await Promise.all([
+    callRosterAPI({ action: 'getEmployees' }),
+    callRosterAPI({ action: 'getRoster', month: rvCurrentMonth }),
+    callAPI({ action: 'getAllLeaves' }),
+  ]);
+
+  // เก็บ employees
+  rvEmployees = (empRes.success && empRes.data) ? empRes.data : [];
+
+  // เก็บ rosterData
+  rvRosterData = {};
+  if (rosterRes.success && rosterRes.data?.length) {
+    rosterRes.data.forEach(row => {
+      const id = String(row['รหัสพนักงาน']);
+      if (!rvRosterData[id]) rvRosterData[id] = {};
+      for (let d = 1; d <= 31; d++) {
+        const val = row[d] !== undefined ? row[d] : (row[String(d)] !== undefined ? row[String(d)] : '');
+        rvRosterData[id][d] = String(val || '').trim();
+      }
+    });
+  }
+
+  // เก็บ leaveData สำหรับเดือนนี้
+  rvLeaveData = [];
+  if (leaveAllRes.success && leaveAllRes.data?.length) {
+    rvLeaveData = leaveAllRes.data.filter(r => {
+      try {
+        const s = new Date(r['วันเริ่มลา']);
+        const e = new Date(r['วันสิ้นสุด'] || r['วันเริ่มลา']);
+        const monthStart = new Date(yearAD, monthNum - 1, 1);
+        const monthEnd   = new Date(yearAD, monthNum, 0);
+        return s <= monthEnd && e >= monthStart &&
+               (r['สถานะ'] === 'รออนุมัติ' || r['สถานะ'] === 'อนุมัติ');
+      } catch (e) { return false; }
+    });
+  }
+
+  // Build leave lookup: { empId: { day: 'pending'|'approved' } }
+  const leaveLookup = {}; // { empId: { day: status } }
+  rvLeaveData.forEach(r => {
+    const empId = String(r['รหัสพนักงาน']);
+    const days  = rvGetLeaveDays(r, yearAD, monthNum);
+    const status = r['สถานะ'] === 'อนุมัติ' ? 'approved' : 'pending';
+    if (!leaveLookup[empId]) leaveLookup[empId] = {};
+    days.forEach(d => {
+      // pending overrides approved (pending = ยังต้องพิจารณา)
+      if (!leaveLookup[empId][d] || status === 'pending') {
+        leaveLookup[empId][d] = status;
+      }
+    });
+  });
+
+  if (!rvEmployees.length) {
+    tbody.innerHTML = `<tr><td colspan="99" style="text-align:center;padding:40px;color:var(--muted);">ไม่พบข้อมูลพนักงาน</td></tr>`;
+    return;
+  }
+
+  // วันนี้
+  const todayD = new Date();
+  const isThisMonth = todayD.getFullYear() === yearAD && todayD.getMonth() + 1 === monthNum;
+  const todayDate = todayD.getDate();
+
+  const dayNames = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+
+  // THEAD
+  let headHTML = `<tr>
+    <th class="col-name-h">พนักงาน</th>
+    <th style="font-size:10px;min-width:44px;text-align:center;">วันหยุด</th>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dow = new Date(yearAD, monthNum - 1, d).getDay();
+    const isWE = dow === 0 || dow === 6;
+    const isToday = isThisMonth && d === todayDate;
+    headHTML += `<th style="font-size:10px;text-align:center;min-width:30px;
+      ${isWE ? 'background:rgba(200,145,42,.14);color:var(--gold-light);' : ''}
+      ${isToday ? 'background:rgba(61,186,122,.2);color:#3dba7a;' : ''}">
+      ${d}<br><span style="font-size:8px;">${dayNames[dow]}</span></th>`;
+  }
+  headHTML += '</tr>';
+  thead.innerHTML = headHTML;
+
+  // สถิติกำลังพลรายวัน
+  const dayStats = {};
+  for (let d = 1; d <= daysInMonth; d++) {
+    dayStats[d] = { morning:0, afternoon:0, night:0, leaveNames:[], pendingNames:[] };
+  }
+
+  // TBODY rows
+  let rowsHTML = '';
+  rvEmployees.forEach(emp => {
+    const id        = String(emp['รหัสพนักงาน']);
+    const empRoster = rvRosterData[id] || {};
+    const empLeave  = leaveLookup[id] || {};
+    let cells = '';
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dow   = new Date(yearAD, monthNum - 1, d).getDay();
+      const isWE  = dow === 0 || dow === 6;
+      const isToday = isThisMonth && d === todayDate;
+      const code  = empRoster[d] || '';
+      const cls   = rvGetShiftClass(code);
+      const leaveStatus = empLeave[d]; // 'pending'|'approved'|undefined
+
+      // สถิติ
+      if (code && !['W','H','C','CH',''].includes(code)) {
+        if (['S','PL','VL'].includes(code)) {
+          dayStats[d].leaveNames.push(emp['ชื่อ-นามสกุล']);
+        } else if (RV_SHIFTS.morning.includes(code))   dayStats[d].morning++;
+        else if (RV_SHIFTS.afternoon.includes(code)) dayStats[d].afternoon++;
+        else if (RV_SHIFTS.night.includes(code))     dayStats[d].night++;
+      }
+      // ใบลารออนุมัติ / อนุมัติแล้ว
+      if (leaveStatus === 'pending') {
+        dayStats[d].pendingNames.push(emp['ชื่อ-นามสกุล']);
+      } else if (leaveStatus === 'approved' && !['S','PL','VL'].includes(code)) {
+        dayStats[d].leaveNames.push(emp['ชื่อ-นามสกุล'] + '(ลา)');
+      }
+
+      // dot overlay
+      let dot = '';
+      if (leaveStatus === 'pending')  dot = `<div class="rv-dot-pending" title="รออนุมัติ"></div>`;
+      else if (leaveStatus === 'approved') dot = `<div class="rv-dot-approved" title="อนุมัติแล้ว"></div>`;
+
+      // tooltip
+      const tip = (SHIFT_TIME_RV[code] || code || '—') + (leaveStatus ? (leaveStatus==='pending'?' ⏳ลารออนุมัติ':' ✅ลาอนุมัติ') : '');
+
+      cells += `<td style="padding:1px;text-align:center;
+        ${isWE ? 'background:rgba(200,145,42,.04);' : ''}
+        ${isToday ? 'background:rgba(61,186,122,.04);' : ''}
+        position:relative;">
+        ${dot}
+        <div class="rv-cell ${cls}" title="${tip}">${rvPad(code)}</div>
+      </td>`;
+    }
+
+    rowsHTML += `<tr>
+      <td class="col-name-d">
+        <div class="emp-n">${emp['ชื่อ-นามสกุล']}</div>
+        <div class="emp-p">${emp['ตำแหน่ง']}</div>
+      </td>
+      <td class="col-off-d">${emp['วันหยุดประจำ']||'-'}</td>
+      ${cells}
+    </tr>`;
+  });
+
+  // Summary row
+  let sumRow = `<tr class="rv-summary">
+    <td class="col-name-d" style="font-size:10px;font-weight:700;color:var(--gold);padding:6px 10px;white-space:nowrap;">
+      📊 กำลังพล
+    </td>
+    <td></td>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const s = dayStats[d];
+    const hasLeave    = s.leaveNames.length > 0;
+    const hasPending  = s.pendingNames.length > 0;
+    const allNames    = [...s.leaveNames.map(n=>`✅${n}`),...s.pendingNames.map(n=>`⏳${n}`)].join('\n');
+    const tipTxt = `เช้า:${s.morning} บ่าย:${s.afternoon} ดึก:${s.night}` + (allNames ? `\nลา:\n${allNames}` : '');
+    sumRow += `<td title="${tipTxt}" style="padding:2px 1px;text-align:center;cursor:default;position:relative;">
+      <div style="font-size:9px;line-height:1.3;">
+        <div class="rv-stat-morning">${s.morning||'·'}</div>
+        <div class="rv-stat-afternoon">${s.afternoon||'·'}</div>
+        <div class="rv-stat-night">${s.night||'·'}</div>
+        ${hasLeave   ? `<div class="rv-stat-leave" title="${s.leaveNames.join(', ')}">✅${s.leaveNames.length}</div>` : ''}
+        ${hasPending ? `<div style="color:#f0a030;font-weight:700;" title="${s.pendingNames.join(', ')}">⏳${s.pendingNames.length}</div>` : ''}
+      </div>
+    </td>`;
+  }
+  sumRow += '</tr>';
+
+  tbody.innerHTML = rowsHTML + sumRow;
+
+  // leave summary text
+  const pendingCount  = rvLeaveData.filter(r => r['สถานะ'] === 'รออนุมัติ').length;
+  const approvedCount = rvLeaveData.filter(r => r['สถานะ'] === 'อนุมัติ').length;
+  const sumEl = document.getElementById('rv-leave-summary');
+  if (sumEl) sumEl.textContent = `เดือนนี้: รออนุมัติ ${pendingCount} ใบ · อนุมัติแล้ว ${approvedCount} ใบ`;
+}
+
+const SHIFT_TIME_RV = {
+  '02':'07:00-16:00','03':'08:00-17:00','04':'09:00-18:00',
+  '08':'10:00-19:00','11':'11:00-20:00','16':'13:00-22:00',
+  '20':'22:00-07:00','21':'08:30-19:00',
+  'W':'วันหยุด','H':'นักขัตฤกษ์','S':'ลาป่วย','PL':'ลากิจ','VL':'ลาพักร้อน',
+  'C':'เปลี่ยนวันหยุด','CH':'สะสมวันหยุด'
+};
 
 // ════════════════════════════════════════════════════
 //  LOAD DASHBOARD DATA
@@ -1989,6 +2389,7 @@ async function loadUserFromPortal() {
     'my-leaves':  ['employee','admin'],
     'approval':   ['approver','hr','admin'],
     'all-leaves': ['approver','hr','admin'],
+    'roster-view': ['approver','hr','admin'],
     'report':     ['admin'],
     'settings':   ['admin']
   };
@@ -2042,6 +2443,7 @@ const pageConfig = {
   'my-leaves': { title:'ประวัติการลา', sub:'ใบลาของฉัน' },
   'approval': { title:'รออนุมัติ', sub:'ใบลาที่รอการพิจารณา' },
   'all-leaves': { title:'ใบลาทั้งหมด', sub:'รายการการลาในระบบ' },
+  'roster-view': { title:'ตารางรอบ', sub:'กำลังพลรายวันประกอบการพิจารณา' },
   'report': { title:'รายงานประจำเดือน', sub:'สรุปสถิติการลาเพื่อผู้บริหาร' },
   'settings': { title:'ตั้งค่าระบบ', sub:'จัดการผู้อนุมัติและการเชื่อมต่อ' }
 };
@@ -2070,6 +2472,7 @@ function showPage(page) {
   if (page === 'my-leaves')  loadMyLeaves();
   if (page === 'all-leaves') loadAllLeaves();
   if (page === 'approval')   loadPendingApproval();
+  if (page === 'roster-view') loadRosterView();
   if (page === 'leave-form') loadApprovers();
   if (page === 'settings')   { loadSettingsApprovers(); testConnection(); }
   if (page === 'report')     { setTimeout(initReportCharts, 100); initReportPeriod(); }
