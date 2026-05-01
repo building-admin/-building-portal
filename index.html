@@ -911,7 +911,7 @@ function selectDept(deptId, deptName, icon) {
 function renderMenuGrid(deptId) {
   const container = document.getElementById('menu-grid-container');
   const menus = (userPermissions?.menus || [])
-    .filter(m => m.deptId === deptId)
+    .filter(m => m.deptId === deptId && !m.parentId)
     .sort((a,b) => (a.order||99)-(b.order||99));
 
   if (!menus.length) {
