@@ -976,6 +976,9 @@
         <a class="nav-item active" onclick="showPage('dashboard')">
           <span class="nav-icon">📊</span> Dashboard
         </a>
+        <a class="nav-item" id="nav-roster-view" onclick="showPage('roster-view')" style="display:none;">
+          <span class="nav-icon">🛡️</span> กำลังพลรายวัน
+        </a>
         <a class="nav-item" onclick="showPage('leave-form')">
           <span class="nav-icon">📝</span> ยื่นใบลา
         </a>
@@ -991,9 +994,6 @@
         </a>
         <a class="nav-item" onclick="showPage('all-leaves')">
           <span class="nav-icon">📋</span> ใบลาทั้งหมด
-        </a>
-        <a class="nav-item" id="nav-roster-view" onclick="showPage('roster-view')">
-          <span class="nav-icon">📅</span> ตารางรอบ
         </a>
       </div>
       <div class="nav-section" id="nav-admin-section">
@@ -1494,6 +1494,10 @@
       <span class="bnav-icon">✅</span>
       <span class="bnav-label">อนุมัติ</span>
       <span class="bnav-badge" id="bnav-badge" style="display:none"></span>
+    </button>
+    <button class="bnav-item" id="bnav-roster-view" onclick="showPage('roster-view');setBnav('roster-view')" style="display:none">
+      <span class="bnav-icon">🛡️</span>
+      <span class="bnav-label">กำลังพล</span>
     </button>
     <button class="bnav-item" id="bnav-more" onclick="openSidebar()">
       <span class="bnav-icon">☰</span>
@@ -2408,6 +2412,8 @@ async function loadUserFromPortal() {
   // bottom nav approval (mobile)
   var bnavApproval = document.getElementById('bnav-approval');
   if (bnavApproval) bnavApproval.style.display = (['approver','hr','admin'].indexOf(role) >= 0) ? 'flex' : 'none';
+  var bnavRosterView = document.getElementById('bnav-roster-view');
+  if (bnavRosterView) bnavRosterView.style.display = (['approver','hr','admin'].indexOf(role) >= 0) ? 'flex' : 'none';
 
   document.getElementById('app').style.display       = 'flex';
   document.getElementById('app').style.flexDirection = 'row';
@@ -2443,7 +2449,7 @@ const pageConfig = {
   'my-leaves': { title:'ประวัติการลา', sub:'ใบลาของฉัน' },
   'approval': { title:'รออนุมัติ', sub:'ใบลาที่รอการพิจารณา' },
   'all-leaves': { title:'ใบลาทั้งหมด', sub:'รายการการลาในระบบ' },
-  'roster-view': { title:'ตารางรอบ', sub:'กำลังพลรายวันประกอบการพิจารณา' },
+  'roster-view': { title:'🛡️ กำลังพลรายวัน', sub:'ตารางรอบพร้อมข้อมูลใบลา สำหรับประกอบการพิจารณาอนุมัติ' },
   'report': { title:'รายงานประจำเดือน', sub:'สรุปสถิติการลาเพื่อผู้บริหาร' },
   'settings': { title:'ตั้งค่าระบบ', sub:'จัดการผู้อนุมัติและการเชื่อมต่อ' }
 };
