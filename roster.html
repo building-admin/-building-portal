@@ -634,6 +634,8 @@ async function loadRoster() {
   currentMonth = document.getElementById('month-select').value;
   const tbody  = document.getElementById('roster-tbody');
   tbody.innerHTML = `<tr><td colspan="99" style="text-align:center;padding:40px;color:var(--muted);">⏳ กำลังโหลด...</td></tr>`;
+  const tbodyInput = document.getElementById('roster-tbody-input');
+  if (tbodyInput) tbodyInput.innerHTML = `<tr><td colspan="99" style="text-align:center;padding:40px;color:var(--muted);">⏳ กำลังโหลด...</td></tr>`;
 
   // ดึงข้อมูลจาก API
   const res = await callAPI({ action: 'getRoster', month: currentMonth });
@@ -850,24 +852,17 @@ function buildRosterTable() {
       const isLeave = ['S','PL','VL'].includes(code);
       const leaveIndicator = isLeave ? `<div style="position:absolute;top:1px;right:1px;width:6px;height:6px;border-radius:50%;background:#ff44aa;"></div>` : '';
 
-      if (isAdmin) {
-        cells += `<td style="padding:1px;${wkBg}position:relative;">
-          ${leaveIndicator}
-          <div class="shift-cell" style="${bg}cursor:pointer;"
-            title="${padShift(code)||'คลิกเพื่อกำหนด'}"
-            onclick="openPicker(event,'${id}',${d})">${padShift(code)}</div></td>`;
-      } else {
-        cells += `<td style="padding:1px;${wkBg}position:relative;">
+      // สรุปตาราง = read-only เสมอ (admin คีย์ที่ panel input)
+      cells += `<td style="padding:1px;${wkBg}position:relative;">
           ${leaveIndicator}
           <div class="shift-cell readonly" style="${bg}"
-            title="${padShift(code)}">${padShift(code)}</div></td>`;
-      }
+            title="${padShift(code)||''}">${padShift(code)}</div></td>`;
     }
 
     return `<tr>
       <td class="col-name">
-        <div ${isAdmin ? `onclick="openAutofill('${id}')" title="คลิกเพื่อ Auto-fill" style="cursor:pointer;"` : ''}>
-          <div class="emp-name" style="${isAdmin ? 'color:var(--gold-light);' : ''}">${emp['ชื่อ-นามสกุล']}</div>
+        <div>
+          <div class="emp-name">${emp['ชื่อ-นามสกุล']}</div>
           <div class="emp-position">${emp['ตำแหน่ง']}</div>
         </div>
       </td>
@@ -1572,7 +1567,18 @@ function showSection(name) {
 }
 
 function goToPortal() { window.location.href = PORTAL_URL; }
-function goToLeave()  { window.location.href = LEAVE_URL + '?token=' + (currentUser?.token || ''); }
+function goToLeave() {
+  const u = currentUser;
+  if (!u) return;
+  const params = new URLSearchParams({
+    token:    u.token    || '',
+    name:     u.name     || '',
+    role:     u.role     || '',
+    position: u.position || '',
+    empId:    u.empId    || ''
+  });
+  window.location.href = LEAVE_URL + '?' + params.toString();
+}
 function logout()     { window.location.href = PORTAL_URL; }
 
 // ── API CALL ─────────────────────────────────────────
