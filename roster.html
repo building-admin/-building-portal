@@ -651,26 +651,54 @@ function buildRosterTable() {
 
   // TBODY
   const tbody = document.getElementById('roster-tbody');
-  tbody.innerHTML = employees.map(emp => {
+
+  // สร้าง row พนักงาน + เก็บข้อมูลกำลังพลรายวัน
+  const dayStats = {}; // { day: { morning:0, afternoon:0, night:0, leave:[], total:0 } }
+  for (let d = 1; d <= daysInMonth; d++) {
+    dayStats[d] = { morning:0, afternoon:0, night:0, leave:[], total:0 };
+  }
+
+  const empRows = employees.map(emp => {
     const id        = String(emp['รหัสพนักงาน']);
     const empRoster = rosterData[id] || {};
     let cells = '';
+
     for (let d = 1; d <= daysInMonth; d++) {
       const dow       = new Date(yearAD, monthNum - 1, d).getDay();
       const isWeekend = dow === 0 || dow === 6;
       const code      = empRoster[d] || '';
       const bg        = getCellBg(code, isWeekend);
       const wkBg      = isWeekend ? 'background:rgba(200,145,42,.06);' : '';
+
+      // เก็บสถิติกำลังพล
+      if (code && !['W','H','','C','CH'].includes(code)) {
+        if (['S','PL','VL'].includes(code)) {
+          dayStats[d].leave.push(emp['ชื่อ-นามสกุล'] + ' (' + code + ')');
+        } else if (SHIFTS.morning.includes(code))   { dayStats[d].morning++;   dayStats[d].total++; }
+        else if (SHIFTS.afternoon.includes(code))   { dayStats[d].afternoon++; dayStats[d].total++; }
+        else if (SHIFTS.night.includes(code))       { dayStats[d].night++;     dayStats[d].total++; }
+      } else if (code && !['W','H','C','CH'].includes(code)) {
+        dayStats[d].total++;
+      }
+
+      // แสดง indicator ถ้าลา
+      const isLeave = ['S','PL','VL'].includes(code);
+      const leaveIndicator = isLeave ? `<div style="position:absolute;top:1px;right:1px;width:6px;height:6px;border-radius:50%;background:#ff44aa;"></div>` : '';
+
       if (isAdmin) {
-        cells += `<td style="padding:1px;${wkBg}">
-          <div class="shift-cell" style="${bg}cursor:pointer;" title="${padShift(code)||'คลิกเพื่อกำหนด'}" onclick="openPicker(event,'${id}',${d})">${padShift(code)}</div></td>`;
+        cells += `<td style="padding:1px;${wkBg}position:relative;">
+          ${leaveIndicator}
+          <div class="shift-cell" style="${bg}cursor:pointer;"
+            title="${padShift(code)||'คลิกเพื่อกำหนด'}"
+            onclick="openPicker(event,'${id}',${d})">${padShift(code)}</div></td>`;
       } else {
-        cells += `<td style="padding:1px;${wkBg}">
-          <div class="shift-cell readonly" style="${bg}" title="${padShift(code)}">${padShift(code)}</div></td>`;
+        cells += `<td style="padding:1px;${wkBg}position:relative;">
+          ${leaveIndicator}
+          <div class="shift-cell readonly" style="${bg}"
+            title="${padShift(code)}">${padShift(code)}</div></td>`;
       }
     }
-    const autofillBtn = isAdmin
-      ? `` : '';
+
     return `<tr>
       <td class="col-name">
         <div style="display:flex;align-items:center;gap:4px;">
@@ -684,6 +712,50 @@ function buildRosterTable() {
       ${cells}
     </tr>`;
   }).join('');
+
+  // แถวสรุปกำลังพล
+  const MIN_PER_SHIFT = 1; // เกณฑ์ขั้นต่ำต่อรอบ
+  let summaryRow = `
+    <tr style="border-top:2px solid rgba(200,145,42,.4);background:rgba(200,145,42,.05);">
+      <td class="col-name" colspan="2" style="font-size:11px;font-weight:700;color:var(--gold);padding:6px 12px;">
+        กำลังพลรายวัน
+      </td>`;
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const s     = dayStats[d];
+    const total = s.morning + s.afternoon + s.night;
+    const hasLeave = s.leave.length > 0;
+    const tooltip  = [
+      `เช้า: ${s.morning}`, `บ่าย: ${s.afternoon}`, `ดึก: ${s.night}`,
+      hasLeave ? `ลา: ${s.leave.join(', ')}` : ''
+    ].filter(Boolean).join('\n');
+
+    const isLow = s.morning < MIN_PER_SHIFT || s.afternoon < MIN_PER_SHIFT || s.night < MIN_PER_SHIFT;
+    const bgCol = isLow ? 'background:rgba(224,82,82,.12);' : '';
+
+    summaryRow += `<td style="padding:2px 1px;${bgCol}" title="${tooltip}">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:1px;padding:2px 0;">
+        <div style="font-size:9px;color:#3dba7a;font-weight:700;">${s.morning||'-'}</div>
+        <div style="font-size:9px;color:#f0a030;font-weight:700;">${s.afternoon||'-'}</div>
+        <div style="font-size:9px;color:#6490ff;font-weight:700;">${s.night||'-'}</div>
+        ${hasLeave ? `<div style="font-size:8px;color:#ff44aa;">🔴${s.leave.length}</div>` : ''}
+      </div>
+    </td>`;
+  }
+  summaryRow += `</tr>
+    <tr style="background:rgba(200,145,42,.03);">
+      <td colspan="2" style="padding:4px 12px;">
+        <div style="display:flex;gap:16px;font-size:10px;color:var(--muted);">
+          <span><span style="color:#3dba7a;font-weight:700;">■</span> เช้า</span>
+          <span><span style="color:#f0a030;font-weight:700;">■</span> บ่าย</span>
+          <span><span style="color:#6490ff;font-weight:700;">■</span> ดึก</span>
+          <span><span style="color:#ff44aa;font-weight:700;">●</span> ลา</span>
+        </div>
+      </td>
+      <td colspan="${daysInMonth}"></td>
+    </tr>`;
+
+  tbody.innerHTML = empRows + summaryRow;
 }
 
 // ── PRINT VIEW (layout แบบ PDF — 3 ส่วน) ─────────────
