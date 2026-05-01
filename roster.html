@@ -557,8 +557,8 @@ function loadUserFromPortal() {
     document.getElementById('btn-add-emp').style.display = 'flex';
   }
 
+  await loadEmployees();
   loadRoster();
-  loadEmployees();
 }
 
 // ── MONTH SELECTOR ───────────────────────────────────
