@@ -168,6 +168,7 @@
   .toast.success { background:rgba(61,186,122,.15); border:1px solid rgba(61,186,122,.4); color:#3dba7a; }
   .toast.error   { background:rgba(224,82,82,.15);  border:1px solid rgba(224,82,82,.4);  color:#e05252; }
   .toast.warn    { background:rgba(240,160,48,.15); border:1px solid rgba(240,160,48,.4); color:#f0a030; }
+  .toast.info    { background:rgba(100,160,255,.15);border:1px solid rgba(100,160,255,.4);color:#64a0ff; }
 
   /* ── SECTION ── */
   .section { display:none; }
@@ -256,6 +257,55 @@
   </div>
 
   <div class="content">
+
+    <!-- ── MY SHIFT CARD (non-admin เห็น) ── -->
+    <div id="my-shift-card" style="display:none;margin-bottom:20px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:20px;">
+        <!-- รอบวันนี้ -->
+        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;align-items:center;gap:16px;">
+          <div id="my-today-icon" style="width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">⏰</div>
+          <div>
+            <div style="font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">รอบวันนี้</div>
+            <div id="my-today-shift" style="font-size:22px;font-weight:800;font-family:var(--font-mono);">-</div>
+            <div id="my-today-time" style="font-size:12px;color:var(--muted);margin-top:2px;">-</div>
+          </div>
+        </div>
+        <!-- วันทำงาน/วันหยุดเดือนนี้ -->
+        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;align-items:center;gap:16px;">
+          <div style="width:52px;height:52px;border-radius:14px;background:rgba(61,186,122,.15);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">📅</div>
+          <div>
+            <div style="font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">เดือนนี้</div>
+            <div style="display:flex;gap:16px;">
+              <div>
+                <div id="my-workdays" style="font-size:22px;font-weight:800;color:#3dba7a;">-</div>
+                <div style="font-size:11px;color:var(--muted);">วันทำงาน</div>
+              </div>
+              <div>
+                <div id="my-offdays" style="font-size:22px;font-weight:800;color:#e05252;">-</div>
+                <div style="font-size:11px;color:var(--muted);">วันหยุด</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- รอบหลักเดือนนี้ -->
+        <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:20px;display:flex;align-items:center;gap:16px;">
+          <div style="width:52px;height:52px;border-radius:14px;background:rgba(200,145,42,.15);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;">🔄</div>
+          <div>
+            <div style="font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px;">รอบหลักเดือนนี้</div>
+            <div id="my-main-shift" style="font-size:22px;font-weight:800;font-family:var(--font-mono);color:var(--gold-light);">-</div>
+            <div id="my-main-time" style="font-size:12px;color:var(--muted);margin-top:2px;">-</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mini calendar ของตัวเอง -->
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:20px;">
+        <div style="font-size:13px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+          <span>📆</span> รอบการทำงานของฉันเดือนนี้
+        </div>
+        <div id="my-mini-calendar" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
+      </div>
+    </div>
 
     <!-- ── SECTION: ROSTER ── -->
     <div class="section active" id="section-roster">
@@ -487,14 +537,14 @@ function loadUserFromPortal() {
   const name   = params.get('name');
   const role   = params.get('role') || 'employee';
   const pos    = params.get('position') || '';
+  const empId  = params.get('empId') || '';
 
   if (!token) {
-    // ถ้าไม่มี token → redirect Portal
     window.location.href = PORTAL_URL;
     return;
   }
 
-  currentUser = { token, name: name || 'ผู้ใช้', role, position: pos };
+  currentUser = { token, name: name || 'ผู้ใช้', role, position: pos, empId };
   isAdmin = role === 'admin';
 
   document.getElementById('sidebar-name').textContent   = currentUser.name;
@@ -567,6 +617,7 @@ async function loadRoster() {
   }
 
   buildRosterTable();
+  renderMyShiftCard();
   hasChanges = false;
   document.getElementById('save-status').textContent = '';
 }
@@ -1103,6 +1154,68 @@ function applyAutofill() {
   showToast(`Fill ${autofillShift} เรียบร้อย — วันหยุดขึ้น W อัตโนมัติ`, 'success');
 }
 
+// ── MY SHIFT CARD ────────────────────────────────────
+function renderMyShiftCard() {
+  const empId = currentUser.empId;
+  if (!empId || isAdmin) return;
+
+  document.getElementById('my-shift-card').style.display = 'block';
+
+  const [yearTH, monthNum] = currentMonth.split('-').map(Number);
+  const yearAD      = yearTH - 543;
+  const daysInMonth = new Date(yearAD, monthNum, 0).getDate();
+  const today       = new Date();
+  const todayDay    = today.getDate();
+  const dayNames    = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+  const myRoster    = rosterData[String(empId)] || {};
+
+  // รอบวันนี้
+  const todayCode = myRoster[todayDay] || '';
+  document.getElementById('my-today-shift').textContent = padShift(todayCode) || '-';
+  document.getElementById('my-today-time').textContent  = todayCode ? (SHIFT_TIME[todayCode] || '') : 'ไม่มีข้อมูล';
+  const todayIconEl = document.getElementById('my-today-icon');
+  if (todayCode) todayIconEl.style.cssText += ';' + getCellBg(todayCode, false);
+
+  // นับวันทำงาน / วันหยุด
+  let workdays = 0, offdays = 0;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const code = myRoster[d] || '';
+    if (!code || ['W','H','S','PL','VL','C','CH'].includes(code)) offdays++;
+    else workdays++;
+  }
+  document.getElementById('my-workdays').textContent = workdays;
+  document.getElementById('my-offdays').textContent  = offdays;
+
+  // รอบหลัก
+  const counts = {};
+  Object.values(myRoster).forEach(code => {
+    if (code && !['W','H','S','PL','VL','C','CH'].includes(code)) counts[code] = (counts[code]||0)+1;
+  });
+  const dominant = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0]?.[0] || '';
+  document.getElementById('my-main-shift').textContent = padShift(dominant) || '-';
+  document.getElementById('my-main-time').textContent  = SHIFT_TIME[dominant] || '';
+
+  // Mini calendar
+  const cal = document.getElementById('my-mini-calendar');
+  cal.innerHTML = '';
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dow     = new Date(yearAD, monthNum - 1, d).getDay();
+    const code    = myRoster[d] || '';
+    const bg      = getCellBg(code, dow === 0 || dow === 6);
+    const isToday = d === todayDay && today.getMonth()+1 === monthNum && today.getFullYear() === yearAD;
+    const cell    = document.createElement('div');
+    cell.style.cssText = `width:38px;height:52px;border-radius:8px;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:2px;
+      ${bg || 'background:rgba(255,255,255,.04);'}
+      ${isToday ? 'box-shadow:0 0 0 2px var(--gold);' : ''}`;
+    cell.innerHTML = `
+      <div style="font-size:9px;color:rgba(255,255,255,.4);">${dayNames[dow]}</div>
+      <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,.5);">${d}</div>
+      <div style="font-size:11px;font-weight:800;font-family:var(--font-mono);">${padShift(code)}</div>`;
+    cal.appendChild(cell);
+  }
+}
+
 function showConfirm({ icon='⚠️', title='ยืนยัน', msg='', okText='ยืนยัน', okClass='btn-primary', onOk=()=>{} }) {
   document.getElementById('confirm-icon').textContent  = icon;
   document.getElementById('confirm-title').textContent = title;
@@ -1183,10 +1296,17 @@ async function callAPI(payload) {
 }
 
 // ── TOAST ────────────────────────────────────────────
-function showToast(msg, type = 'success') {
+function showToast(msg, type) {
   const t = document.getElementById('toast');
+  // ตรวจ type อัตโนมัติถ้าไม่ระบุ
+  if (!type) {
+    if (msg.includes('❌') || msg.includes('ผิดพลาด') || msg.includes('ไม่'))  type = 'error';
+    else if (msg.includes('⚠️') || msg.includes('กรุณา'))                      type = 'warn';
+    else if (msg.includes('ℹ️'))                                                type = 'info';
+    else                                                                        type = 'success';
+  }
   t.className = `toast ${type}`;
-  document.getElementById('toast-msg').textContent = msg;
+  document.getElementById('toast-msg').textContent = msg.replace(/^[✅❌⚠️ℹ️]\s*/u, '');
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3000);
 }

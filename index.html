@@ -958,6 +958,7 @@ async function openRoster() {
       name:     u.name     || '',
       position: u.position || '',
       role:     u.role     || 'employee',
+      empId:    u.employeeId || ''
     });
     window.location.href = `roster.html?${params.toString()}`;
   } catch(e) {
