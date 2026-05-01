@@ -229,7 +229,7 @@
     <button class="nav-item active" id="nav-roster" onclick="showSection('roster')">
       <span class="nav-icon">📋</span> ตารางรอบการทำงาน
     </button>
-    <button class="nav-item" id="nav-employees" onclick="showSection('employees')">
+    <button class="nav-item" id="nav-employees" onclick="showSection('employees')" style="display:none;">
       <span class="nav-icon">👥</span> จัดการพนักงาน
     </button>
   </div>
@@ -581,8 +581,9 @@ async function loadUserFromPortal() {
 
   // แสดงปุ่มเฉพาะ admin
   if (isAdmin) {
-    document.getElementById('btn-save').style.display    = 'flex';
-    document.getElementById('btn-add-emp').style.display = 'flex';
+    document.getElementById('btn-save').style.display      = 'flex';
+    document.getElementById('btn-add-emp').style.display   = 'flex';
+    document.getElementById('nav-employees').style.display = 'flex';
     // Admin: แสดง tab bar และเริ่มที่ "คีย์ข้อมูล"
     document.getElementById('roster-tab-bar').style.display = 'flex';
     switchRosterTab('input');
