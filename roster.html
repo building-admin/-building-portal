@@ -96,6 +96,12 @@
   .legend-item { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--silver); font-family:var(--font-label); }
   .legend-dot { width:10px; height:10px; border-radius:3px; }
 
+  /* ── ROSTER TABS ── */
+  .rtab-bar { display:flex; gap:6px; margin-bottom:14px; background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:5px; width:fit-content; }
+  .rtab { padding:7px 18px; border:none; border-radius:7px; font-family:var(--font-body); font-size:13px; font-weight:600; cursor:pointer; transition:all .2s; color:var(--silver); background:transparent; }
+  .rtab:hover { color:var(--white); background:rgba(44,74,114,.5); }
+  .rtab.active { background:linear-gradient(135deg,var(--gold),var(--gold-light)); color:var(--navy); }
+
   /* ── ROSTER TABLE ── */
   .table-wrapper { overflow-x:auto; border-radius:12px; border:1px solid var(--border); }
   .roster-table { width:100%; border-collapse:collapse; min-width:900px; }
@@ -309,6 +315,7 @@
 
     <!-- ── SECTION: ROSTER ── -->
     <div class="section active" id="section-roster">
+      <!-- toolbar (shared) -->
       <div class="toolbar">
         <div class="month-selector">
           <button class="month-nav" onclick="changeMonth(-1)">‹</button>
@@ -317,6 +324,12 @@
         </div>
         <button class="btn-primary no-print" id="btn-save" onclick="saveRoster()" style="display:none;">💾 บันทึก</button>
         <span id="save-status" style="font-size:12px;color:var(--muted);"></span>
+      </div>
+
+      <!-- Tab bar (admin only — shown via JS) -->
+      <div class="rtab-bar no-print" id="roster-tab-bar" style="display:none;">
+        <button class="rtab active" id="rtab-input"   onclick="switchRosterTab('input')">📝 คีย์ข้อมูล</button>
+        <button class="rtab"        id="rtab-summary" onclick="switchRosterTab('summary')">📊 สรุปตาราง</button>
       </div>
 
       <div class="legend">
@@ -328,13 +341,28 @@
         <div class="legend-item"><div class="legend-dot shift-leave" style="display:inline-block;"></div> ลา (S/PL/VL/C/CH)</div>
       </div>
 
-      <div class="table-wrapper">
-        <table class="roster-table" id="roster-table">
-          <thead id="roster-thead"></thead>
-          <tbody id="roster-tbody">
-            <tr><td colspan="99" style="text-align:center;padding:40px;color:var(--muted);">⏳ กำลังโหลด...</td></tr>
-          </tbody>
-        </table>
+      <!-- PANEL A: คีย์ข้อมูล (admin เท่านั้น — flat, editable) -->
+      <div id="roster-panel-input" style="display:none;">
+        <div class="table-wrapper">
+          <table class="roster-table" id="roster-table-input">
+            <thead id="roster-thead-input"></thead>
+            <tbody id="roster-tbody-input">
+              <tr><td colspan="99" style="text-align:center;padding:40px;color:var(--muted);">⏳ กำลังโหลด...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PANEL B: สรุปตาราง (ทุก role — grouped, read-only) -->
+      <div id="roster-panel-summary">
+        <div class="table-wrapper">
+          <table class="roster-table" id="roster-table">
+            <thead id="roster-thead"></thead>
+            <tbody id="roster-tbody">
+              <tr><td colspan="99" style="text-align:center;padding:40px;color:var(--muted);">⏳ กำลังโหลด...</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -555,6 +583,13 @@ async function loadUserFromPortal() {
   if (isAdmin) {
     document.getElementById('btn-save').style.display    = 'flex';
     document.getElementById('btn-add-emp').style.display = 'flex';
+    // Admin: แสดง tab bar และเริ่มที่ "คีย์ข้อมูล"
+    document.getElementById('roster-tab-bar').style.display = 'flex';
+    switchRosterTab('input');
+  } else {
+    // Staff: ซ่อน input panel, แสดง summary อย่างเดียว
+    document.getElementById('roster-panel-input').style.display   = 'none';
+    document.getElementById('roster-panel-summary').style.display = 'block';
   }
 
   await loadEmployees();
@@ -617,9 +652,122 @@ async function loadRoster() {
   }
 
   buildRosterTable();
+  if (isAdmin) buildInputTable();
   renderMyShiftCard();
   hasChanges = false;
   document.getElementById('save-status').textContent = '';
+}
+
+// ── TAB SWITCHER ─────────────────────────────────────
+function switchRosterTab(tab) {
+  document.getElementById('roster-panel-input').style.display   = (tab === 'input')   ? 'block' : 'none';
+  document.getElementById('roster-panel-summary').style.display = (tab === 'summary') ? 'block' : 'none';
+  document.getElementById('rtab-input').classList.toggle('active',   tab === 'input');
+  document.getElementById('rtab-summary').classList.toggle('active', tab === 'summary');
+}
+
+// ── BUILD INPUT TABLE (admin — flat, editable) ────────
+function buildInputTable() {
+  if (!isAdmin) return;
+
+  const [yearTH, monthNum] = currentMonth.split('-').map(Number);
+  const yearAD      = yearTH - 543;
+  const daysInMonth = new Date(yearAD, monthNum, 0).getDate();
+  const dayNames    = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+
+  if (!employees.length) {
+    document.getElementById('roster-tbody-input').innerHTML =
+      `<tr><td colspan="99" style="text-align:center;padding:40px;color:var(--muted);">ไม่พบข้อมูลพนักงาน</td></tr>`;
+    return;
+  }
+
+  // THEAD
+  const thead = document.getElementById('roster-thead-input');
+  let headHTML = `<tr style="background:var(--navy-light);">
+    <th class="col-name">พนักงาน</th>
+    <th class="col-off">วันหยุด</th>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dow = new Date(yearAD, monthNum - 1, d).getDay();
+    const isWE = dow === 0 || dow === 6;
+    headHTML += `<th class="col-day" style="${isWE?'background:rgba(200,145,42,.12);color:var(--gold-light);':''}font-size:10px;">
+      ${d}<br><span style="font-size:8px;">${dayNames[dow]}</span></th>`;
+  }
+  headHTML += '</tr>';
+  thead.innerHTML = headHTML;
+
+  // dayStats
+  const dayStats = {};
+  for (let d = 1; d <= daysInMonth; d++) {
+    dayStats[d] = { morning:0, afternoon:0, night:0, leave:[], total:0 };
+  }
+
+  // ROWS — flat list ตาม ลำดับ (ไม่จัดกลุ่ม)
+  const empRows = employees.map(emp => {
+    const id        = String(emp['รหัสพนักงาน']);
+    const empRoster = rosterData[id] || {};
+    let cells = '';
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dow       = new Date(yearAD, monthNum - 1, d).getDay();
+      const isWeekend = dow === 0 || dow === 6;
+      const code      = empRoster[d] || '';
+      const bg        = getCellBg(code, isWeekend);
+      const wkBg      = isWeekend ? 'background:rgba(200,145,42,.06);' : '';
+
+      if (code && !['W','H','','C','CH'].includes(code)) {
+        if (['S','PL','VL'].includes(code))             dayStats[d].leave.push(emp['ชื่อ-นามสกุล'] + ' (' + code + ')');
+        else if (SHIFTS.morning.includes(code))   { dayStats[d].morning++;   dayStats[d].total++; }
+        else if (SHIFTS.afternoon.includes(code)) { dayStats[d].afternoon++; dayStats[d].total++; }
+        else if (SHIFTS.night.includes(code))     { dayStats[d].night++;     dayStats[d].total++; }
+      }
+
+      const isLeave = ['S','PL','VL'].includes(code);
+      const leaveIndicator = isLeave ? `<div style="position:absolute;top:1px;right:1px;width:6px;height:6px;border-radius:50%;background:#ff44aa;"></div>` : '';
+
+      cells += `<td style="padding:1px;${wkBg}position:relative;">
+        ${leaveIndicator}
+        <div class="shift-cell" style="${bg}cursor:pointer;"
+          title="${padShift(code)||'คลิกเพื่อกำหนด'}"
+          onclick="openPicker(event,'${id}',${d})">${padShift(code)}</div></td>`;
+    }
+
+    return `<tr>
+      <td class="col-name">
+        <div onclick="openAutofill('${id}')" title="คลิกเพื่อ Auto-fill" style="cursor:pointer;">
+          <div class="emp-name" style="color:var(--gold-light);">${emp['ชื่อ-นามสกุล']}</div>
+          <div class="emp-position">${emp['ตำแหน่ง']}</div>
+        </div>
+      </td>
+      <td class="emp-off">${emp['วันหยุดประจำ']||'-'}</td>
+      ${cells}
+    </tr>`;
+  }).join('');
+
+  // Summary row
+  let summaryRow = `<tr style="border-top:2px solid rgba(200,145,42,.5);background:rgba(13,30,53,.95);position:sticky;bottom:0;">
+    <td class="col-name" style="font-size:11px;font-weight:700;color:var(--gold);padding:6px 12px;white-space:nowrap;">📊 กำลังพลรายวัน</td>
+    <td style="font-size:9px;color:var(--muted);padding:4px;text-align:center;white-space:nowrap;">
+      <div style="color:#3dba7a;">เช้า</div><div style="color:#f0a030;">บ่าย</div><div style="color:#6490ff;">ดึก</div>
+    </td>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const s = dayStats[d];
+    const hasLeave = s.leave.length > 0;
+    const tooltip  = [`วันที่ ${d}`,`เช้า: ${s.morning} คน`,`บ่าย: ${s.afternoon} คน`,`ดึก: ${s.night} คน`,
+      hasLeave ? `ลา: ${s.leave.join(', ')}` : ''].filter(Boolean).join('\n');
+    const isLow = s.morning < 1 || s.afternoon < 1 || s.night < 1;
+    const dow   = new Date(yearAD, monthNum - 1, d).getDay();
+    const bgCol = isLow ? 'background:rgba(224,82,82,.15);' : ((dow===0||dow===6) ? 'background:rgba(200,145,42,.08);' : '');
+    summaryRow += `<td style="padding:2px 1px;${bgCol}" title="${tooltip}">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:1px;padding:3px 1px;">
+        <div style="font-size:10px;color:#3dba7a;font-weight:800;line-height:1;">${s.morning||'0'}</div>
+        <div style="font-size:10px;color:#f0a030;font-weight:800;line-height:1;">${s.afternoon||'0'}</div>
+        <div style="font-size:10px;color:#6490ff;font-weight:800;line-height:1;">${s.night||'0'}</div>
+        ${hasLeave ? `<div style="font-size:8px;color:#ff44aa;line-height:1;">🔴${s.leave.length}</div>` : ''}
+      </div></td>`;
+  }
+  summaryRow += '</tr>';
+
+  document.getElementById('roster-tbody-input').innerHTML = empRows + summaryRow;
 }
 
 // ── HELPERS สำหรับ grouping ──────────────────────────
@@ -1058,6 +1206,7 @@ function selectShift(code) {
 
   // อัปเดต cell ทันที
   buildRosterTable();
+  buildInputTable();
 
   hasChanges = true;
   document.getElementById('save-status').textContent = '● มีการเปลี่ยนแปลง (ยังไม่บันทึก)';
@@ -1207,6 +1356,7 @@ async function saveEmployee() {
     closeEmpModal();
     await loadEmployees();
     buildRosterTable();
+    buildInputTable();
   } else {
     showToast(res.message, 'error');
   }
@@ -1223,6 +1373,7 @@ async function deleteEmployee(empId) {
         showToast('ปิดใช้งานเรียบร้อยแล้ว', 'success');
         await loadEmployees();
         buildRosterTable();
+        buildInputTable();
       } else {
         showToast(res.message, 'error');
       }
@@ -1298,6 +1449,7 @@ function applyAutofill() {
 
   closeAutofill();
   buildRosterTable();
+  buildInputTable();
   hasChanges = true;
   document.getElementById('save-status').textContent = '● มีการเปลี่ยนแปลง (ยังไม่บันทึก)';
   document.getElementById('save-status').style.color = 'var(--warning)';
