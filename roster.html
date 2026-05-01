@@ -714,46 +714,44 @@ function buildRosterTable() {
   }).join('');
 
   // แถวสรุปกำลังพล
-  const MIN_PER_SHIFT = 1; // เกณฑ์ขั้นต่ำต่อรอบ
+  const MIN_PER_SHIFT = 1;
   let summaryRow = `
-    <tr style="border-top:2px solid rgba(200,145,42,.4);background:rgba(200,145,42,.05);">
-      <td class="col-name" colspan="2" style="font-size:11px;font-weight:700;color:var(--gold);padding:6px 12px;">
-        กำลังพลรายวัน
+    <tr style="border-top:2px solid rgba(200,145,42,.5);background:rgba(13,30,53,.95);position:sticky;bottom:0;">
+      <td class="col-name" style="font-size:11px;font-weight:700;color:var(--gold);padding:6px 12px;white-space:nowrap;">
+        📊 กำลังพลรายวัน
+      </td>
+      <td style="font-size:9px;color:var(--muted);padding:4px;text-align:center;white-space:nowrap;">
+        <div style="color:#3dba7a;">เช้า</div>
+        <div style="color:#f0a030;">บ่าย</div>
+        <div style="color:#6490ff;">ดึก</div>
       </td>`;
 
   for (let d = 1; d <= daysInMonth; d++) {
     const s     = dayStats[d];
-    const total = s.morning + s.afternoon + s.night;
     const hasLeave = s.leave.length > 0;
     const tooltip  = [
-      `เช้า: ${s.morning}`, `บ่าย: ${s.afternoon}`, `ดึก: ${s.night}`,
+      `วันที่ ${d}`,
+      `เช้า: ${s.morning} คน`,
+      `บ่าย: ${s.afternoon} คน`,
+      `ดึก: ${s.night} คน`,
       hasLeave ? `ลา: ${s.leave.join(', ')}` : ''
     ].filter(Boolean).join('\n');
 
     const isLow = s.morning < MIN_PER_SHIFT || s.afternoon < MIN_PER_SHIFT || s.night < MIN_PER_SHIFT;
-    const bgCol = isLow ? 'background:rgba(224,82,82,.12);' : '';
+    const bgCol = isLow ? 'background:rgba(224,82,82,.15);' : '';
+    const dow   = new Date(yearAD, monthNum - 1, d).getDay();
+    const wkBg  = (dow === 0 || dow === 6) ? 'background:rgba(200,145,42,.08);' : '';
 
-    summaryRow += `<td style="padding:2px 1px;${bgCol}" title="${tooltip}">
-      <div style="display:flex;flex-direction:column;align-items:center;gap:1px;padding:2px 0;">
-        <div style="font-size:9px;color:#3dba7a;font-weight:700;">${s.morning||'-'}</div>
-        <div style="font-size:9px;color:#f0a030;font-weight:700;">${s.afternoon||'-'}</div>
-        <div style="font-size:9px;color:#6490ff;font-weight:700;">${s.night||'-'}</div>
-        ${hasLeave ? `<div style="font-size:8px;color:#ff44aa;">🔴${s.leave.length}</div>` : ''}
+    summaryRow += `<td style="padding:2px 1px;${bgCol||wkBg}" title="${tooltip}">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:1px;padding:3px 1px;">
+        <div style="font-size:10px;color:#3dba7a;font-weight:800;line-height:1;">${s.morning||'0'}</div>
+        <div style="font-size:10px;color:#f0a030;font-weight:800;line-height:1;">${s.afternoon||'0'}</div>
+        <div style="font-size:10px;color:#6490ff;font-weight:800;line-height:1;">${s.night||'0'}</div>
+        ${hasLeave ? `<div style="font-size:8px;color:#ff44aa;line-height:1;">🔴${s.leave.length}</div>` : ''}
       </div>
     </td>`;
   }
-  summaryRow += `</tr>
-    <tr style="background:rgba(200,145,42,.03);">
-      <td colspan="2" style="padding:4px 12px;">
-        <div style="display:flex;gap:16px;font-size:10px;color:var(--muted);">
-          <span><span style="color:#3dba7a;font-weight:700;">■</span> เช้า</span>
-          <span><span style="color:#f0a030;font-weight:700;">■</span> บ่าย</span>
-          <span><span style="color:#6490ff;font-weight:700;">■</span> ดึก</span>
-          <span><span style="color:#ff44aa;font-weight:700;">●</span> ลา</span>
-        </div>
-      </td>
-      <td colspan="${daysInMonth}"></td>
-    </tr>`;
+  summaryRow += `</tr>`;
 
   tbody.innerHTML = empRows + summaryRow;
 }
