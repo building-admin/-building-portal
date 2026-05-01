@@ -622,7 +622,23 @@ async function loadRoster() {
   document.getElementById('save-status').textContent = '';
 }
 
-// ── BUILD TABLE (หน้าจอปกติ — clean) ─────────────────
+// ── HELPERS สำหรับ grouping ──────────────────────────
+function getDominantShift(empId) {
+  const r = rosterData[String(empId)] || {};
+  const c = {};
+  Object.values(r).forEach(code => {
+    if (code && !['W','H','S','PL','VL','C','CH'].includes(code)) c[code] = (c[code]||0)+1;
+  });
+  return Object.entries(c).sort((a,b)=>b[1]-a[1])[0]?.[0] || '';
+}
+function getShiftLabel(code) {
+  if (SHIFTS.morning.includes(code))   return 'เช้า';
+  if (SHIFTS.afternoon.includes(code)) return 'บ่าย';
+  if (SHIFTS.night.includes(code))     return 'ดึก';
+  return 'อื่นๆ';
+}
+
+// ── BUILD TABLE (หน้าจอปกติ — จัดกลุ่มตาม print view) ─
 function buildRosterTable() {
   const [yearTH, monthNum] = currentMonth.split('-').map(Number);
   const yearAD      = yearTH - 543;
@@ -658,7 +674,8 @@ function buildRosterTable() {
     dayStats[d] = { morning:0, afternoon:0, night:0, leave:[], total:0 };
   }
 
-  const empRows = employees.map(emp => {
+  // ── ฟังก์ชัน render แถวพนักงาน 1 คน ─────────────────
+  function renderEmpRow(emp) {
     const id        = String(emp['รหัสพนักงาน']);
     const empRoster = rosterData[id] || {};
     let cells = '';
@@ -681,7 +698,6 @@ function buildRosterTable() {
         dayStats[d].total++;
       }
 
-      // แสดง indicator ถ้าลา
       const isLeave = ['S','PL','VL'].includes(code);
       const leaveIndicator = isLeave ? `<div style="position:absolute;top:1px;right:1px;width:6px;height:6px;border-radius:50%;background:#ff44aa;"></div>` : '';
 
@@ -701,17 +717,97 @@ function buildRosterTable() {
 
     return `<tr>
       <td class="col-name">
-        <div style="display:flex;align-items:center;gap:4px;">
-          <div ${isAdmin ? `onclick="openAutofill('${id}')" title="คลิกเพื่อ Auto-fill" style="cursor:pointer;"` : ''}>
-            <div class="emp-name" style="${isAdmin ? 'color:var(--gold-light);' : ''}">${emp['ชื่อ-นามสกุล']}</div>
-            <div class="emp-position">${emp['ตำแหน่ง']}</div>
-          </div>
+        <div ${isAdmin ? `onclick="openAutofill('${id}')" title="คลิกเพื่อ Auto-fill" style="cursor:pointer;"` : ''}>
+          <div class="emp-name" style="${isAdmin ? 'color:var(--gold-light);' : ''}">${emp['ชื่อ-นามสกุล']}</div>
+          <div class="emp-position">${emp['ตำแหน่ง']}</div>
         </div>
       </td>
       <td class="emp-off">${emp['วันหยุดประจำ']||'-'}</td>
       ${cells}
     </tr>`;
-  }).join('');
+  }
+
+  // ── Section header row ────────────────────────────
+  function makeSectionRow(icon, label, color='var(--gold-light)') {
+    return `<tr>
+      <td colspan="${daysInMonth + 2}" style="
+        background:rgba(26,52,96,.98);
+        border-top:2px solid rgba(200,145,42,.5);
+        border-bottom:1px solid rgba(200,145,42,.25);
+        padding:7px 14px;
+        font-size:12px;
+        font-weight:700;
+        color:${color};
+        font-family:var(--font-label);
+        letter-spacing:0.06em;
+        position:sticky;
+        left:0;
+      ">${icon} ${label}</td>
+    </tr>`;
+  }
+
+  // ── Sub-group label row (กะเช้า/บ่าย/ดึก) ─────────
+  function makeSubRow(icon, label, color) {
+    return `<tr>
+      <td colspan="${daysInMonth + 2}" style="
+        background:rgba(15,32,68,.7);
+        border-top:1px solid rgba(${color},.25);
+        padding:3px 24px;
+        font-size:10px;
+        color:rgba(${color},1);
+        font-family:var(--font-label);
+        letter-spacing:0.05em;
+      ">▸ ${icon} ${label}</td>
+    </tr>`;
+  }
+
+  // ── จัดกลุ่มพนักงาน ──────────────────────────────
+  const group1 = employees.filter(e => String(e['กลุ่ม']) === '1');
+  const group2 = employees.filter(e => String(e['กลุ่ม']) === '2');
+  const group3 = employees.filter(e => String(e['กลุ่ม']) === '3');
+  const noGroup = employees.filter(e => !['1','2','3'].includes(String(e['กลุ่ม'])));
+
+  // group1 แยกกะ
+  const sub1 = { 'เช้า':[], 'บ่าย':[], 'ดึก':[], 'อื่นๆ':[] };
+  group1.forEach(emp => sub1[getShiftLabel(getDominantShift(emp['รหัสพนักงาน']))].push(emp));
+
+  const SUB_CONFIG = [
+    { key:'เช้า',  icon:'🌅', color:'61,186,122' },
+    { key:'บ่าย',  icon:'🌇', color:'240,160,48' },
+    { key:'ดึก',   icon:'🌙', color:'100,140,255' },
+    { key:'อื่นๆ', icon:'📋', color:'168,187,212' },
+  ];
+
+  let allRows = '';
+
+  // ── ส่วนที่ 1 ─────────────────────────────────────
+  if (group1.length) {
+    allRows += makeSectionRow('🛡️', 'ส่วนที่ 1 — จป. / ป้องกัน / จราจร');
+    SUB_CONFIG.forEach(({ key, icon, color }) => {
+      const emps = sub1[key];
+      if (!emps.length) return;
+      allRows += makeSubRow(icon, `กะ${key} (${emps.length} คน)`, color);
+      emps.forEach(emp => { allRows += renderEmpRow(emp); });
+    });
+  }
+
+  // ── ส่วนที่ 2 ─────────────────────────────────────
+  if (group2.length) {
+    allRows += makeSectionRow('📊', 'ส่วนที่ 2 — หัวหน้ากลยุทธ์', '#e8b84b');
+    group2.forEach(emp => { allRows += renderEmpRow(emp); });
+  }
+
+  // ── ส่วนที่ 3 ─────────────────────────────────────
+  if (group3.length) {
+    allRows += makeSectionRow('🏢', 'ส่วนที่ 3 — บริการอาคารและทรัพย์สิน', '#a8bbd4');
+    group3.forEach(emp => { allRows += renderEmpRow(emp); });
+  }
+
+  // ── พนักงานที่ยังไม่ได้ assign กลุ่ม ──────────────
+  if (noGroup.length) {
+    allRows += makeSectionRow('❓', 'ยังไม่ได้จัดกลุ่ม', 'var(--muted)');
+    noGroup.forEach(emp => { allRows += renderEmpRow(emp); });
+  }
 
   // แถวสรุปกำลังพล
   const MIN_PER_SHIFT = 1;
@@ -753,7 +849,7 @@ function buildRosterTable() {
   }
   summaryRow += `</tr>`;
 
-  tbody.innerHTML = empRows + summaryRow;
+  tbody.innerHTML = allRows + summaryRow;
 }
 
 // ── PRINT VIEW (layout แบบ PDF — 3 ส่วน) ─────────────
@@ -769,22 +865,6 @@ function openPrintView(autoPrint = true) {
   const group1 = employees.filter(e => String(e['กลุ่ม']) === '1');
   const group2 = employees.filter(e => String(e['กลุ่ม']) === '2');
   const group3 = employees.filter(e => String(e['กลุ่ม']) === '3');
-
-  function getDominantShift(empId) {
-    const r = rosterData[String(empId)] || {};
-    const c = {};
-    Object.values(r).forEach(code => {
-      if (code && !['W','H','S','PL','VL','C','CH'].includes(code)) c[code] = (c[code]||0)+1;
-    });
-    return Object.entries(c).sort((a,b)=>b[1]-a[1])[0]?.[0] || '';
-  }
-
-  function getShiftLabel(code) {
-    if (SHIFTS.morning.includes(code))   return 'เช้า';
-    if (SHIFTS.afternoon.includes(code)) return 'บ่าย';
-    if (SHIFTS.night.includes(code))     return 'ดึก';
-    return 'อื่นๆ';
-  }
 
   const subGroups = { 'เช้า':[], 'บ่าย':[], 'ดึก':[], 'อื่นๆ':[] };
   group1.forEach(emp => subGroups[getShiftLabel(getDominantShift(emp['รหัสพนักงาน']))].push(emp));
