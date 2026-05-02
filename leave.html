@@ -2142,7 +2142,7 @@ function updateChartsFromData(all, allTime) {
     window._monthlyChart.data.datasets[1].data = monthlyCounts['ลากิจ'];
     window._monthlyChart.data.datasets[2].data = monthlyCounts['ลาพักร้อน'];
     window._monthlyChart.data.datasets[3].data = monthlyCounts['อื่นๆ'];
-    window._monthlyChart.update();
+    window._monthlyChart.update('none');
   }
 
 
@@ -2156,7 +2156,7 @@ function updateChartsFromData(all, allTime) {
       typeCounts['เปลี่ยนวันหยุด'] || 0,
       typeCounts['เปลี่ยนรอบ']    || 0
     ];
-    window._typeChart.update();
+    window._typeChart.update('none');
   }
 
   // อัปเดต staff chart (ใช้ข้อมูลทั้งหมด)
@@ -2168,7 +2168,7 @@ function updateChartsFromData(all, allTime) {
   if (window._staffChart && Object.keys(staffCounts).length) {
     window._staffChart.data.labels = Object.keys(staffCounts);
     window._staffChart.data.datasets[0].data = Object.values(staffCounts);
-    window._staffChart.update();
+    window._staffChart.update('none');
   }
 }
 
@@ -3160,7 +3160,7 @@ function initCharts() {
         { label:'อื่นๆ',     data: Array(12).fill(0), backgroundColor:'rgba(100,130,180,0.7)', borderRadius:4, borderSkipped:false }
       ]
     },
-    options: { responsive:true, plugins:{ legend:{ position:'top', labels:{ boxWidth:10, padding:16, font:{size:11} } } }, scales:{ x:{ grid:{ display:false } }, y:{ grid:{ color:'rgba(44,74,114,0.3)' }, ticks:{ stepSize:1, precision:0 } } } }
+    options: { animation: false, responsive:true, plugins:{ legend:{ position:'top', labels:{ boxWidth:10, padding:16, font:{size:11} } } }, scales:{ x:{ grid:{ display:false } }, y:{ grid:{ color:'rgba(44,74,114,0.3)' }, ticks:{ stepSize:1, precision:0 } } } }
   });
 
   // Donut chart — เริ่มว่าง
@@ -3170,7 +3170,7 @@ function initCharts() {
       labels: ['ลาป่วย','ลากิจ','ลาพักร้อน','ลานักขัตฤกษ์','เปลี่ยนวันหยุด','เปลี่ยนรอบ'],
       datasets: [{ data:[0,0,0,0,0,0], backgroundColor:['rgba(224,82,82,0.8)','rgba(200,145,42,0.8)','rgba(61,186,122,0.8)','rgba(74,144,217,0.8)','rgba(120,80,180,0.8)','rgba(80,160,200,0.8)'], borderWidth:0, hoverOffset:6 }]
     },
-    options: { responsive:true, cutout:'65%', plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, padding:12, font:{size:11} } } } }
+    options: { animation: false, responsive:true, cutout:'65%', plugins:{ legend:{ position:'bottom', labels:{ boxWidth:10, padding:12, font:{size:11} } } } }
   });
 
   // Staff bar chart — เริ่มว่าง
@@ -3180,7 +3180,7 @@ function initCharts() {
       labels: [],
       datasets: [{ label:'วันลา', data:[], backgroundColor:'rgba(200,145,42,0.6)', borderRadius:4, borderSkipped:false }]
     },
-    options: { responsive:true, indexAxis:'y', plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ color:'rgba(44,74,114,0.3)' }, ticks:{ stepSize:1, precision:0 } }, y:{ grid:{ display:false } } } }
+    options: { animation: false, responsive:true, indexAxis:'y', plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ color:'rgba(44,74,114,0.3)' }, ticks:{ stepSize:1, precision:0 } }, y:{ grid:{ display:false } } } }
   });
 }
 
