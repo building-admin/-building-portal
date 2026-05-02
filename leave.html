@@ -2054,7 +2054,10 @@ async function savePermissions() {
 // ════════════════════════════════════════════════════
 //  LOAD DASHBOARD DATA
 // ════════════════════════════════════════════════════
+let _dashboardLoading = false;
 async function loadDashboardData() {
+  if (_dashboardLoading) return;
+  _dashboardLoading = true;
   try {
     const [allRes, pendingRes, allTimeRes] = await Promise.all([
       callAPI({ action: 'getAllLeaves', month: new Date().getMonth()+1, year: new Date().getFullYear() }),
@@ -2100,6 +2103,8 @@ async function loadDashboardData() {
       const el = document.getElementById(id);
       if (el) el.textContent = '—';
     });
+  } finally {
+    _dashboardLoading = false;
   }
 }
 
@@ -2638,7 +2643,8 @@ async function loadUserFromPortal() {
               : (window._menuPerms && window._menuPerms['all-leaves']) ? 'all-leaves'
               : 'dashboard';
   }
-  setTimeout(function() { showPage(firstPage); initCharts(); loadDashboardData(); }, 100);
+  // showPage จะเรียก loadDashboardData อยู่แล้ว — ไม่ต้องเรียกซ้ำ
+  setTimeout(function() { showPage(firstPage); initCharts(); }, 100);
 }
 
 function showAccessDenied(icon, title, sub) {

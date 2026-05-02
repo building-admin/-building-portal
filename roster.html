@@ -249,10 +249,13 @@
     .main { margin-left: 0; padding-bottom: 68px; }
     .mobile-topbar-btn { display:flex; align-items:center; }
     .bottom-nav { display:block; }
-    .topbar { padding:12px 14px; }
-    .topbar-left h1 { font-size:16px; }
-    .topbar-left p  { font-size:10px; }
-    .topbar-right .btn-secondary { padding:6px 10px; font-size:11px; }
+    .topbar { padding:10px 12px; flex-wrap:wrap; gap:6px; }
+    .topbar-left h1 { font-size:15px; }
+    .topbar-left p  { font-size:10px; display:none; }
+    /* ซ่อนปุ่มรองบน tablet portrait — เหลือแค่บันทึก */
+    .topbar-right .btn-secondary { display:none; }
+    #btn-save { display:flex !important; padding:7px 14px; font-size:12px; }
+    .topbar-right { gap:6px; }
     .content { padding:10px; }
     .toolbar { flex-wrap:wrap; gap:8px; }
     .month-selector { flex:1; min-width:180px; }
@@ -261,20 +264,16 @@
     .rtab { flex:1; text-align:center; font-size:12px; padding:7px 10px; }
     .legend { gap:6px; }
     .legend-item { font-size:10px; }
-    /* shift cell เล็กลงบนมือถือ */
     .shift-cell { width:22px; height:20px; font-size:9px; border-radius:3px; }
     .col-name { min-width:110px; font-size:11px; }
     .emp-name { font-size:11px; }
     .emp-position { font-size:9px; }
     .emp-off { font-size:10px; min-width:40px; }
-    /* topbar buttons wrap */
-    .topbar-right { gap:6px; flex-wrap:wrap; }
-    #btn-save { padding:7px 12px; font-size:12px; }
   }
 
   @media (max-width: 480px) {
     .topbar-left p { display:none; }
-    .topbar-right .btn-secondary:not(#btn-save) { display:none; }
+    .topbar-right .btn-secondary { display:none; }
     .shift-cell { width:20px; height:18px; font-size:8px; }
     .col-name { min-width:90px; }
   }

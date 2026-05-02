@@ -270,6 +270,20 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
   #jobs-table{min-width:700px}
 }
 
+/* Tablet portrait: 481px–768px — topbar เบียด */
+@media(max-width:768px) and (min-width:481px) {
+  #top-bar { padding:0 10px; height:52px; gap:6px; }
+  .brand-text .org { display:none; }
+  .brand-text .dept { font-size:13px; max-width:140px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #api-status .status-text { display:none; }
+  #user-info { font-size:12px; gap:4px; }
+  #user-info .user-emp { display:none; }
+  .dept-btn { padding:6px 10px; font-size:12px; }
+  #admin-btn { padding:6px 10px; font-size:12px; }
+  #logout-btn { padding:6px 10px; font-size:12px; }
+  #logout-btn span:last-child { display:none; }
+}
+
 /* Mobile: ≤480px */
 @media(max-width:480px){
   /* Top Bar */
