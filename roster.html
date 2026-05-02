@@ -204,12 +204,93 @@
     .roster-table th, .roster-table td { font-size:10px; padding:4px 2px; }
     .shift-cell { width:24px; height:20px; font-size:9px; }
   }
+
+  /* ── MOBILE ── */
+  .sidebar-overlay {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,.6);
+    z-index:90; backdrop-filter:blur(2px);
+  }
+  .sidebar-overlay.show { display:block; }
+  .mobile-topbar-btn {
+    display:none; background:none; border:none; color:var(--silver);
+    font-size:20px; cursor:pointer; padding:4px 8px; border-radius:6px;
+    transition:background .15s;
+  }
+  .mobile-topbar-btn:hover { background:rgba(44,74,114,.4); }
+
+  /* bottom nav */
+  .bottom-nav {
+    display:none; position:fixed; bottom:0; left:0; right:0;
+    background:var(--navy-mid); border-top:1px solid var(--border);
+    z-index:80; padding-bottom:env(safe-area-inset-bottom);
+  }
+  .bottom-nav-inner {
+    display:flex; justify-content:space-around; align-items:stretch;
+    padding:6px 0 4px;
+  }
+  .bnav-item {
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    padding:6px 14px; border:none; background:none; color:var(--muted);
+    cursor:pointer; border-radius:10px; transition:all .2s; font-family:var(--font-body);
+    flex:1; max-width:80px;
+  }
+  .bnav-item.active { color:var(--gold-light); background:rgba(200,145,42,.1); }
+  .bnav-icon  { font-size:20px; line-height:1; }
+  .bnav-label { font-size:9px; font-weight:500; white-space:nowrap; }
+
+  @media (max-width: 768px) {
+    :root { --sidebar-w: 240px; }
+    .sidebar {
+      transform: translateX(-100%);
+      transition: transform .25s ease;
+      z-index:100;
+    }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; padding-bottom: 68px; }
+    .mobile-topbar-btn { display:flex; align-items:center; }
+    .bottom-nav { display:block; }
+    .topbar { padding:12px 14px; }
+    .topbar-left h1 { font-size:16px; }
+    .topbar-left p  { font-size:10px; }
+    .topbar-right .btn-secondary { padding:6px 10px; font-size:11px; }
+    .content { padding:10px; }
+    .toolbar { flex-wrap:wrap; gap:8px; }
+    .month-selector { flex:1; min-width:180px; }
+    #month-select { font-size:13px; }
+    .rtab-bar { width:100%; }
+    .rtab { flex:1; text-align:center; font-size:12px; padding:7px 10px; }
+    .legend { gap:6px; }
+    .legend-item { font-size:10px; }
+    /* shift cell เล็กลงบนมือถือ */
+    .shift-cell { width:22px; height:20px; font-size:9px; border-radius:3px; }
+    .col-name { min-width:110px; font-size:11px; }
+    .emp-name { font-size:11px; }
+    .emp-position { font-size:9px; }
+    .emp-off { font-size:10px; min-width:40px; }
+    /* topbar buttons wrap */
+    .topbar-right { gap:6px; flex-wrap:wrap; }
+    #btn-save { padding:7px 12px; font-size:12px; }
+  }
+
+  @media (max-width: 480px) {
+    .topbar-left p { display:none; }
+    .topbar-right .btn-secondary:not(#btn-save) { display:none; }
+    .shift-cell { width:20px; height:18px; font-size:8px; }
+    .col-name { min-width:90px; }
+  }
+
+  @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .main { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
+  }
 </style>
 </head>
 <body>
 
+<!-- sidebar overlay -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
 <!-- ── SIDEBAR ── -->
-<div class="sidebar">
+<div class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <div class="logo-icon">📅</div>
     <div>
@@ -250,9 +331,12 @@
 <!-- ── MAIN ── -->
 <div class="main">
   <div class="topbar">
-    <div class="topbar-left">
-      <h1 id="page-title">ตารางรอบการทำงาน</h1>
-      <p id="page-sub">รอบการปฏิบัติงานฝ่ายอาคารและสถานที่</p>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <button class="mobile-topbar-btn no-print" onclick="openSidebar()">☰</button>
+      <div class="topbar-left">
+        <h1 id="page-title">ตารางรอบการทำงาน</h1>
+        <p id="page-sub">รอบการปฏิบัติงานฝ่ายอาคารและสถานที่</p>
+      </div>
     </div>
     <div class="topbar-right">
       <span class="topbar-date" id="topbar-date"></span>
@@ -501,6 +585,28 @@
 </div>
 
 <!-- ── TOAST ── -->
+<!-- ── BOTTOM NAV (mobile) ── -->
+<nav class="bottom-nav no-print">
+  <div class="bottom-nav-inner">
+    <button class="bnav-item active" id="bnav-roster" onclick="showSection('roster');setBnav('roster')">
+      <span class="bnav-icon">📋</span>
+      <span class="bnav-label">ตารางรอบ</span>
+    </button>
+    <button class="bnav-item" id="bnav-employees" onclick="showSection('employees');setBnav('employees')" style="display:none">
+      <span class="bnav-icon">👥</span>
+      <span class="bnav-label">พนักงาน</span>
+    </button>
+    <button class="bnav-item" onclick="goToPortal()">
+      <span class="bnav-icon">🏠</span>
+      <span class="bnav-label">Portal</span>
+    </button>
+    <button class="bnav-item" onclick="goToLeave()">
+      <span class="bnav-icon">📝</span>
+      <span class="bnav-label">ใบลา</span>
+    </button>
+  </div>
+</nav>
+
 <div class="toast" id="toast"><span class="toast-icon" id="toast-icon">✅</span><span id="toast-msg"></span></div>
 
 <script>
@@ -1571,6 +1677,9 @@ function showSection(name) {
 
   const titles = { roster: 'ตารางรอบการทำงาน', employees: 'จัดการพนักงาน' };
   document.getElementById('page-title').textContent = titles[name] || '';
+
+  setBnav(name);
+  closeSidebar();
 }
 
 function goToPortal() { window.location.href = PORTAL_URL; }
@@ -1677,8 +1786,27 @@ async function applyRosterPermissions(role) {
   const canEmp = role === 'admin' || !!perms['roster-employees']?.[r];
   const navEmp = document.getElementById('nav-employees');
   if (navEmp) navEmp.style.display = canEmp ? 'flex' : 'none';
+  const bnavEmp = document.getElementById('bnav-employees');
+  if (bnavEmp) bnavEmp.style.display = canEmp ? 'flex' : 'none';
   const btnAddEmp = document.getElementById('btn-add-emp');
   if (btnAddEmp && !canEmp) btnAddEmp.style.display = 'none';
+}
+
+// ── MOBILE SIDEBAR ───────────────────────────────────
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebar-overlay').classList.add('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('show');
+}
+
+// ── BOTTOM NAV ───────────────────────────────────────
+function setBnav(section) {
+  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('bnav-' + section);
+  if (btn) btn.classList.add('active');
 }
 
 // ── TOAST ────────────────────────────────────────────
