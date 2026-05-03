@@ -2498,8 +2498,23 @@ async function loadUserFromPortal() {
   const navType = performance.getEntriesByType('navigation')[0]?.type;
   const isRefresh = navType === 'reload';
 
+  // ตรวจสอบ session หมดอายุ (8 ชั่วโมง = Session Timeout)
+  const SESSION_MAX_MS = 8 * 60 * 60 * 1000;
+  const IDLE_MAX_MS    = 1 * 60 * 60 * 1000; // Idle Timeout 1 ชั่วโมง
+  const savedTime    = parseInt(sessionStorage.getItem('leave_session_time')    || '0');
+  const lastActivity = parseInt(sessionStorage.getItem('leave_last_activity')   || '0');
+  const sessionExpired = Date.now() - savedTime    > SESSION_MAX_MS;
+  const idleExpired    = lastActivity > 0 && Date.now() - lastActivity > IDLE_MAX_MS;
+
+  if (sessionExpired || idleExpired) {
+    sessionStorage.removeItem('leave_session_token');
+    sessionStorage.removeItem('leave_params');
+    sessionStorage.removeItem('leave_session_time');
+    sessionStorage.removeItem('leave_last_activity');
+  }
+
   // ใช้ token จาก URL เสมอ หรือจาก sessionStorage เฉพาะกรณี refresh เท่านั้น
-  const token = urlToken || (isRefresh ? sessionStorage.getItem('leave_session_token') : null);
+  const token = urlToken || (isRefresh && !sessionExpired && !idleExpired ? sessionStorage.getItem('leave_session_token') : null);
 
   if (!token) {
     showAccessDenied('🔒', 'ไม่มีสิทธิ์เข้าถึง', 'กรุณาเข้าผ่าน Building Portal');
@@ -2515,6 +2530,8 @@ async function loadUserFromPortal() {
 
   // เก็บ token ไว้ใช้ตอน refresh
   sessionStorage.setItem('leave_session_token', token);
+  sessionStorage.setItem('leave_session_time', Date.now().toString());
+  sessionStorage.setItem('leave_last_activity', Date.now().toString());
   // เก็บ params ไว้ใช้ตอน refresh ด้วย
   if (urlToken) {
     const saveParams = { name: params.get('name'), position: params.get('position'), dept: params.get('dept'), division: params.get('division'), empId: params.get('empId') };
@@ -2659,6 +2676,8 @@ async function doLogout() {
     await callPortalAPI({ action: 'revokeToken', token }).catch(()=>{});
     sessionStorage.removeItem('leave_session_token');
     sessionStorage.removeItem('leave_params');
+    sessionStorage.removeItem('leave_session_time');
+    sessionStorage.removeItem('leave_last_activity');
   }
   window.location.href = './index.html';
 }
@@ -3129,6 +3148,32 @@ function showToast(msg, type) {
 
 // โหลด user จาก Portal ทันทีที่เปิดหน้า
 window.addEventListener('DOMContentLoaded', loadUserFromPortal);
+
+// ── IDLE TIMEOUT TRACKER ─────────────────────────────
+// อัปเดต last activity เมื่อมีการใช้งาน
+function updateActivity() {
+  if (sessionStorage.getItem('leave_session_token')) {
+    sessionStorage.setItem('leave_last_activity', Date.now().toString());
+  }
+}
+['click','keydown','scroll','touchstart'].forEach(evt => {
+  document.addEventListener(evt, updateActivity, { passive: true });
+});
+
+// ตรวจสอบ idle ทุก 5 นาที
+setInterval(() => {
+  const IDLE_MAX_MS  = 60 * 60 * 1000; // 1 ชั่วโมง
+  const lastActivity = parseInt(sessionStorage.getItem('leave_last_activity') || '0');
+  if (lastActivity > 0 && Date.now() - lastActivity > IDLE_MAX_MS) {
+    sessionStorage.removeItem('leave_session_token');
+    sessionStorage.removeItem('leave_params');
+    sessionStorage.removeItem('leave_session_time');
+    sessionStorage.removeItem('leave_last_activity');
+    // แจ้งเตือนก่อน redirect
+    showToast('⏰ หมดเวลาการใช้งาน กำลัง Logout...', 'warn');
+    setTimeout(() => { window.location.href = './index.html'; }, 2000);
+  }
+}, 5 * 60 * 1000); // ตรวจทุก 5 นาที
 
 // ปุ่ม "กลับ Portal" ใน topbar
 document.addEventListener('DOMContentLoaded', () => {
