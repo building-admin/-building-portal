@@ -1136,7 +1136,7 @@ function buildInputTable() {
     const isWE = dow === 0 || dow === 6;
     const hName = getHolidayName(yearAD, monthNum, d);
     const thStyle = hName
-      ? 'background:rgba(200,145,42,.2);color:var(--gold-light);box-shadow:inset 0 0 0 2px var(--gold);'
+      ? 'box-shadow:inset 0 0 0 2px var(--gold);color:var(--gold-light);'
       : isWE ? 'background:rgba(200,145,42,.12);color:var(--gold-light);' : '';
     headHTML += `<th class="col-day" style="${thStyle}font-size:10px;position:relative;" title="${hName||''}">
       ${d}<br><span style="font-size:8px;">${dayNames[dow]}</span></th>`;
@@ -1258,7 +1258,7 @@ function buildRosterTable() {
     const isWeekend = dow === 0 || dow === 6;
     const hName = getHolidayName(yearAD, monthNum, d);
     const thStyle = hName
-      ? 'background:rgba(200,145,42,.2);color:var(--gold-light);box-shadow:inset 0 0 0 2px var(--gold);'
+      ? 'box-shadow:inset 0 0 0 2px var(--gold);color:var(--gold-light);'
       : isWeekend ? 'background:rgba(200,145,42,.12);color:var(--gold-light);' : '';
     headHTML += `<th class="col-day" style="${thStyle}font-size:10px;position:relative;" title="${hName||''}">
       ${d}<br><span style="font-size:8px;">${dayNames[dow]}</span></th>`;
