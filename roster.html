@@ -699,7 +699,241 @@ let currentMonth = '';
 let pickerTarget = null; // { empId, day }
 let hasChanges   = false;
 
-// ── INIT ─────────────────────────────────────────────
+// ── INIT ─────────────
+
+// ── HOLIDAYS ─────────────────────────────────────────
+// ข้อมูลวันหยุดเริ่มต้น 2568 (13 วัน) — admin แก้ไขได้
+const DEFAULT_HOLIDAYS = {
+  2568: [
+    { date:'2568-01-01', name:'วันขึ้นปีใหม่' },
+    { date:'2568-02-12', name:'วันมาฆบูชา' },
+    { date:'2568-04-06', name:'วันจักรี' },
+    { date:'2568-04-13', name:'วันสงกรานต์' },
+    { date:'2568-04-14', name:'วันสงกรานต์' },
+    { date:'2568-04-15', name:'วันสงกรานต์' },
+    { date:'2568-05-01', name:'วันแรงงานแห่งชาติ' },
+    { date:'2568-05-11', name:'วันวิสาขบูชา' },
+    { date:'2568-07-10', name:'วันอาสาฬหบูชา' },
+    { date:'2568-07-11', name:'วันเข้าพรรษา' },
+    { date:'2568-08-12', name:'วันแม่แห่งชาติ' },
+    { date:'2568-10-13', name:'วันคล้ายวันสวรรคต ร.9' },
+    { date:'2568-12-05', name:'วันพ่อแห่งชาติ' },
+    { date:'2568-12-10', name:'วันรัฐธรรมนูญ' },
+    { date:'2568-12-31', name:'วันสิ้นปี' },
+  ]
+};
+
+// โหลดจาก LocalStorage ถ้ามี ไม่งั้นใช้ Default
+function loadHolidaysFromStorage() {
+  try {
+    const saved = localStorage.getItem('bfs_roster_holidays');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_HOLIDAYS));
+}
+
+function saveHolidaysToStorage() {
+  try {
+    localStorage.setItem('bfs_roster_holidays', JSON.stringify(_holidays));
+  } catch(e) {
+    console.warn('LocalStorage ไม่พร้อมใช้งาน');
+  }
+}
+
+let _holidays = loadHolidaysFromStorage();
+let _holidayEditMode = false;
+const DAY_NAMES_TH = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+const MONTH_NAMES_TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+// แปลง Buddhist year date → JS Date (CE)
+function thaiDateToJS(thaiDate) {
+  // format: 2568-MM-DD
+  const [y, m, d] = thaiDate.split('-').map(Number);
+  return new Date(y - 543, m - 1, d);
+}
+
+// ดึงวันหยุดของปี พ.ศ.
+function getHolidaysForYear(yearTH) {
+  return (_holidays[yearTH] || []).slice().sort((a,b) => a.date.localeCompare(b.date));
+}
+
+// เช็คว่าวันที่ในตาราง (CE) เป็นวันหยุดนักขัตฤกษ์ไหม
+function getHolidayName(yearAD, monthNum, day) {
+  const yearTH = yearAD + 543;
+  const mm = String(monthNum).padStart(2,'0');
+  const dd = String(day).padStart(2,'0');
+  const dateStr = `${yearTH}-${mm}-${dd}`;
+  const h = (_holidays[yearTH] || []).find(h => h.date === dateStr);
+  return h ? h.name : null;
+}
+
+function openHolidayModal() {
+  // สร้าง year selector
+  const sel = document.getElementById('holiday-year-select');
+  if (sel.options.length === 0) {
+    const currentYearTH = new Date().getFullYear() + 543;
+    for (let y = currentYearTH - 1; y <= currentYearTH + 2; y++) {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = `พ.ศ. ${y}`;
+      if (y === currentYearTH) opt.selected = true;
+      sel.appendChild(opt);
+    }
+  }
+  // แสดงปุ่มแก้ไขเฉพาะ admin
+  const editBtn = document.getElementById('btn-edit-holiday');
+  if (editBtn) editBtn.style.display = isAdmin ? 'flex' : 'none';
+
+  renderHolidayModal();
+  document.getElementById('modal-holiday').classList.add('show');
+}
+
+function closeHolidayModal() {
+  cancelHolidayEdit();
+  document.getElementById('modal-holiday').classList.remove('show');
+}
+
+function renderHolidayModal() {
+  const yearTH  = parseInt(document.getElementById('holiday-year-select').value);
+  const holidays = getHolidaysForYear(yearTH);
+  const countEl = document.getElementById('holiday-count-label');
+  if (countEl) countEl.textContent = `ทั้งหมด ${holidays.length} วัน`;
+
+  const content = document.getElementById('holiday-modal-content');
+
+  if (_holidayEditMode && isAdmin) {
+    // Edit mode
+    let html = `<div style="margin-bottom:12px;">
+      <button onclick="addHolidayRow(${yearTH})" class="btn-secondary" style="font-size:12px;padding:6px 12px;">➕ เพิ่มวันหยุด</button>
+    </div>
+    <div id="holiday-edit-list">`;
+    holidays.forEach((h, i) => {
+      html += `<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+        <input type="date" value="${thaiDateToJS(h.date).toISOString().split('T')[0]}"
+          data-idx="${i}" data-year="${yearTH}" class="form-input holiday-date-input"
+          style="width:160px;" onchange="updateHolidayDate(${yearTH},${i},this.value)">
+        <input type="text" value="${h.name}" data-idx="${i}" data-year="${yearTH}"
+          class="form-input holiday-name-input" placeholder="ชื่อวันหยุด"
+          style="flex:1;" oninput="updateHolidayName(${yearTH},${i},this.value)">
+        <button onclick="removeHoliday(${yearTH},${i})" style="background:rgba(224,82,82,.2);border:1px solid rgba(224,82,82,.4);color:#e05252;border-radius:6px;padding:6px 10px;cursor:pointer;">🗑️</button>
+      </div>`;
+    });
+    html += '</div>';
+    content.innerHTML = html;
+  } else {
+    // View mode — grid
+    if (!holidays.length) {
+      content.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);">ยังไม่มีข้อมูลวันหยุดปี ${yearTH}</div>`;
+      return;
+    }
+    let html = '<div class="holiday-modal-grid">';
+    holidays.forEach((h, i) => {
+      const jsDate  = thaiDateToJS(h.date);
+      const dayName = DAY_NAMES_TH[jsDate.getDay()];
+      const [y, m, d] = h.date.split('-');
+      const displayDate = `${parseInt(d)} ${MONTH_NAMES_TH[parseInt(m)-1]} ${y}`;
+      html += `<div class="holiday-card">
+        <div class="holiday-card-date">${displayDate}</div>
+        <div class="holiday-card-name">${h.name}</div>
+        <div class="holiday-card-day">วัน${dayName}</div>
+      </div>`;
+    });
+    html += '</div>';
+    content.innerHTML = html;
+  }
+}
+
+function resetHolidays() {
+  const yearTH = parseInt(document.getElementById('holiday-year-select').value);
+  showConfirm({
+    icon: '↺', title: 'รีเซ็ตวันหยุด',
+    msg: `ต้องการรีเซ็ตวันหยุดปี ${yearTH} กลับค่าเริ่มต้นใช่ไหมครับ?`,
+    okText: 'รีเซ็ต', okClass: 'btn-danger',
+    onOk: () => {
+      if (DEFAULT_HOLIDAYS[yearTH]) {
+        _holidays[yearTH] = JSON.parse(JSON.stringify(DEFAULT_HOLIDAYS[yearTH]));
+      } else {
+        _holidays[yearTH] = [];
+      }
+      saveHolidaysToStorage();
+      renderHolidayModal();
+      buildRosterTable();
+      if (isAdmin) buildInputTable();
+      showToast('รีเซ็ตวันหยุดเรียบร้อยแล้ว', 'success');
+    }
+  });
+}
+
+function toggleHolidayEdit() {
+  _holidayEditMode = !_holidayEditMode;
+  const btn = document.getElementById('btn-edit-holiday');
+  const actions = document.getElementById('holiday-edit-actions');
+  if (btn) btn.textContent = _holidayEditMode ? '👁️ ดูปกติ' : '✏️ แก้ไข';
+  if (actions) actions.style.display = _holidayEditMode ? 'flex' : 'none';
+  renderHolidayModal();
+}
+
+function cancelHolidayEdit() {
+  _holidayEditMode = false;
+  const btn = document.getElementById('btn-edit-holiday');
+  const actions = document.getElementById('holiday-edit-actions');
+  if (btn) btn.textContent = '✏️ แก้ไข';
+  if (actions) actions.style.display = 'none';
+}
+
+function addHolidayRow(yearTH) {
+  if (!_holidays[yearTH]) _holidays[yearTH] = [];
+  _holidays[yearTH].push({ date:`${yearTH}-01-01`, name:'วันหยุด' });
+  renderHolidayModal();
+}
+
+function removeHoliday(yearTH, idx) {
+  _holidays[yearTH].splice(idx, 1);
+  renderHolidayModal();
+}
+
+function updateHolidayDate(yearTH, idx, ceDate) {
+  // แปลง CE → Thai Buddhist date
+  const [y, m, d] = ceDate.split('-').map(Number);
+  const thaiDate = `${y+543}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  if (_holidays[yearTH] && _holidays[yearTH][idx]) {
+    _holidays[yearTH][idx].date = thaiDate;
+  }
+}
+
+function updateHolidayName(yearTH, idx, name) {
+  if (_holidays[yearTH] && _holidays[yearTH][idx]) {
+    _holidays[yearTH][idx].name = name;
+  }
+}
+
+function saveHolidays() {
+  // re-read inputs ก่อน save
+  document.querySelectorAll('.holiday-date-input').forEach(el => {
+    const yearTH = parseInt(el.dataset.year);
+    const idx    = parseInt(el.dataset.idx);
+    updateHolidayDate(yearTH, idx, el.value);
+  });
+  document.querySelectorAll('.holiday-name-input').forEach(el => {
+    const yearTH = parseInt(el.dataset.year);
+    const idx    = parseInt(el.dataset.idx);
+    updateHolidayName(yearTH, idx, el.value);
+  });
+  // sort ตามวันที่
+  const yearTH = parseInt(document.getElementById('holiday-year-select').value);
+  if (_holidays[yearTH]) {
+    _holidays[yearTH].sort((a,b) => a.date.localeCompare(b.date));
+  }
+  // บันทึกลง LocalStorage
+  saveHolidaysToStorage();
+  cancelHolidayEdit();
+  renderHolidayModal();
+  // rebuild ตารางเพื่อ highlight ใหม่
+  buildRosterTable();
+  if (isAdmin) buildInputTable();
+  showToast('บันทึกวันหยุดเรียบร้อยแล้ว — ข้อมูลจะคงอยู่แม้ reload', 'success');
+}
+
 window.addEventListener('DOMContentLoaded', () => {
   initDateDisplay();
   loadUserFromPortal();
@@ -1836,239 +2070,6 @@ async function applyRosterPermissions(role) {
   if (bnavEmp) bnavEmp.style.display = canEmp ? 'flex' : 'none';
   const btnAddEmp = document.getElementById('btn-add-emp');
   if (btnAddEmp && !canEmp) btnAddEmp.style.display = 'none';
-}
-
-// ── HOLIDAYS ─────────────────────────────────────────
-// ข้อมูลวันหยุดเริ่มต้น 2568 (13 วัน) — admin แก้ไขได้
-const DEFAULT_HOLIDAYS = {
-  2568: [
-    { date:'2568-01-01', name:'วันขึ้นปีใหม่' },
-    { date:'2568-02-12', name:'วันมาฆบูชา' },
-    { date:'2568-04-06', name:'วันจักรี' },
-    { date:'2568-04-13', name:'วันสงกรานต์' },
-    { date:'2568-04-14', name:'วันสงกรานต์' },
-    { date:'2568-04-15', name:'วันสงกรานต์' },
-    { date:'2568-05-01', name:'วันแรงงานแห่งชาติ' },
-    { date:'2568-05-11', name:'วันวิสาขบูชา' },
-    { date:'2568-07-10', name:'วันอาสาฬหบูชา' },
-    { date:'2568-07-11', name:'วันเข้าพรรษา' },
-    { date:'2568-08-12', name:'วันแม่แห่งชาติ' },
-    { date:'2568-10-13', name:'วันคล้ายวันสวรรคต ร.9' },
-    { date:'2568-12-05', name:'วันพ่อแห่งชาติ' },
-    { date:'2568-12-10', name:'วันรัฐธรรมนูญ' },
-    { date:'2568-12-31', name:'วันสิ้นปี' },
-  ]
-};
-
-// โหลดจาก LocalStorage ถ้ามี ไม่งั้นใช้ Default
-function loadHolidaysFromStorage() {
-  try {
-    const saved = localStorage.getItem('bfs_roster_holidays');
-    if (saved) return JSON.parse(saved);
-  } catch(e) {}
-  return JSON.parse(JSON.stringify(DEFAULT_HOLIDAYS));
-}
-
-function saveHolidaysToStorage() {
-  try {
-    localStorage.setItem('bfs_roster_holidays', JSON.stringify(_holidays));
-  } catch(e) {
-    console.warn('LocalStorage ไม่พร้อมใช้งาน');
-  }
-}
-
-let _holidays = loadHolidaysFromStorage();
-let _holidayEditMode = false;
-const DAY_NAMES_TH = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
-const MONTH_NAMES_TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
-
-// แปลง Buddhist year date → JS Date (CE)
-function thaiDateToJS(thaiDate) {
-  // format: 2568-MM-DD
-  const [y, m, d] = thaiDate.split('-').map(Number);
-  return new Date(y - 543, m - 1, d);
-}
-
-// ดึงวันหยุดของปี พ.ศ.
-function getHolidaysForYear(yearTH) {
-  return (_holidays[yearTH] || []).slice().sort((a,b) => a.date.localeCompare(b.date));
-}
-
-// เช็คว่าวันที่ในตาราง (CE) เป็นวันหยุดนักขัตฤกษ์ไหม
-function getHolidayName(yearAD, monthNum, day) {
-  const yearTH = yearAD + 543;
-  const mm = String(monthNum).padStart(2,'0');
-  const dd = String(day).padStart(2,'0');
-  const dateStr = `${yearTH}-${mm}-${dd}`;
-  const h = (_holidays[yearTH] || []).find(h => h.date === dateStr);
-  return h ? h.name : null;
-}
-
-function openHolidayModal() {
-  // สร้าง year selector
-  const sel = document.getElementById('holiday-year-select');
-  if (sel.options.length === 0) {
-    const currentYearTH = new Date().getFullYear() + 543;
-    for (let y = currentYearTH - 1; y <= currentYearTH + 2; y++) {
-      const opt = document.createElement('option');
-      opt.value = y;
-      opt.textContent = `พ.ศ. ${y}`;
-      if (y === currentYearTH) opt.selected = true;
-      sel.appendChild(opt);
-    }
-  }
-  // แสดงปุ่มแก้ไขเฉพาะ admin
-  const editBtn = document.getElementById('btn-edit-holiday');
-  if (editBtn) editBtn.style.display = isAdmin ? 'flex' : 'none';
-
-  renderHolidayModal();
-  document.getElementById('modal-holiday').classList.add('show');
-}
-
-function closeHolidayModal() {
-  cancelHolidayEdit();
-  document.getElementById('modal-holiday').classList.remove('show');
-}
-
-function renderHolidayModal() {
-  const yearTH  = parseInt(document.getElementById('holiday-year-select').value);
-  const holidays = getHolidaysForYear(yearTH);
-  const countEl = document.getElementById('holiday-count-label');
-  if (countEl) countEl.textContent = `ทั้งหมด ${holidays.length} วัน`;
-
-  const content = document.getElementById('holiday-modal-content');
-
-  if (_holidayEditMode && isAdmin) {
-    // Edit mode
-    let html = `<div style="margin-bottom:12px;">
-      <button onclick="addHolidayRow(${yearTH})" class="btn-secondary" style="font-size:12px;padding:6px 12px;">➕ เพิ่มวันหยุด</button>
-    </div>
-    <div id="holiday-edit-list">`;
-    holidays.forEach((h, i) => {
-      html += `<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
-        <input type="date" value="${thaiDateToJS(h.date).toISOString().split('T')[0]}"
-          data-idx="${i}" data-year="${yearTH}" class="form-input holiday-date-input"
-          style="width:160px;" onchange="updateHolidayDate(${yearTH},${i},this.value)">
-        <input type="text" value="${h.name}" data-idx="${i}" data-year="${yearTH}"
-          class="form-input holiday-name-input" placeholder="ชื่อวันหยุด"
-          style="flex:1;" oninput="updateHolidayName(${yearTH},${i},this.value)">
-        <button onclick="removeHoliday(${yearTH},${i})" style="background:rgba(224,82,82,.2);border:1px solid rgba(224,82,82,.4);color:#e05252;border-radius:6px;padding:6px 10px;cursor:pointer;">🗑️</button>
-      </div>`;
-    });
-    html += '</div>';
-    content.innerHTML = html;
-  } else {
-    // View mode — grid
-    if (!holidays.length) {
-      content.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);">ยังไม่มีข้อมูลวันหยุดปี ${yearTH}</div>`;
-      return;
-    }
-    let html = '<div class="holiday-modal-grid">';
-    holidays.forEach((h, i) => {
-      const jsDate  = thaiDateToJS(h.date);
-      const dayName = DAY_NAMES_TH[jsDate.getDay()];
-      const [y, m, d] = h.date.split('-');
-      const displayDate = `${parseInt(d)} ${MONTH_NAMES_TH[parseInt(m)-1]} ${y}`;
-      html += `<div class="holiday-card">
-        <div class="holiday-card-date">${displayDate}</div>
-        <div class="holiday-card-name">${h.name}</div>
-        <div class="holiday-card-day">วัน${dayName}</div>
-      </div>`;
-    });
-    html += '</div>';
-    content.innerHTML = html;
-  }
-}
-
-function resetHolidays() {
-  const yearTH = parseInt(document.getElementById('holiday-year-select').value);
-  showConfirm({
-    icon: '↺', title: 'รีเซ็ตวันหยุด',
-    msg: `ต้องการรีเซ็ตวันหยุดปี ${yearTH} กลับค่าเริ่มต้นใช่ไหมครับ?`,
-    okText: 'รีเซ็ต', okClass: 'btn-danger',
-    onOk: () => {
-      if (DEFAULT_HOLIDAYS[yearTH]) {
-        _holidays[yearTH] = JSON.parse(JSON.stringify(DEFAULT_HOLIDAYS[yearTH]));
-      } else {
-        _holidays[yearTH] = [];
-      }
-      saveHolidaysToStorage();
-      renderHolidayModal();
-      buildRosterTable();
-      if (isAdmin) buildInputTable();
-      showToast('รีเซ็ตวันหยุดเรียบร้อยแล้ว', 'success');
-    }
-  });
-}
-
-function toggleHolidayEdit() {
-  _holidayEditMode = !_holidayEditMode;
-  const btn = document.getElementById('btn-edit-holiday');
-  const actions = document.getElementById('holiday-edit-actions');
-  if (btn) btn.textContent = _holidayEditMode ? '👁️ ดูปกติ' : '✏️ แก้ไข';
-  if (actions) actions.style.display = _holidayEditMode ? 'flex' : 'none';
-  renderHolidayModal();
-}
-
-function cancelHolidayEdit() {
-  _holidayEditMode = false;
-  const btn = document.getElementById('btn-edit-holiday');
-  const actions = document.getElementById('holiday-edit-actions');
-  if (btn) btn.textContent = '✏️ แก้ไข';
-  if (actions) actions.style.display = 'none';
-}
-
-function addHolidayRow(yearTH) {
-  if (!_holidays[yearTH]) _holidays[yearTH] = [];
-  _holidays[yearTH].push({ date:`${yearTH}-01-01`, name:'วันหยุด' });
-  renderHolidayModal();
-}
-
-function removeHoliday(yearTH, idx) {
-  _holidays[yearTH].splice(idx, 1);
-  renderHolidayModal();
-}
-
-function updateHolidayDate(yearTH, idx, ceDate) {
-  // แปลง CE → Thai Buddhist date
-  const [y, m, d] = ceDate.split('-').map(Number);
-  const thaiDate = `${y+543}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-  if (_holidays[yearTH] && _holidays[yearTH][idx]) {
-    _holidays[yearTH][idx].date = thaiDate;
-  }
-}
-
-function updateHolidayName(yearTH, idx, name) {
-  if (_holidays[yearTH] && _holidays[yearTH][idx]) {
-    _holidays[yearTH][idx].name = name;
-  }
-}
-
-function saveHolidays() {
-  // re-read inputs ก่อน save
-  document.querySelectorAll('.holiday-date-input').forEach(el => {
-    const yearTH = parseInt(el.dataset.year);
-    const idx    = parseInt(el.dataset.idx);
-    updateHolidayDate(yearTH, idx, el.value);
-  });
-  document.querySelectorAll('.holiday-name-input').forEach(el => {
-    const yearTH = parseInt(el.dataset.year);
-    const idx    = parseInt(el.dataset.idx);
-    updateHolidayName(yearTH, idx, el.value);
-  });
-  // sort ตามวันที่
-  const yearTH = parseInt(document.getElementById('holiday-year-select').value);
-  if (_holidays[yearTH]) {
-    _holidays[yearTH].sort((a,b) => a.date.localeCompare(b.date));
-  }
-  // บันทึกลง LocalStorage
-  saveHolidaysToStorage();
-  cancelHolidayEdit();
-  renderHolidayModal();
-  // rebuild ตารางเพื่อ highlight ใหม่
-  buildRosterTable();
-  if (isAdmin) buildInputTable();
-  showToast('บันทึกวันหยุดเรียบร้อยแล้ว — ข้อมูลจะคงอยู่แม้ reload', 'success');
 }
 
 // ── MOBILE SIDEBAR ───────────────────────────────────
