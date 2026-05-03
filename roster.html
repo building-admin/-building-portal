@@ -1493,7 +1493,11 @@ function openPrintView(autoPrint = true) {
       .sign-area { display:flex; justify-content:flex-end; gap:80px; margin-top:16px; }
       .sign-box { text-align:center; }
       .sign-line { border-top:1px solid #000; padding-top:4px; margin-top:28px; font-size:9px; }
-      @media print { body { padding:4px; } }
+      @media print {
+        @page { size: A4 landscape; margin: 8mm; }
+        body { padding:0; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+        * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
+      }
     </style></head><body>
     <h1>รอบการปฏิบัติงานฝ่ายอาคารและสถานที่</h1>
     <h2>${monthNames[monthNum]} ${yearTH}</h2>
