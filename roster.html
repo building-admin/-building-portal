@@ -1135,11 +1135,11 @@ function buildInputTable() {
     const dow = new Date(yearAD, monthNum - 1, d).getDay();
     const isWE = dow === 0 || dow === 6;
     const hName = getHolidayName(yearAD, monthNum, d);
-    const thStyle = hName ? 'background:rgba(200,145,42,.25);color:var(--gold-light);'
-                  : isWE  ? 'background:rgba(200,145,42,.12);color:var(--gold-light);' : '';
-    headHTML += `<th class="col-day" style="${thStyle}font-size:10px;" title="${hName||''}">
-      ${d}<br><span style="font-size:8px;">${dayNames[dow]}</span>
-      ${hName ? '<br><span style="font-size:7px;color:var(--gold);">H</span>' : ''}</th>`;
+    const thStyle = hName
+      ? 'background:rgba(200,145,42,.2);color:var(--gold-light);box-shadow:inset 0 0 0 2px var(--gold);'
+      : isWE ? 'background:rgba(200,145,42,.12);color:var(--gold-light);' : '';
+    headHTML += `<th class="col-day" style="${thStyle}font-size:10px;position:relative;" title="${hName||''}">
+      ${d}<br><span style="font-size:8px;">${dayNames[dow]}</span></th>`;
   }
   headHTML += '</tr>';
   thead.innerHTML = headHTML;
@@ -1257,11 +1257,11 @@ function buildRosterTable() {
     const dow = new Date(yearAD, monthNum - 1, d).getDay();
     const isWeekend = dow === 0 || dow === 6;
     const hName = getHolidayName(yearAD, monthNum, d);
-    const thStyle = hName ? 'background:rgba(200,145,42,.25);color:var(--gold-light);'
-                  : isWeekend ? 'background:rgba(200,145,42,.12);color:var(--gold-light);' : '';
-    headHTML += `<th class="col-day" style="${thStyle}font-size:10px;" title="${hName||''}">
-      ${d}<br><span style="font-size:8px;">${dayNames[dow]}</span>
-      ${hName ? '<br><span style="font-size:7px;color:var(--gold);">H</span>' : ''}</th>`;
+    const thStyle = hName
+      ? 'background:rgba(200,145,42,.2);color:var(--gold-light);box-shadow:inset 0 0 0 2px var(--gold);'
+      : isWeekend ? 'background:rgba(200,145,42,.12);color:var(--gold-light);' : '';
+    headHTML += `<th class="col-day" style="${thStyle}font-size:10px;position:relative;" title="${hName||''}">
+      ${d}<br><span style="font-size:8px;">${dayNames[dow]}</span></th>`;
   }
   headHTML += '</tr>';
   thead.innerHTML = headHTML;
