@@ -410,7 +410,6 @@
     <div class="topbar-right">
       <span class="topbar-date" id="topbar-date"></span>
       <button class="btn-secondary no-print" onclick="exportCSV()">📥 CSV</button>
-      <button class="btn-secondary no-print" onclick="openHolidayModal()">📅 วันหยุด 13 วัน</button>
       <button class="btn-secondary no-print" onclick="openPrintView(false)">👁️ ดูตัวอย่าง</button>
       <button class="btn-secondary no-print" onclick="openPrintView(true)">🖨️ พิมพ์/PDF</button>
     </div>
@@ -477,6 +476,7 @@
           <button class="month-nav" onclick="changeMonth(1)">›</button>
         </div>
         <button class="btn-primary no-print" id="btn-save" onclick="saveRoster()" style="display:none;">💾 บันทึก</button>
+        <button class="btn-secondary no-print" onclick="openHolidayModal()">📅 วันหยุด</button>
         <span id="save-status" style="font-size:12px;color:var(--muted);"></span>
       </div>
 
@@ -1309,10 +1309,12 @@ function buildRosterTable() {
             title="${padShift(code)||''}">${padShift(code)}</div></td>`;
     }
 
-    return `<tr>
+    const isSelf = currentUser && String(emp['รหัสพนักงาน']) === String(currentUser.empId);
+
+    return `<tr${isSelf ? ' style="background:rgba(77,217,192,.06);"' : ''}>
       <td class="col-name">
         <div>
-          <div class="emp-name">${emp['ชื่อ-นามสกุล']}</div>
+          <div class="emp-name" style="${isSelf ? 'color:#4dd9c0;font-weight:700;' : ''}">${isSelf ? '👤 ' : ''}${emp['ชื่อ-นามสกุล']}</div>
           <div class="emp-position">${emp['ตำแหน่ง']}</div>
         </div>
       </td>
