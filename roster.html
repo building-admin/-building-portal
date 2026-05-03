@@ -304,29 +304,54 @@
 <body>
 
 <!-- ── HOLIDAY MODAL ── -->
-<div class="modal-overlay" id="modal-holiday">
-  <div class="modal" style="max-width:680px;width:95%;">
-    <div class="modal-header">
-      <div class="modal-title">📅 วันหยุดนักขัตฤกษ์ประจำปี</div>
-      <button class="modal-close" onclick="closeHolidayModal()">✕</button>
+<div id="modal-holiday" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9990;align-items:center;justify-content:center;backdrop-filter:blur(3px);">
+  <div style="background:var(--navy-mid);border:1px solid var(--border);border-radius:16px;max-width:680px;width:95%;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.8);">
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:12px;padding:18px 22px;border-bottom:1px solid var(--border);flex-shrink:0;">
+      <span style="font-size:20px;">📅</span>
+      <div style="flex:1;">
+        <div style="font-size:16px;font-weight:700;color:var(--white);">วันหยุดนักขัตฤกษ์ประจำปี</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">กำหนดโดยบริษัท — Admin แก้ไขได้</div>
+      </div>
+      <button onclick="closeHolidayModal()"
+        style="background:rgba(44,74,114,.5);border:1px solid var(--border);color:var(--silver);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;"
+        onmouseover="this.style.background='rgba(224,82,82,.2)';this.style.color='#e05252'"
+        onmouseout="this.style.background='rgba(44,74,114,.5)';this.style.color='var(--silver)'">✕</button>
     </div>
-    <div style="padding:0 20px 4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <select id="holiday-year-select" class="form-input" style="width:120px;" onchange="renderHolidayModal()"></select>
-      <span id="holiday-count-label" style="font-size:12px;color:var(--muted);"></span>
-      <div style="flex:1;"></div>
-      <button id="btn-edit-holiday" class="btn-secondary" style="display:none;font-size:12px;padding:6px 12px;" onclick="toggleHolidayEdit()">✏️ แก้ไข</button>
+
+    <!-- Sub-header -->
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 22px;border-bottom:1px solid rgba(44,74,114,.3);flex-shrink:0;background:rgba(13,30,53,.4);">
+      <select id="holiday-year-select" onchange="renderHolidayModal()"
+        style="background:var(--navy-light);border:1px solid var(--border);color:var(--white);border-radius:8px;padding:6px 10px;font-size:13px;font-family:var(--font-body);cursor:pointer;"></select>
+      <span id="holiday-count-label" style="font-size:12px;color:var(--muted);flex:1;"></span>
+      <button id="btn-edit-holiday" onclick="toggleHolidayEdit()"
+        style="display:none;background:transparent;border:1px solid var(--border);color:var(--silver);border-radius:8px;padding:6px 14px;font-size:12px;cursor:pointer;font-family:var(--font-body);"
+        onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--gold-light)'"
+        onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--silver)'">✏️ แก้ไข</button>
     </div>
-    <div class="modal-body" style="max-height:60vh;overflow-y:auto;">
+
+    <!-- Body -->
+    <div style="padding:18px 22px;overflow-y:auto;flex:1;">
       <div id="holiday-modal-content"></div>
     </div>
-    <div class="modal-footer">
-      <div id="holiday-edit-actions" style="display:none;gap:8px;display:none;">
-        <button class="btn-cancel" onclick="cancelHolidayEdit()">ยกเลิก</button>
-        <button class="btn-secondary" onclick="resetHolidays()" style="font-size:12px;">↺ รีเซ็ต</button>
-        <button class="btn-save" onclick="saveHolidays()">💾 บันทึก</button>
+
+    <!-- Footer -->
+    <div style="display:flex;align-items:center;justify-content:flex-end;gap:10px;padding:14px 22px;border-top:1px solid var(--border);flex-shrink:0;background:rgba(13,30,53,.4);border-radius:0 0 16px 16px;">
+      <div id="holiday-edit-actions" style="display:none;gap:10px;align-items:center;">
+        <button onclick="cancelHolidayEdit()"
+          style="padding:8px 18px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);cursor:pointer;font-size:13px;font-family:var(--font-body);">ยกเลิก</button>
+        <button onclick="resetHolidays()"
+          style="padding:8px 18px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);cursor:pointer;font-size:13px;font-family:var(--font-body);">↺ รีเซ็ต</button>
+        <button onclick="saveHolidays()"
+          style="padding:8px 22px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:8px;color:var(--navy);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font-body);">💾 บันทึก</button>
       </div>
-      <button class="btn-cancel" onclick="closeHolidayModal()">ปิด</button>
+      <button onclick="closeHolidayModal()"
+        style="padding:8px 20px;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--muted);cursor:pointer;font-size:13px;font-family:var(--font-body);"
+        onmouseover="this.style.borderColor='var(--gold)';this.style.color='var(--white)'"
+        onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">ปิด</button>
     </div>
+
   </div>
 </div>
 
@@ -816,12 +841,12 @@ function openHolidayModal() {
   if (editBtn) editBtn.style.display = isAdmin ? 'flex' : 'none';
 
   renderHolidayModal();
-  document.getElementById('modal-holiday').classList.add('show');
+  document.getElementById('modal-holiday').style.display = 'flex';
 }
 
 function closeHolidayModal() {
   cancelHolidayEdit();
-  document.getElementById('modal-holiday').classList.remove('show');
+  document.getElementById('modal-holiday').style.display = 'none';
 }
 
 function renderHolidayModal() {
@@ -834,19 +859,23 @@ function renderHolidayModal() {
 
   if (_holidayEditMode && isAdmin) {
     // Edit mode
-    let html = `<div style="margin-bottom:12px;">
-      <button onclick="addHolidayRow(${yearTH})" class="btn-secondary" style="font-size:12px;padding:6px 12px;">➕ เพิ่มวันหยุด</button>
+    let html = `<div style="margin-bottom:14px;">
+      <button onclick="addHolidayRow(${yearTH})"
+        style="background:rgba(200,145,42,.1);border:1px solid rgba(200,145,42,.3);color:var(--gold-light);border-radius:8px;padding:7px 16px;font-size:12px;cursor:pointer;font-family:var(--font-body);">➕ เพิ่มวันหยุด</button>
     </div>
     <div id="holiday-edit-list">`;
     holidays.forEach((h, i) => {
-      html += `<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+      html += `<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(44,74,114,.25);">
         <input type="date" value="${thaiDateToJS(h.date).toISOString().split('T')[0]}"
-          data-idx="${i}" data-year="${yearTH}" class="form-input holiday-date-input"
-          style="width:160px;" onchange="updateHolidayDate(${yearTH},${i},this.value)">
+          data-idx="${i}" data-year="${yearTH}" class="holiday-date-input"
+          style="background:var(--navy-light);border:1px solid var(--border);color:var(--white);border-radius:8px;padding:7px 10px;font-size:13px;font-family:var(--font-body);width:160px;"
+          onchange="updateHolidayDate(${yearTH},${i},this.value)">
         <input type="text" value="${h.name}" data-idx="${i}" data-year="${yearTH}"
-          class="form-input holiday-name-input" placeholder="ชื่อวันหยุด"
-          style="flex:1;" oninput="updateHolidayName(${yearTH},${i},this.value)">
-        <button onclick="removeHoliday(${yearTH},${i})" style="background:rgba(224,82,82,.2);border:1px solid rgba(224,82,82,.4);color:#e05252;border-radius:6px;padding:6px 10px;cursor:pointer;">🗑️</button>
+          class="holiday-name-input"
+          style="background:var(--navy-light);border:1px solid var(--border);color:var(--white);border-radius:8px;padding:7px 10px;font-size:13px;font-family:var(--font-body);flex:1;"
+          placeholder="ชื่อวันหยุด" oninput="updateHolidayName(${yearTH},${i},this.value)">
+        <button onclick="removeHoliday(${yearTH},${i})"
+          style="background:rgba(224,82,82,.1);border:1px solid rgba(224,82,82,.3);color:#e05252;border-radius:8px;padding:7px 11px;cursor:pointer;flex-shrink:0;">🗑️</button>
       </div>`;
     });
     html += '</div>';
@@ -863,10 +892,10 @@ function renderHolidayModal() {
       const dayName = DAY_NAMES_TH[jsDate.getDay()];
       const [y, m, d] = h.date.split('-');
       const displayDate = `${parseInt(d)} ${MONTH_NAMES_TH[parseInt(m)-1]} ${y}`;
-      html += `<div class="holiday-card">
-        <div class="holiday-card-date">${displayDate}</div>
-        <div class="holiday-card-name">${h.name}</div>
-        <div class="holiday-card-day">วัน${dayName}</div>
+      html += `<div style="background:rgba(44,74,114,.2);border:1px solid rgba(44,74,114,.5);border-radius:10px;padding:12px 14px;">
+        <div style="font-size:11px;color:var(--gold);font-family:var(--font-label);font-weight:700;margin-bottom:4px;">${displayDate}</div>
+        <div style="font-size:13px;color:var(--white);font-weight:600;margin-bottom:2px;">${h.name}</div>
+        <div style="font-size:11px;color:var(--muted);">วัน${dayName}</div>
       </div>`;
     });
     html += '</div>';
@@ -900,7 +929,7 @@ function toggleHolidayEdit() {
   const btn = document.getElementById('btn-edit-holiday');
   const actions = document.getElementById('holiday-edit-actions');
   if (btn) btn.textContent = _holidayEditMode ? '👁️ ดูปกติ' : '✏️ แก้ไข';
-  if (actions) actions.style.display = _holidayEditMode ? 'flex' : 'none';
+  if (actions) { actions.style.display = _holidayEditMode ? 'flex' : 'none'; }
   renderHolidayModal();
 }
 
