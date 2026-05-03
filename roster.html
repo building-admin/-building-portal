@@ -205,7 +205,18 @@
     .shift-cell { width:24px; height:20px; font-size:9px; }
   }
 
-  /* ── MOBILE ── */
+  /* ── HOLIDAYS ── */
+  .holiday-col th { background:rgba(200,145,42,.2) !important; color:var(--gold-light) !important; }
+  .holiday-col td { background:rgba(200,145,42,.06) !important; }
+  .holiday-name-row th { font-size:8px !important; color:var(--gold) !important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:36px; padding:1px 2px !important; }
+
+  /* modal วันหยุด */
+  .holiday-modal-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:12px; }
+  @media(max-width:600px) { .holiday-modal-grid { grid-template-columns:repeat(2,1fr); } }
+  .holiday-card { background:rgba(200,145,42,.1); border:1px solid rgba(200,145,42,.3); border-radius:8px; padding:10px 12px; }
+  .holiday-card-date { font-size:11px; color:var(--gold); font-family:var(--font-label); font-weight:700; }
+  .holiday-card-name { font-size:12px; color:var(--white); margin-top:2px; }
+  .holiday-card-day  { font-size:10px; color:var(--muted); margin-top:1px; }
   .sidebar-overlay {
     display:none; position:fixed; inset:0; background:rgba(0,0,0,.6);
     z-index:90; backdrop-filter:blur(2px);
@@ -285,6 +296,33 @@
 </head>
 <body>
 
+<!-- ── HOLIDAY MODAL ── -->
+<div class="modal-overlay" id="modal-holiday">
+  <div class="modal" style="max-width:680px;width:95%;">
+    <div class="modal-header">
+      <div class="modal-title">📅 วันหยุดนักขัตฤกษ์ประจำปี</div>
+      <button class="modal-close" onclick="closeHolidayModal()">✕</button>
+    </div>
+    <div style="padding:0 20px 4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <select id="holiday-year-select" class="form-input" style="width:120px;" onchange="renderHolidayModal()"></select>
+      <span id="holiday-count-label" style="font-size:12px;color:var(--muted);"></span>
+      <div style="flex:1;"></div>
+      <button id="btn-edit-holiday" class="btn-secondary" style="display:none;font-size:12px;padding:6px 12px;" onclick="toggleHolidayEdit()">✏️ แก้ไข</button>
+    </div>
+    <div class="modal-body" style="max-height:60vh;overflow-y:auto;">
+      <div id="holiday-modal-content"></div>
+    </div>
+    <div class="modal-footer">
+      <div id="holiday-edit-actions" style="display:none;gap:8px;display:none;">
+        <button class="btn-cancel" onclick="cancelHolidayEdit()">ยกเลิก</button>
+        <button class="btn-secondary" onclick="resetHolidays()" style="font-size:12px;">↺ รีเซ็ต</button>
+        <button class="btn-save" onclick="saveHolidays()">💾 บันทึก</button>
+      </div>
+      <button class="btn-cancel" onclick="closeHolidayModal()">ปิด</button>
+    </div>
+  </div>
+</div>
+
 <!-- sidebar overlay -->
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
@@ -340,6 +378,7 @@
     <div class="topbar-right">
       <span class="topbar-date" id="topbar-date"></span>
       <button class="btn-secondary no-print" onclick="exportCSV()">📥 CSV</button>
+      <button class="btn-secondary no-print" onclick="openHolidayModal()">📅 วันหยุด 13 วัน</button>
       <button class="btn-secondary no-print" onclick="openPrintView(false)">👁️ ดูตัวอย่าง</button>
       <button class="btn-secondary no-print" onclick="openPrintView(true)">🖨️ พิมพ์/PDF</button>
     </div>
@@ -801,8 +840,12 @@ function buildInputTable() {
   for (let d = 1; d <= daysInMonth; d++) {
     const dow = new Date(yearAD, monthNum - 1, d).getDay();
     const isWE = dow === 0 || dow === 6;
-    headHTML += `<th class="col-day" style="${isWE?'background:rgba(200,145,42,.12);color:var(--gold-light);':''}font-size:10px;">
-      ${d}<br><span style="font-size:8px;">${dayNames[dow]}</span></th>`;
+    const hName = getHolidayName(yearAD, monthNum, d);
+    const thStyle = hName ? 'background:rgba(200,145,42,.25);color:var(--gold-light);'
+                  : isWE  ? 'background:rgba(200,145,42,.12);color:var(--gold-light);' : '';
+    headHTML += `<th class="col-day" style="${thStyle}font-size:10px;" title="${hName||''}">
+      ${d}<br><span style="font-size:8px;">${dayNames[dow]}</span>
+      ${hName ? '<br><span style="font-size:7px;color:var(--gold);">H</span>' : ''}</th>`;
   }
   headHTML += '</tr>';
   thead.innerHTML = headHTML;
@@ -919,8 +962,12 @@ function buildRosterTable() {
   for (let d = 1; d <= daysInMonth; d++) {
     const dow = new Date(yearAD, monthNum - 1, d).getDay();
     const isWeekend = dow === 0 || dow === 6;
-    headHTML += `<th class="col-day" style="${isWeekend?'background:rgba(200,145,42,.12);color:var(--gold-light);':''}font-size:10px;">
-      ${d}<br><span style="font-size:8px;">${dayNames[dow]}</span></th>`;
+    const hName = getHolidayName(yearAD, monthNum, d);
+    const thStyle = hName ? 'background:rgba(200,145,42,.25);color:var(--gold-light);'
+                  : isWeekend ? 'background:rgba(200,145,42,.12);color:var(--gold-light);' : '';
+    headHTML += `<th class="col-day" style="${thStyle}font-size:10px;" title="${hName||''}">
+      ${d}<br><span style="font-size:8px;">${dayNames[dow]}</span>
+      ${hName ? '<br><span style="font-size:7px;color:var(--gold);">H</span>' : ''}</th>`;
   }
   headHTML += '</tr>';
   thead.innerHTML = headHTML;
@@ -1789,6 +1836,237 @@ async function applyRosterPermissions(role) {
   if (bnavEmp) bnavEmp.style.display = canEmp ? 'flex' : 'none';
   const btnAddEmp = document.getElementById('btn-add-emp');
   if (btnAddEmp && !canEmp) btnAddEmp.style.display = 'none';
+}
+
+// ── HOLIDAYS ─────────────────────────────────────────
+// ข้อมูลวันหยุดเริ่มต้น 2568 (13 วัน) — admin แก้ไขได้
+const DEFAULT_HOLIDAYS = {
+  2568: [
+    { date:'2568-01-01', name:'วันขึ้นปีใหม่' },
+    { date:'2568-02-12', name:'วันมาฆบูชา' },
+    { date:'2568-04-06', name:'วันจักรี' },
+    { date:'2568-04-13', name:'วันสงกรานต์' },
+    { date:'2568-04-14', name:'วันสงกรานต์' },
+    { date:'2568-04-15', name:'วันสงกรานต์' },
+    { date:'2568-05-01', name:'วันแรงงานแห่งชาติ' },
+    { date:'2568-05-11', name:'วันวิสาขบูชา' },
+    { date:'2568-07-10', name:'วันอาสาฬหบูชา' },
+    { date:'2568-07-11', name:'วันเข้าพรรษา' },
+    { date:'2568-08-12', name:'วันแม่แห่งชาติ' },
+    { date:'2568-10-13', name:'วันคล้ายวันสวรรคต ร.9' },
+    { date:'2568-12-05', name:'วันพ่อแห่งชาติ' },
+    { date:'2568-12-10', name:'วันรัฐธรรมนูญ' },
+    { date:'2568-12-31', name:'วันสิ้นปี' },
+  ]
+};
+
+// โหลดจาก LocalStorage ถ้ามี ไม่งั้นใช้ Default
+function loadHolidaysFromStorage() {
+  try {
+    const saved = localStorage.getItem('bfs_roster_holidays');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_HOLIDAYS));
+}
+
+function saveHolidaysToStorage() {
+  try {
+    localStorage.setItem('bfs_roster_holidays', JSON.stringify(_holidays));
+  } catch(e) {
+    console.warn('LocalStorage ไม่พร้อมใช้งาน');
+  }
+}
+
+let _holidays = loadHolidaysFromStorage();
+let _holidayEditMode = false;
+const DAY_NAMES_TH = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+const MONTH_NAMES_TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
+// แปลง Buddhist year date → JS Date (CE)
+function thaiDateToJS(thaiDate) {
+  // format: 2568-MM-DD
+  const [y, m, d] = thaiDate.split('-').map(Number);
+  return new Date(y - 543, m - 1, d);
+}
+
+// ดึงวันหยุดของปี พ.ศ.
+function getHolidaysForYear(yearTH) {
+  return (_holidays[yearTH] || []).slice().sort((a,b) => a.date.localeCompare(b.date));
+}
+
+// เช็คว่าวันที่ในตาราง (CE) เป็นวันหยุดนักขัตฤกษ์ไหม
+function getHolidayName(yearAD, monthNum, day) {
+  const yearTH = yearAD + 543;
+  const mm = String(monthNum).padStart(2,'0');
+  const dd = String(day).padStart(2,'0');
+  const dateStr = `${yearTH}-${mm}-${dd}`;
+  const h = (_holidays[yearTH] || []).find(h => h.date === dateStr);
+  return h ? h.name : null;
+}
+
+function openHolidayModal() {
+  // สร้าง year selector
+  const sel = document.getElementById('holiday-year-select');
+  if (sel.options.length === 0) {
+    const currentYearTH = new Date().getFullYear() + 543;
+    for (let y = currentYearTH - 1; y <= currentYearTH + 2; y++) {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = `พ.ศ. ${y}`;
+      if (y === currentYearTH) opt.selected = true;
+      sel.appendChild(opt);
+    }
+  }
+  // แสดงปุ่มแก้ไขเฉพาะ admin
+  const editBtn = document.getElementById('btn-edit-holiday');
+  if (editBtn) editBtn.style.display = isAdmin ? 'flex' : 'none';
+
+  renderHolidayModal();
+  document.getElementById('modal-holiday').classList.add('show');
+}
+
+function closeHolidayModal() {
+  cancelHolidayEdit();
+  document.getElementById('modal-holiday').classList.remove('show');
+}
+
+function renderHolidayModal() {
+  const yearTH  = parseInt(document.getElementById('holiday-year-select').value);
+  const holidays = getHolidaysForYear(yearTH);
+  const countEl = document.getElementById('holiday-count-label');
+  if (countEl) countEl.textContent = `ทั้งหมด ${holidays.length} วัน`;
+
+  const content = document.getElementById('holiday-modal-content');
+
+  if (_holidayEditMode && isAdmin) {
+    // Edit mode
+    let html = `<div style="margin-bottom:12px;">
+      <button onclick="addHolidayRow(${yearTH})" class="btn-secondary" style="font-size:12px;padding:6px 12px;">➕ เพิ่มวันหยุด</button>
+    </div>
+    <div id="holiday-edit-list">`;
+    holidays.forEach((h, i) => {
+      html += `<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+        <input type="date" value="${thaiDateToJS(h.date).toISOString().split('T')[0]}"
+          data-idx="${i}" data-year="${yearTH}" class="form-input holiday-date-input"
+          style="width:160px;" onchange="updateHolidayDate(${yearTH},${i},this.value)">
+        <input type="text" value="${h.name}" data-idx="${i}" data-year="${yearTH}"
+          class="form-input holiday-name-input" placeholder="ชื่อวันหยุด"
+          style="flex:1;" oninput="updateHolidayName(${yearTH},${i},this.value)">
+        <button onclick="removeHoliday(${yearTH},${i})" style="background:rgba(224,82,82,.2);border:1px solid rgba(224,82,82,.4);color:#e05252;border-radius:6px;padding:6px 10px;cursor:pointer;">🗑️</button>
+      </div>`;
+    });
+    html += '</div>';
+    content.innerHTML = html;
+  } else {
+    // View mode — grid
+    if (!holidays.length) {
+      content.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);">ยังไม่มีข้อมูลวันหยุดปี ${yearTH}</div>`;
+      return;
+    }
+    let html = '<div class="holiday-modal-grid">';
+    holidays.forEach((h, i) => {
+      const jsDate  = thaiDateToJS(h.date);
+      const dayName = DAY_NAMES_TH[jsDate.getDay()];
+      const [y, m, d] = h.date.split('-');
+      const displayDate = `${parseInt(d)} ${MONTH_NAMES_TH[parseInt(m)-1]} ${y}`;
+      html += `<div class="holiday-card">
+        <div class="holiday-card-date">${displayDate}</div>
+        <div class="holiday-card-name">${h.name}</div>
+        <div class="holiday-card-day">วัน${dayName}</div>
+      </div>`;
+    });
+    html += '</div>';
+    content.innerHTML = html;
+  }
+}
+
+function resetHolidays() {
+  const yearTH = parseInt(document.getElementById('holiday-year-select').value);
+  showConfirm({
+    icon: '↺', title: 'รีเซ็ตวันหยุด',
+    msg: `ต้องการรีเซ็ตวันหยุดปี ${yearTH} กลับค่าเริ่มต้นใช่ไหมครับ?`,
+    okText: 'รีเซ็ต', okClass: 'btn-danger',
+    onOk: () => {
+      if (DEFAULT_HOLIDAYS[yearTH]) {
+        _holidays[yearTH] = JSON.parse(JSON.stringify(DEFAULT_HOLIDAYS[yearTH]));
+      } else {
+        _holidays[yearTH] = [];
+      }
+      saveHolidaysToStorage();
+      renderHolidayModal();
+      buildRosterTable();
+      if (isAdmin) buildInputTable();
+      showToast('รีเซ็ตวันหยุดเรียบร้อยแล้ว', 'success');
+    }
+  });
+}
+  _holidayEditMode = !_holidayEditMode;
+  const btn = document.getElementById('btn-edit-holiday');
+  const actions = document.getElementById('holiday-edit-actions');
+  if (btn) btn.textContent = _holidayEditMode ? '👁️ ดูปกติ' : '✏️ แก้ไข';
+  if (actions) actions.style.display = _holidayEditMode ? 'flex' : 'none';
+  renderHolidayModal();
+}
+
+function cancelHolidayEdit() {
+  _holidayEditMode = false;
+  const btn = document.getElementById('btn-edit-holiday');
+  const actions = document.getElementById('holiday-edit-actions');
+  if (btn) btn.textContent = '✏️ แก้ไข';
+  if (actions) actions.style.display = 'none';
+}
+
+function addHolidayRow(yearTH) {
+  if (!_holidays[yearTH]) _holidays[yearTH] = [];
+  _holidays[yearTH].push({ date:`${yearTH}-01-01`, name:'วันหยุด' });
+  renderHolidayModal();
+}
+
+function removeHoliday(yearTH, idx) {
+  _holidays[yearTH].splice(idx, 1);
+  renderHolidayModal();
+}
+
+function updateHolidayDate(yearTH, idx, ceDate) {
+  // แปลง CE → Thai Buddhist date
+  const [y, m, d] = ceDate.split('-').map(Number);
+  const thaiDate = `${y+543}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  if (_holidays[yearTH] && _holidays[yearTH][idx]) {
+    _holidays[yearTH][idx].date = thaiDate;
+  }
+}
+
+function updateHolidayName(yearTH, idx, name) {
+  if (_holidays[yearTH] && _holidays[yearTH][idx]) {
+    _holidays[yearTH][idx].name = name;
+  }
+}
+
+function saveHolidays() {
+  // re-read inputs ก่อน save
+  document.querySelectorAll('.holiday-date-input').forEach(el => {
+    const yearTH = parseInt(el.dataset.year);
+    const idx    = parseInt(el.dataset.idx);
+    updateHolidayDate(yearTH, idx, el.value);
+  });
+  document.querySelectorAll('.holiday-name-input').forEach(el => {
+    const yearTH = parseInt(el.dataset.year);
+    const idx    = parseInt(el.dataset.idx);
+    updateHolidayName(yearTH, idx, el.value);
+  });
+  // sort ตามวันที่
+  const yearTH = parseInt(document.getElementById('holiday-year-select').value);
+  if (_holidays[yearTH]) {
+    _holidays[yearTH].sort((a,b) => a.date.localeCompare(b.date));
+  }
+  // บันทึกลง LocalStorage
+  saveHolidaysToStorage();
+  cancelHolidayEdit();
+  renderHolidayModal();
+  // rebuild ตารางเพื่อ highlight ใหม่
+  buildRosterTable();
+  if (isAdmin) buildInputTable();
+  showToast('บันทึกวันหยุดเรียบร้อยแล้ว — ข้อมูลจะคงอยู่แม้ reload', 'success');
 }
 
 // ── MOBILE SIDEBAR ───────────────────────────────────
