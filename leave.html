@@ -1740,16 +1740,17 @@ async function loadRosterView() {
   }
 
   // Build leave lookup: { empId: { day: 'pending'|'approved' } }
-  const leaveLookup = {}; // { empId: { day: status } }
+  const leaveLookup = {}; // { empId: { day: {status, type} } }
   rvLeaveData.forEach(r => {
-    const empId = String(r['รหัสพนักงาน']);
-    const days  = rvGetLeaveDays(r, yearAD, monthNum);
-    const status = r['สถานะ'] === 'อนุมัติ' ? 'approved' : 'pending';
+    const empId    = String(r['รหัสพนักงาน']);
+    const days     = rvGetLeaveDays(r, yearAD, monthNum);
+    const status   = r['สถานะ'] === 'อนุมัติ' ? 'approved'
+                   : r['สถานะ'] === 'ไม่อนุมัติ' ? 'rejected' : 'pending';
+    const leaveType = String(r['ประเภทลา'] || '').replace(/^[\p{Emoji}\s]+/u,'').trim();
     if (!leaveLookup[empId]) leaveLookup[empId] = {};
     days.forEach(d => {
-      // pending overrides approved (pending = ยังต้องพิจารณา)
       if (!leaveLookup[empId][d] || status === 'pending') {
-        leaveLookup[empId][d] = status;
+        leaveLookup[empId][d] = { status, type: leaveType };
       }
     });
   });
@@ -1819,9 +1820,19 @@ async function loadRosterView() {
       const dow   = new Date(yearAD, monthNum - 1, d).getDay();
       const isWE  = dow === 0 || dow === 6;
       const isToday = isThisMonth && d === todayDate;
-      const code  = empRoster[d] || '';
-      const cls   = rvGetShiftClass(code);
-      const leaveStatus = empLeave[d];
+      const code        = empRoster[d] || '';
+      const cls         = rvGetShiftClass(code);
+      const leaveInfo   = empLeave[d];
+      const leaveStatus = leaveInfo?.status;
+      const leaveType   = leaveInfo?.type || '';
+      const statusLabel = leaveStatus === 'approved' ? '✅ อนุมัติ'
+                        : leaveStatus === 'rejected'  ? '❌ ไม่อนุมัติ'
+                        : leaveStatus === 'pending'   ? '⏳ รออนุมัติ' : '';
+      const hasBorder   = !!leaveStatus;
+      const borderClass = hasBorder ? 'rv-leave-border' : '';
+      const tip         = leaveType && statusLabel
+                        ? `${leaveType} ${statusLabel}`
+                        : (SHIFT_TIME_RV[code] || code || '—');
 
       // สถิติ
       if (code && !['W','H','C','CH',''].includes(code)) {
@@ -1830,14 +1841,9 @@ async function loadRosterView() {
         else if (RV_SHIFTS.afternoon.includes(code)) dayStats[d].afternoon++;
         else if (RV_SHIFTS.night.includes(code))     dayStats[d].night++;
       }
-      if (leaveStatus === 'pending')                      dayStats[d].pendingNames.push(emp['ชื่อ-นามสกุล']);
+      if (leaveStatus === 'pending')  dayStats[d].pendingNames.push(emp['ชื่อ-นามสกุล']);
       else if (leaveStatus === 'approved' && !['S','PL','VL'].includes(code))
-                                                          dayStats[d].leaveNames.push(emp['ชื่อ-นามสกุล'] + '(ลา)');
-
-      let dot = '';
-      const hasBorder = leaveStatus === 'pending' || leaveStatus === 'approved';
-      const borderClass = hasBorder ? 'rv-leave-border' : '';
-      const tip = (SHIFT_TIME_RV[code] || code || '—') + (leaveStatus ? (leaveStatus==='pending'?' ⏳ลารออนุมัติ':' ✅ลาอนุมัติ') : '');
+                                      dayStats[d].leaveNames.push(emp['ชื่อ-นามสกุล'] + '(ลา)');
 
       cells += `<td style="padding:1px;text-align:center;
         ${isWE ? 'background:rgba(200,145,42,.04);' : ''}
@@ -2577,17 +2583,18 @@ async function loadUserFromPortal() {
   document.getElementById('sidebar-role').textContent   = currentUser.position || currentUser.role;
   document.getElementById('sidebar-avatar').textContent = currentUser.initials;
 
-  // กรอก form อัตโนมัติ — ถ้า position/dept ว่าง ให้ดึงจาก Sheet พนักงาน
-  if (!currentUser.position || !currentUser.dept) {
-    try {
-      const empRes = await callAPI({ action: 'getEmployeeInfo', employeeId: currentUser.employeeId });
-      if (empRes.success && empRes.data) {
-        if (!currentUser.position) currentUser.position = empRes.data.position || '';
-        if (!currentUser.dept)     currentUser.dept     = empRes.data.dept     || '';
-        // อัปเดต sidebar หลัง API return
-        document.getElementById('sidebar-role').textContent = currentUser.position || currentUser.role;
-      }
-    } catch(e) {}
+  // ── Parallel: getEmployeeInfo + getLeavePermissions พร้อมกัน ──
+  const [empInfoRes, permRes] = await Promise.all([
+    (!currentUser.position || !currentUser.dept)
+      ? callAPI({ action: 'getEmployeeInfo', employeeId: currentUser.employeeId }).catch(()=>null)
+      : Promise.resolve(null),
+    callAPI({ action: 'getLeavePermissions' }).catch(()=>null)
+  ]);
+
+  if (empInfoRes?.success && empInfoRes.data) {
+    if (!currentUser.position) currentUser.position = empInfoRes.data.position || '';
+    if (!currentUser.dept)     currentUser.dept     = empInfoRes.data.dept     || '';
+    document.getElementById('sidebar-role').textContent = currentUser.position || currentUser.role;
   }
 
   const fields = {
@@ -2602,12 +2609,8 @@ async function loadUserFromPortal() {
     if (el) el.value = val;
   });
 
-  // ── โหลด Permissions จาก API แล้ว apply ──────────────
   let permData = null;
-  try {
-    const permRes = await callAPI({ action: 'getLeavePermissions' });
-    if (permRes.success && permRes.data?.length) permData = permRes.data;
-  } catch(e) {}
+  if (permRes?.success && permRes.data?.length) permData = permRes.data;
 
   const DEFAULT_PERMS = [
     { menu:'dashboard',   employee:true,  approver:true,  hr:true,  admin:true },
