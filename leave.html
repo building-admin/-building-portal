@@ -1131,7 +1131,7 @@
 
             <div class="form-section-title">ประเภทการลา<span class="field-required">*</span></div>
             <div class="leave-type-grid">
-              <button class="leave-type-btn selected" onclick="selectType(this,'ลาป่วย')"><span class="ltype-icon">🤒</span>ลาป่วย</button>
+              <button class="leave-type-btn selected" data-selected="ลาป่วย" onclick="selectType(this,'ลาป่วย')"><span class="ltype-icon">🤒</span>ลาป่วย</button>
               <button class="leave-type-btn" onclick="selectType(this,'ลากิจ')"><span class="ltype-icon">📌</span>ลากิจ</button>
               <button class="leave-type-btn" onclick="selectType(this,'ลาพักร้อน')"><span class="ltype-icon">🏖️</span>ลาพักร้อน</button>
               <button class="leave-type-btn" onclick="selectType(this,'ลานักขัตฤกษ์')"><span class="ltype-icon">🎉</span>ลานักขัตฤกษ์</button>
@@ -1319,7 +1319,7 @@
             <div class="roster-month-label" id="rv-month-label">กำลังโหลด...</div>
             <button class="roster-month-btn" onclick="rvChangeMonth(1)">▶</button>
           </div>
-          <select class="period-select" id="rv-month-select" onchange="loadRosterView()" style="min-width:160px;"></select>
+          <select class="period-select" id="rv-month-select" onchange="loadRosterView()" style="display:none;"></select>
           <button class="roster-month-btn" onclick="loadRosterView()" title="รีเฟรช">⟳ รีเฟรช</button>
           <div style="flex:1;"></div>
           <div id="rv-leave-summary" style="font-size:11px;color:var(--muted);"></div>
@@ -1566,18 +1566,6 @@ async function callPortalAPI(payload) {
     return await res.json();
   } catch(e) {
     return { success: false, message: e.message };
-  }
-}
-
-async function callAPI(payload) {
-  try {
-    const qs = new URLSearchParams({ payload: JSON.stringify(payload) }).toString();
-    const res = await fetch(`${API_URL}?${qs}`, { redirect: 'follow' });
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    return await res.json();
-  } catch (err) {
-    console.error('API Error:', err);
-    return { success: false, message: err.message };
   }
 }
 
@@ -2577,7 +2565,7 @@ async function loadUserFromPortal() {
   currentUser = {
     id:         uid      || '',
     employeeId: empId    || uid || '',
-    name:       name     || '',
+    name:       savedParams.name || name || '',
     type:       role     || 'employee',
     role:       roleLabel,
     position:   pos      || '',
