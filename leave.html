@@ -2578,7 +2578,17 @@ async function loadUserFromPortal() {
   document.getElementById('sidebar-role').textContent   = currentUser.position || currentUser.role;
   document.getElementById('sidebar-avatar').textContent = currentUser.initials;
 
-  // กรอก form อัตโนมัติ
+  // กรอก form อัตโนมัติ — ถ้า position/dept ว่าง ให้ดึงจาก Sheet พนักงาน
+  if (!currentUser.position || !currentUser.dept) {
+    try {
+      const empRes = await callAPI({ action: 'getEmployeeInfo', employeeId: currentUser.employeeId });
+      if (empRes.success && empRes.data) {
+        if (!currentUser.position) currentUser.position = empRes.data.position || '';
+        if (!currentUser.dept)     currentUser.dept     = empRes.data.dept     || '';
+      }
+    } catch(e) {}
+  }
+
   const fields = {
     'emp-name': currentUser.name,
     'emp-id': currentUser.employeeId,
