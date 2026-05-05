@@ -2302,8 +2302,7 @@ function updateChartsFromData(all, allTime) {
     const t = (r['ประเภทลา'] || '').replace(/^[\p{Emoji}\s]+/u, '').trim();
     if (typeCounts[t] !== undefined) typeCounts[t]++;
   });
-  console.log('🔍 typeCounts:', typeCounts);
-  console.log('🔍 sample ประเภทลา:', data.slice(0,3).map(r => r['ประเภทลา']));
+
 
   // อัปเดต monthly bar chart
   if (window._monthlyChart) {
