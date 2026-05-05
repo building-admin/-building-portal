@@ -955,6 +955,12 @@
     .main { padding-bottom: calc(72px + env(safe-area-inset-bottom)); }
   }
 </style>
+  <!-- Flatpickr date picker -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <style>
+    .flatpickr-input[readonly] { cursor: pointer; }
+    .flatpickr-calendar { font-family: var(--font-body); }
+  </style>
 </head>
 <body>
 
@@ -3446,6 +3452,28 @@ function initReportCharts() {
     options: { responsive:true, plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ display:false } }, y:{ grid:{ color:'rgba(44,74,114,0.3)' }, ticks:{ stepSize:1, precision:0 } } } }
   });
 }
+</script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+  // ── Flatpickr: แสดงวันที่เป็น DD/MM/YYYY แต่ value ยังเป็น YYYY-MM-DD ──
+  function initDatePickers() {
+    const common = {
+      dateFormat:  'Y-m-d',      // value จริงที่ส่ง API
+      altInput:    true,          // แสดง input อีกอัน
+      altFormat:   'd/m/Y',      // รูปแบบที่ user เห็น
+      allowInput:  false,
+      locale: {
+        firstDayOfWeek: 1,
+        weekdays: { shorthand:['อา','จ','อ','พ','พฤ','ศ','ส'], longhand:['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'] },
+        months:   { shorthand:['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'],
+                    longhand:  ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'] }
+      },
+      onChange: () => calcDays()
+    };
+    flatpickr('#date-start', common);
+    flatpickr('#date-end',   common);
+  }
+  document.addEventListener('DOMContentLoaded', initDatePickers);
 </script>
 </body>
 </html>
