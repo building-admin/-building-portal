@@ -1002,7 +1002,7 @@ async function openRoster() {
     const params = new URLSearchParams({
       token:    token,
       name:     u.name     || '',
-      position: u.position || u.role || '',
+      position: u.position || '',
       role:     u.role     || 'employee',
       empId:    u.employeeId || ''
     });
@@ -1042,7 +1042,7 @@ async function openLeave() {
     const params = new URLSearchParams({
       token:    token,
       name:     u.name       || '',
-      position: u.position   || u.role || '',
+      position: u.position   || '',
       dept:     deptName,
       division: u.division   || '',
       empId:    u.employeeId || '',
