@@ -2585,6 +2585,8 @@ async function loadUserFromPortal() {
       if (empRes.success && empRes.data) {
         if (!currentUser.position) currentUser.position = empRes.data.position || '';
         if (!currentUser.dept)     currentUser.dept     = empRes.data.dept     || '';
+        // อัปเดต sidebar หลัง API return
+        document.getElementById('sidebar-role').textContent = currentUser.position || currentUser.role;
       }
     } catch(e) {}
   }
