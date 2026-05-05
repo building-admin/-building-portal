@@ -1002,7 +1002,7 @@ async function openRoster() {
     const params = new URLSearchParams({
       token:    token,
       name:     u.name     || '',
-      position: u.position || '',
+      position: u.position || u.role || '',
       role:     u.role     || 'employee',
       empId:    u.employeeId || ''
     });
@@ -1038,11 +1038,12 @@ async function openLeave() {
       sessionStorage.setItem('leave_token', token);
     }
 
+    const deptName = currentDept?.deptName || u.dept || '';
     const params = new URLSearchParams({
       token:    token,
       name:     u.name       || '',
-      position: u.position   || '',
-      dept:     u.dept       || currentDept?.deptId || '',
+      position: u.position   || u.role || '',
+      dept:     deptName,
       division: u.division   || '',
       empId:    u.employeeId || '',
     });
