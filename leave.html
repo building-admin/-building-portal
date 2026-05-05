@@ -792,7 +792,7 @@
 
   /* ── FORCE CARD ── */
   .force-card-wrap { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
-  .force-card { flex:1; min-width:160px; background:rgba(10,22,40,.6); border:1px solid var(--border); border-radius:12px; padding:12px 14px; }
+  .force-card { flex:1; min-width:160px; background:rgba(10,22,40,.6); border:1px solid var(--border); border-radius:12px; padding:12px 14px; display:flex; flex-direction:column; }
   .force-card-header { display:flex; align-items:center; gap:6px; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid rgba(44,74,114,.4); }
   .force-card-title { font-size:12px; font-weight:700; font-family:var(--font-label); }
   .force-card-rows { display:flex; flex-direction:column; gap:3px; }
@@ -1982,7 +1982,16 @@ async function loadRosterView() {
         </div>
         <div class="force-card-rows">`;
 
-      Object.entries(posMap).sort().forEach(([pos, cnt]) => {
+      // เรียงลำดับตำแหน่ง: จป. → หัวหน้า → ป้องกัน → จราจร → อื่นๆ
+      function posOrder(p) {
+        if (p.includes('จป')) return 0;
+        if (p.includes('หัวหน้า')) return 1;
+        if (p.includes('ป้องกัน')) return 2;
+        if (p.includes('จราจร')) return 3;
+        return 4;
+      }
+      const sortedPos = Object.entries(posMap).sort((a,b) => posOrder(a[0]) - posOrder(b[0]));
+      sortedPos.forEach(([pos, cnt]) => {
         html += `<div class="force-card-row">
           <span class="force-card-pos">${pos}</span>
           <span class="force-card-count" style="color:${color};">${cnt}</span>
@@ -1990,14 +1999,15 @@ async function loadRosterView() {
       });
 
       html += `</div>
+        <div style="flex:1;"></div>
         <hr class="force-card-divider">
         <div class="force-card-total">
           <span style="color:var(--muted);">เต็ม</span>
-          <span>${total} คน</span>
+          <span><b>${total}</b> คน</span>
         </div>
         <div class="force-card-total">
           <span style="color:var(--muted);">ปฏิบัติงาน</span>
-          <span style="color:${color};">${active} คน</span>
+          <span style="color:${color};"><b>${active}</b> คน</span>
         </div>
         ${absent > 0 ? `<div class="force-card-absent">⚠️ ลา ${absent} คน</div>` : ''}
       </div>`;
