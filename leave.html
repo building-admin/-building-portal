@@ -2542,7 +2542,9 @@ async function loadUserFromPortal() {
   sessionStorage.setItem('leave_session_time', Date.now().toString());
   sessionStorage.setItem('leave_last_activity', Date.now().toString());
   // เก็บ params ไว้ใช้ตอน refresh ด้วย
+  // ถ้ามี token ใหม่จาก URL → ล้าง savedParams เก่าทิ้งเสมอ
   if (urlToken) {
+    sessionStorage.removeItem('leave_params');
     const saveParams = { name: params.get('name'), position: params.get('position'), dept: params.get('dept'), division: params.get('division'), empId: params.get('empId') };
     sessionStorage.setItem('leave_params', JSON.stringify(saveParams));
   }
