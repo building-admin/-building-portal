@@ -1013,6 +1013,15 @@
           <span class="nav-icon">📋</span> ใบลาทั้งหมด
         </a>
       </div>
+      <div class="nav-section" id="nav-ot-section">
+        <div class="nav-section-label">สะสมวันหยุด OT</div>
+        <a class="nav-item" id="nav-ot-record" onclick="showPage('ot-record')">
+          <span class="nav-icon">⏱</span> บันทึก OT
+        </a>
+        <a class="nav-item" id="nav-ot-balance" onclick="showPage('ot-balance')">
+          <span class="nav-icon">📊</span> ชั่วโมงสะสม
+        </a>
+      </div>
       <div class="nav-section" id="nav-admin-section">
         <div class="nav-section-label">รายงาน</div>
         <a class="nav-item" onclick="showPage('report')">
@@ -1153,18 +1162,38 @@
               <button class="leave-type-btn" onclick="selectType(this,'ลานักขัตฤกษ์')"><span class="ltype-icon">🎉</span>ลานักขัตฤกษ์</button>
               <button class="leave-type-btn" onclick="selectType(this,'เปลี่ยนวันหยุด')"><span class="ltype-icon">🔄</span>เปลี่ยนวันหยุด</button>
               <button class="leave-type-btn" onclick="selectType(this,'เปลี่ยนรอบ')"><span class="ltype-icon">🔃</span>เปลี่ยนรอบ</button>
+              <button class="leave-type-btn" onclick="selectType(this,'วันหยุดสะสม');checkOTBalance()"><span class="ltype-icon">🔋</span>วันหยุดสะสม</button>
+            </div>
+
+            <!-- OT Balance แสดงเมื่อเลือก วันหยุดสะสม -->
+            <div id="ot-balance-info" style="display:none;background:rgba(200,145,42,0.08);border:1px solid rgba(200,145,42,0.3);border-radius:8px;padding:10px 14px;margin:10px 0;">
+              <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">ชั่วโมงสะสมคงเหลือ</div>
+              <div id="ot-balance-val" style="font-size:22px;font-weight:700;color:var(--gold-light);">-- ชม.</div>
             </div>
 
             <div class="form-section-title">วันที่ลา<span class="field-required">*</span></div>
-            <div class="form-row">
-              <div>
-                <label class="field-label">วันเริ่มต้น</label>
-                <input type="date" class="field-input" id="date-start" onchange="calcDays()">
-              </div>
-              <div>
-                <label class="field-label">วันสิ้นสุด</label>
-                <input type="date" class="field-input" id="date-end" onchange="calcDays()">
-              </div>
+
+            <!-- Multi-date table -->
+            <div id="leave-dates-table" style="margin-bottom:12px;">
+              <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                <thead>
+                  <tr style="background:var(--navy-light);">
+                    <th style="padding:7px 10px;text-align:left;color:var(--silver);font-weight:600;">วันที่</th>
+                    <th style="padding:7px 10px;text-align:center;color:var(--silver);font-weight:600;width:100px;">ชั่วโมง</th>
+                    <th style="padding:7px 6px;width:36px;"></th>
+                  </tr>
+                </thead>
+                <tbody id="leave-dates-body"></tbody>
+              </table>
+              <button type="button" onclick="addLeaveDate()" style="margin-top:8px;padding:6px 14px;background:rgba(200,145,42,0.12);border:1px solid rgba(200,145,42,0.3);border-radius:6px;color:var(--gold-light);font-size:12px;cursor:pointer;width:100%;">+ เพิ่มวัน</button>
+            </div>
+
+            <!-- สรุปจำนวนวัน -->
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--navy-light);border-radius:6px;margin-bottom:14px;font-size:13px;">
+              <span style="color:var(--text-muted);">รวมจำนวนวัน</span>
+              <span id="days-count" style="font-weight:700;color:var(--gold-light);">0</span>
+              <span style="color:var(--text-muted);">วัน</span>
+              <span id="ot-hours-info" style="display:none;color:var(--text-muted);font-size:11px;">(<span id="ot-hours-total">0</span> ชม. จาก <span id="ot-balance-remain">0</span> ชม.)</span>
             </div>
 
             <div class="form-section-title">รายละเอียด</div>
@@ -1497,6 +1526,86 @@
             <button class="btn-submit" style="width:100%;" onclick="testConnection()">🔗 ทดสอบการเชื่อมต่อ</button>
           </div>
 
+        </div>
+      </div>
+
+      <!-- ── OT RECORD SECTION ── -->
+      <div class="page-section" id="section-ot-record">
+        <div class="table-header">
+          <div class="table-title">⏱ บันทึก OT สะสมวันหยุด</div>
+        </div>
+        <div class="form-layout" style="max-width:680px;margin:0 auto;">
+          <div class="form-main">
+            <div class="form-section-title">รายการวันที่ทำ OT</div>
+            <div id="ot-rec-table" style="margin-bottom:12px;">
+              <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                <thead>
+                  <tr style="background:var(--navy-light);">
+                    <th style="padding:7px 10px;text-align:left;color:var(--silver);font-weight:600;">วันที่</th>
+                    <th style="padding:7px 10px;text-align:center;color:var(--silver);font-weight:600;width:100px;">ชั่วโมง</th>
+                    <th style="padding:7px 6px;width:36px;"></th>
+                  </tr>
+                </thead>
+                <tbody id="ot-rec-body"></tbody>
+              </table>
+              <button type="button" onclick="addOTRow()" style="margin-top:8px;padding:6px 14px;background:rgba(200,145,42,0.12);border:1px solid rgba(200,145,42,0.3);border-radius:6px;color:var(--gold-light);font-size:12px;cursor:pointer;width:100%;">+ เพิ่มรายการ</button>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--navy-light);border-radius:6px;margin-bottom:14px;font-size:13px;">
+              <span style="color:var(--text-muted);">รวม</span>
+              <span id="ot-rec-total" style="font-weight:700;color:var(--gold-light);">0</span>
+              <span style="color:var(--text-muted);">ชั่วโมง</span>
+            </div>
+            <div class="form-section-title">หมายเหตุ (เหตุผลการทำ OT)</div>
+            <div style="margin-bottom:14px;">
+              <textarea class="field-textarea" id="ot-rec-remark" placeholder="เช่น OT จากการเก็บของ, OT งานพิเศษ..."></textarea>
+            </div>
+            <div class="form-actions">
+              <button class="btn-cancel" onclick="showPage('dashboard')">ยกเลิก</button>
+              <button class="btn-submit" id="ot-rec-btn" onclick="submitOTBatch()">📤 ส่งขออนุมัติ</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── OT BALANCE SECTION ── -->
+      <div class="page-section" id="section-ot-balance">
+        <div class="table-header">
+          <div class="table-title">📊 ชั่วโมงสะสม OT</div>
+        </div>
+        <!-- ยอดสรุป -->
+        <div id="ot-balance-cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;padding:0 4px;"></div>
+        <!-- ตารางพนักงานทุกคน (admin/hr/bs001) -->
+        <div id="ot-all-staff-section" style="display:none;margin-bottom:20px;">
+          <div class="table-header" style="margin-bottom:8px;">
+            <div class="table-title" style="font-size:14px;">ยอดสะสมทีม</div>
+          </div>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead><tr>
+                <th>ชื่อพนักงาน</th>
+                <th style="text-align:center;">สะสม (ชม.)</th>
+                <th style="text-align:center;">ใช้ไป (ชม.)</th>
+                <th style="text-align:center;">คงเหลือ (ชม.)</th>
+              </tr></thead>
+              <tbody id="ot-all-staff-body"></tbody>
+            </table>
+          </div>
+        </div>
+        <!-- ประวัติ Batch ของตัวเอง -->
+        <div class="table-header" style="margin-bottom:8px;">
+          <div class="table-title" style="font-size:14px;">ประวัติการยื่น OT</div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead><tr>
+              <th>รหัส Batch</th>
+              <th>วันที่ยื่น</th>
+              <th style="text-align:center;">ชม.รวม</th>
+              <th>หมายเหตุ</th>
+              <th style="text-align:center;">สถานะ</th>
+            </tr></thead>
+            <tbody id="ot-batch-history-body"></tbody>
+          </table>
         </div>
       </div>
 
@@ -2302,7 +2411,8 @@ function updateChartsFromData(all, allTime) {
     const t = (r['ประเภทลา'] || '').replace(/^[\p{Emoji}\s]+/u, '').trim();
     if (typeCounts[t] !== undefined) typeCounts[t]++;
   });
-
+  console.log('🔍 typeCounts:', typeCounts);
+  console.log('🔍 sample ประเภทลา:', data.slice(0,3).map(r => r['ประเภทลา']));
 
   // อัปเดต monthly bar chart
   if (window._monthlyChart) {
@@ -2873,14 +2983,16 @@ async function doLogout() {
 }
 
 const pageConfig = {
-  'dashboard': { title:'Dashboard', sub:'ภาพรวมระบบใบลา' },
-  'leave-form': { title:'ยื่นใบลา', sub:'กรอกแบบฟอร์มการลา' },
-  'my-leaves': { title:'ประวัติการลา', sub:'ใบลาของฉัน' },
-  'approval': { title:'รออนุมัติ', sub:'ใบลาที่รอการพิจารณา' },
-  'all-leaves': { title:'ใบลาทั้งหมด', sub:'รายการการลาในระบบ' },
-  'roster-view': { title:'🛡️ กำลังพลรายวัน', sub:'ตารางรอบพร้อมข้อมูลใบลา สำหรับประกอบการพิจารณาอนุมัติ' },
-  'report': { title:'รายงานประจำเดือน', sub:'สรุปสถิติการลาเพื่อผู้บริหาร' },
-  'settings': { title:'ตั้งค่าระบบ', sub:'จัดการผู้อนุมัติและการเชื่อมต่อ' }
+  'dashboard':  { title:'Dashboard',         sub:'ภาพรวมระบบใบลา' },
+  'leave-form': { title:'ยื่นใบลา',          sub:'กรอกแบบฟอร์มการลา' },
+  'my-leaves':  { title:'ประวัติการลา',      sub:'ใบลาของฉัน' },
+  'approval':   { title:'รออนุมัติ',         sub:'ใบลาที่รอการพิจารณา' },
+  'all-leaves': { title:'ใบลาทั้งหมด',       sub:'รายการการลาในระบบ' },
+  'roster-view':{ title:'🛡️ กำลังพลรายวัน', sub:'ตารางรอบพร้อมข้อมูลใบลา สำหรับประกอบการพิจารณาอนุมัติ' },
+  'report':     { title:'รายงานประจำเดือน', sub:'สรุปสถิติการลาเพื่อผู้บริหาร' },
+  'settings':   { title:'ตั้งค่าระบบ',       sub:'จัดการผู้อนุมัติและการเชื่อมต่อ' },
+  'ot-record':  { title:'บันทึก OT',         sub:'ยื่นขออนุมัติสะสมชั่วโมง OT' },
+  'ot-balance': { title:'ชั่วโมงสะสม OT',   sub:'ยอดสะสม / ใช้ไป / คงเหลือ' },
 };
 
 function setBnav(page) {
@@ -2908,14 +3020,16 @@ function showPage(page) {
   }
   setBnav(page);
   closeSidebar();
-  if (page === 'dashboard')  loadDashboardData();
-  if (page === 'my-leaves')  loadMyLeaves();
-  if (page === 'all-leaves') loadAllLeaves();
-  if (page === 'approval')   loadPendingApproval();
+  if (page === 'dashboard')   loadDashboardData();
+  if (page === 'my-leaves')   loadMyLeaves();
+  if (page === 'all-leaves')  loadAllLeaves();
+  if (page === 'approval')    loadPendingApproval();
   if (page === 'roster-view') loadRosterView();
-  if (page === 'leave-form') loadApprovers();
-  if (page === 'settings')   { loadSettingsApprovers(); testConnection(); loadPermissions(); }
-  if (page === 'report')     { setTimeout(initReportCharts, 100); initReportPeriod(); }
+  if (page === 'leave-form')  { loadApprovers(); initLeaveForm(); }
+  if (page === 'settings')    { loadSettingsApprovers(); testConnection(); loadPermissions(); }
+  if (page === 'report')      { setTimeout(initReportCharts, 100); initReportPeriod(); }
+  if (page === 'ot-record')   initOTForm();
+  if (page === 'ot-balance')  loadOTBalance();
 }
 
 function openSidebar() {
@@ -2970,44 +3084,314 @@ async function loadApprovers() {
       </div>`).join('');
 }
 
+// ════════════════════════════════════════════════════
+//  LEAVE FORM — Multi-date
+// ════════════════════════════════════════════════════
+let _leaveDates = []; // [{ date, hours }]
+
+function initLeaveForm() {
+  _leaveDates = [];
+  renderLeaveDatesTable();
+  addLeaveDate(); // เพิ่มแถวแรกอัตโนมัติ
+  loadApprovers();
+  // reset ประเภทลา
+  document.querySelectorAll('.leave-type-btn').forEach(b => b.classList.remove('selected'));
+  const first = document.querySelector('.leave-type-btn');
+  if (first) { first.classList.add('selected'); first.setAttribute('data-selected','ลาป่วย'); }
+  document.getElementById('ot-balance-info').style.display = 'none';
+  document.getElementById('ot-hours-info').style.display   = 'none';
+}
+
+function addLeaveDate() {
+  _leaveDates.push({ date: '', hours: 8 });
+  renderLeaveDatesTable();
+}
+
+function removeLeaveDate(idx) {
+  _leaveDates.splice(idx, 1);
+  renderLeaveDatesTable();
+}
+
+function renderLeaveDatesTable() {
+  const tbody = document.getElementById('leave-dates-body');
+  if (!tbody) return;
+  tbody.innerHTML = _leaveDates.map((row, i) => `
+    <tr>
+      <td style="padding:5px 6px;">
+        <input type="date" class="field-input" style="padding:5px 8px;font-size:12px;"
+          value="${row.date}" onchange="_leaveDates[${i}].date=this.value;calcLeaveDays()">
+      </td>
+      <td style="padding:5px 6px;text-align:center;">
+        <select class="field-input" style="padding:5px 8px;font-size:12px;width:80px;"
+          onchange="_leaveDates[${i}].hours=Number(this.value);calcLeaveDays()">
+          <option value="8"  ${row.hours==8?'selected':''}>8 ชม.</option>
+          <option value="4"  ${row.hours==4?'selected':''}>4 ชม.</option>
+        </select>
+      </td>
+      <td style="padding:5px 4px;text-align:center;">
+        <button onclick="removeLeaveDate(${i})" style="background:none;border:none;color:#e55;cursor:pointer;font-size:15px;line-height:1;">🗑️</button>
+      </td>
+    </tr>`).join('');
+  calcLeaveDays();
+  // ใส่ flatpickr ทุก input date ใหม่
+  setTimeout(() => {
+    tbody.querySelectorAll('input[type=date]').forEach(inp => {
+      if (!inp._flatpickr) flatpickr(inp, { dateFormat:'Y-m-d', altInput:true, altFormat:'d/m/Y',
+        locale:{ firstDayOfWeek:1,
+          weekdays:{shorthand:['อา','จ','อ','พ','พฤ','ศ','ส'],longhand:['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์']},
+          months:{shorthand:['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'],
+                  longhand:['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม']}},
+        onChange(sel,str){ const i=Array.from(tbody.querySelectorAll('input[type=date]')).indexOf(inp.nextSibling||inp); if(i>=0) _leaveDates[i].date=str; calcLeaveDays(); }
+      });
+    });
+  }, 50);
+}
+
+function calcLeaveDays() {
+  const validDates = _leaveDates.filter(d => d.date);
+  const totalDays  = validDates.reduce((s, d) => s + (d.hours >= 8 ? 1 : 0.5), 0);
+  const totalHours = validDates.reduce((s, d) => s + Number(d.hours), 0);
+  const el = document.getElementById('days-count');
+  if (el) el.textContent = totalDays;
+  // สรุปวันใน sidebar
+  const elS = document.getElementById('summary-start');
+  const elE = document.getElementById('summary-end');
+  if (validDates.length > 0) {
+    const sorted = [...validDates].sort((a,b)=>a.date.localeCompare(b.date));
+    const fmt = d => d ? new Date(d).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'}) : '';
+    if (elS) elS.textContent = fmt(sorted[0].date);
+    if (elE) elE.textContent = fmt(sorted[sorted.length-1].date);
+  }
+  // OT balance check
+  const isOT = document.querySelector('.leave-type-btn.selected')?.getAttribute('data-selected') === 'วันหยุดสะสม';
+  const hoursInfo = document.getElementById('ot-hours-info');
+  if (isOT && hoursInfo) {
+    hoursInfo.style.display = 'inline';
+    const htEl = document.getElementById('ot-hours-total');
+    if (htEl) htEl.textContent = totalHours;
+    const remain = parseInt(document.getElementById('ot-balance-val')?.textContent) || 0;
+    const remEl  = document.getElementById('ot-balance-remain');
+    if (remEl) remEl.textContent = remain;
+    const submitBtn = document.querySelector('#section-leave-form .btn-submit');
+    if (submitBtn) submitBtn.disabled = totalHours > remain;
+  } else if (hoursInfo) {
+    hoursInfo.style.display = 'none';
+  }
+}
+
+async function checkOTBalance() {
+  const info = document.getElementById('ot-balance-info');
+  if (!info) return;
+  info.style.display = 'block';
+  const valEl = document.getElementById('ot-balance-val');
+  if (valEl) valEl.textContent = '...';
+  const empId = currentUser?.employeeId || currentUser?.empId || currentUser?.id;
+  const res = await callAPI({ action:'getOTBalance', employeeId: empId });
+  if (res.success) {
+    if (valEl) valEl.textContent = res.data.balance + ' ชม.';
+  }
+  calcLeaveDays();
+}
+
 async function submitLeave() {
   const selectedBtn = document.querySelector('.leave-type-btn.selected');
   const leaveType   = selectedBtn ? (selectedBtn.getAttribute('data-selected') || '') : '';
-  const startDate   = document.getElementById('date-start').value;
-  const endDate     = document.getElementById('date-end').value;
-  const days        = parseInt(document.getElementById('days-count').textContent) || 0;
   const reason      = document.getElementById('leave-reason')?.value || '';
   const remark      = document.getElementById('leave-remark')?.value || '';
+  const validDates  = _leaveDates.filter(d => d.date);
 
-  if (!leaveType) { showToast('กรุณาเลือกประเภทการลา'); return; }
-  if (!startDate)  { showToast('กรุณาระบุวันที่ลา'); return; }
-  if (!reason)     { showToast('กรุณาระบุเหตุผลการลา'); return; }
+  if (!leaveType)           { showToast('กรุณาเลือกประเภทการลา');  return; }
+  if (!validDates.length)   { showToast('กรุณาเพิ่มวันที่ลา');     return; }
+  if (!reason)              { showToast('กรุณาระบุเหตุผลการลา');   return; }
 
-  const btn = document.querySelector('.btn-submit');
-  btn.disabled = true;
-  btn.textContent = '⏳ กำลังส่ง...';
+  // เช็ควันซ้ำ
+  const empId = currentUser?.employeeId || currentUser?.empId || currentUser?.id;
+  const dupRes = await callAPI({ action:'checkDuplicateDates', employeeId: empId, dates: validDates });
+  if (dupRes.success && dupRes.duplicates?.length) {
+    const dupDates = dupRes.duplicates.map(d => new Date(d.date).toLocaleDateString('th-TH',{day:'numeric',month:'short'})).join(', ');
+    showToast(`⚠️ วันซ้ำกับใบลาเดิม: ${dupDates}`);
+    return;
+  }
 
+  const btn = document.querySelector('#section-leave-form .btn-submit');
+  btn.disabled = true; btn.textContent = '⏳ กำลังส่ง...';
+
+  const totalDays = validDates.reduce((s,d) => s + (d.hours >= 8 ? 1 : 0.5), 0);
   const res = await callAPI({
     action:       'submitLeave',
-    employeeId:   currentUser.employeeId || currentUser.id,
+    employeeId:   empId,
     employeeName: currentUser.name,
     position:     currentUser.position,
-    leaveType,
-    startDate,
-    endDate:      endDate || startDate,
-    days,
-    reason,
+    leaveType, reason, remark,
+    dates:        validDates,
+    days:         totalDays
+  });
+
+  btn.disabled = false; btn.textContent = '📤 ส่งใบลา';
+  if (res.success) {
+    showToast(`✅ ${res.message}`);
+    _leaveDates = [];
+    setTimeout(() => showPage('my-leaves'), 1000);
+  } else {
+    showToast('❌ ' + res.message);
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  OT RECORD FORM
+// ════════════════════════════════════════════════════
+let _otRows = [];
+
+function initOTForm() {
+  _otRows = [];
+  renderOTTable();
+  addOTRow();
+  document.getElementById('ot-rec-remark').value = '';
+}
+
+function addOTRow() {
+  _otRows.push({ date:'', hours:4 });
+  renderOTTable();
+}
+
+function removeOTRow(idx) {
+  _otRows.splice(idx, 1);
+  renderOTTable();
+}
+
+function renderOTTable() {
+  const tbody = document.getElementById('ot-rec-body');
+  if (!tbody) return;
+  tbody.innerHTML = _otRows.map((row, i) => `
+    <tr>
+      <td style="padding:5px 6px;">
+        <input type="date" class="field-input" style="padding:5px 8px;font-size:12px;"
+          value="${row.date}" onchange="_otRows[${i}].date=this.value;calcOTTotal()">
+      </td>
+      <td style="padding:5px 6px;text-align:center;">
+        <input type="number" class="field-input" style="padding:5px 8px;font-size:12px;width:70px;text-align:center;"
+          value="${row.hours}" min="0.5" max="8" step="0.5"
+          onchange="_otRows[${i}].hours=Math.min(8,Math.max(0.5,Number(this.value)));this.value=_otRows[${i}].hours;calcOTTotal()">
+      </td>
+      <td style="padding:5px 4px;text-align:center;">
+        <button onclick="removeOTRow(${i})" style="background:none;border:none;color:#e55;cursor:pointer;font-size:15px;line-height:1;">🗑️</button>
+      </td>
+    </tr>`).join('');
+  calcOTTotal();
+  setTimeout(() => {
+    tbody.querySelectorAll('input[type=date]').forEach(inp => {
+      if (!inp._flatpickr) flatpickr(inp, { dateFormat:'Y-m-d', altInput:true, altFormat:'d/m/Y',
+        locale:{ firstDayOfWeek:1,
+          weekdays:{shorthand:['อา','จ','อ','พ','พฤ','ศ','ส'],longhand:['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์']},
+          months:{shorthand:['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'],
+                  longhand:['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม']}},
+        onChange(sel,str){ const idx=parseInt(inp.closest('tr').rowIndex)-1; if(idx>=0&&_otRows[idx]) _otRows[idx].date=str; calcOTTotal(); }
+      });
+    });
+  }, 50);
+}
+
+function calcOTTotal() {
+  const total = _otRows.reduce((s,r) => s + Number(r.hours||0), 0);
+  const el = document.getElementById('ot-rec-total');
+  if (el) el.textContent = total;
+}
+
+async function submitOTBatch() {
+  const validRows = _otRows.filter(r => r.date && r.hours > 0);
+  const remark    = document.getElementById('ot-rec-remark')?.value || '';
+
+  if (!validRows.length) { showToast('กรุณาเพิ่มรายการ OT อย่างน้อย 1 รายการ'); return; }
+  if (!remark)           { showToast('กรุณาระบุหมายเหตุ/เหตุผลการทำ OT');       return; }
+
+  const overCap = validRows.find(r => r.hours > 8);
+  if (overCap) { showToast(`วันที่ ${overCap.date} เกิน 8 ชม./วัน`); return; }
+
+  const btn = document.getElementById('ot-rec-btn');
+  btn.disabled = true; btn.textContent = '⏳ กำลังส่ง...';
+
+  const empId = currentUser?.employeeId || currentUser?.empId || currentUser?.id;
+  const res = await callAPI({
+    action:       'submitOTBatch',
+    employeeId:   empId,
+    employeeName: currentUser.name,
+    items:        validRows,
     remark
   });
 
-  btn.disabled = false;
-  btn.textContent = '📤 ส่งใบลา';
-
+  btn.disabled = false; btn.textContent = '📤 ส่งขออนุมัติ';
   if (res.success) {
-    showToast(`✅ ${res.message}`);
-    setTimeout(() => showPage('my-leaves'), 1000);
+    showToast(`✅ ส่งขออนุมัติ OT เรียบร้อย (${res.batchId})`);
+    _otRows = [];
+    setTimeout(() => showPage('ot-balance'), 1200);
   } else {
-    showToast('❌ เกิดข้อผิดพลาด: ' + res.message);
+    showToast('❌ ' + res.message);
+  }
+}
+
+// ════════════════════════════════════════════════════
+//  OT BALANCE PAGE
+// ════════════════════════════════════════════════════
+async function loadOTBalance() {
+  const empId = currentUser?.employeeId || currentUser?.empId || currentUser?.id;
+  const role  = currentUser?.role || '';
+  const canSeeAll = ['admin','hr'].includes(role) || currentUser?.username === 'bs001';
+
+  // ยอดตัวเอง
+  const res = await callAPI({ action:'getOTBalance', employeeId: empId });
+  const cards = document.getElementById('ot-balance-cards');
+  if (res.success && cards) {
+    const { earned, used, balance } = res.data;
+    cards.innerHTML = `
+      <div style="background:var(--navy-light);border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">สะสมทั้งหมด</div>
+        <div style="font-size:26px;font-weight:700;color:var(--white);">${earned}</div>
+        <div style="font-size:11px;color:var(--muted);">ชั่วโมง</div>
+      </div>
+      <div style="background:var(--navy-light);border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">ใช้ไปแล้ว</div>
+        <div style="font-size:26px;font-weight:700;color:#e5a04a;">${used}</div>
+        <div style="font-size:11px;color:var(--muted);">ชั่วโมง</div>
+      </div>
+      <div style="background:var(--navy-light);border-radius:10px;padding:14px;text-align:center;">
+        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">คงเหลือ</div>
+        <div style="font-size:26px;font-weight:700;color:var(--gold-light);">${balance}</div>
+        <div style="font-size:11px;color:var(--muted);">ชั่วโมง</div>
+      </div>`;
+  }
+
+  // ยอดทีม (admin/hr/bs001)
+  const allSection = document.getElementById('ot-all-staff-section');
+  if (canSeeAll && allSection) {
+    allSection.style.display = 'block';
+    const allRes = await callAPI({ action:'getOTSummaryAll' });
+    const tbody  = document.getElementById('ot-all-staff-body');
+    if (allRes.success && tbody) {
+      tbody.innerHTML = allRes.data.map(r => `
+        <tr>
+          <td>${r['ชื่อพนักงาน']}</td>
+          <td style="text-align:center;">${r['สะสมทั้งหมด']}</td>
+          <td style="text-align:center;">${r['ใช้ไปแล้ว']}</td>
+          <td style="text-align:center;font-weight:700;color:var(--gold-light);">${r['คงเหลือ']}</td>
+        </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--muted);">ไม่มีข้อมูล</td></tr>';
+    }
+  }
+
+  // ประวัติ Batch ตัวเอง
+  const bRes  = await callAPI({ action:'getMyOTBatches', employeeId: empId });
+  const tbody = document.getElementById('ot-batch-history-body');
+  if (bRes.success && tbody) {
+    tbody.innerHTML = bRes.data.map(b => {
+      const statusColor = b['สถานะ'] === 'อนุมัติ' ? 'var(--success)' : b['สถานะ'] === 'ไม่อนุมัติ' ? '#e55' : 'var(--gold-light)';
+      const statusIcon  = b['สถานะ'] === 'อนุมัติ' ? '✅' : b['สถานะ'] === 'ไม่อนุมัติ' ? '❌' : '⏳';
+      return `<tr>
+        <td style="font-size:11px;">${b['รหัส Batch']}</td>
+        <td>${new Date(b['วันที่ยื่น']).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'})}</td>
+        <td style="text-align:center;font-weight:700;">${b['ชั่วโมงรวม']}</td>
+        <td style="font-size:12px;">${b['หมายเหตุ']||'-'}</td>
+        <td style="text-align:center;color:${statusColor};font-weight:600;">${statusIcon} ${b['สถานะ']}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted);">ไม่มีประวัติ</td></tr>';
   }
 }
 
@@ -3453,26 +3837,5 @@ function initReportCharts() {
 }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script>
-  // ── Flatpickr: แสดงวันที่เป็น DD/MM/YYYY แต่ value ยังเป็น YYYY-MM-DD ──
-  function initDatePickers() {
-    const common = {
-      dateFormat:  'Y-m-d',      // value จริงที่ส่ง API
-      altInput:    true,          // แสดง input อีกอัน
-      altFormat:   'd/m/Y',      // รูปแบบที่ user เห็น
-      allowInput:  false,
-      locale: {
-        firstDayOfWeek: 1,
-        weekdays: { shorthand:['อา','จ','อ','พ','พฤ','ศ','ส'], longhand:['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'] },
-        months:   { shorthand:['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'],
-                    longhand:  ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'] }
-      },
-      onChange: () => calcDays()
-    };
-    flatpickr('#date-start', common);
-    flatpickr('#date-end',   common);
-  }
-  document.addEventListener('DOMContentLoaded', initDatePickers);
-</script>
 </body>
 </html>
