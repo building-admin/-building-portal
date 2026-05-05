@@ -790,7 +790,18 @@
   .rv-table .weekend-col { background:rgba(200,145,42,.05); }
   .rv-table .today-col th, .rv-table .today-col td { background:rgba(61,186,122,.06) !important; }
 
-  /* summary row */
+  /* ── FORCE CARD ── */
+  .force-card-wrap { display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+  .force-card { flex:1; min-width:160px; background:rgba(10,22,40,.6); border:1px solid var(--border); border-radius:12px; padding:12px 14px; }
+  .force-card-header { display:flex; align-items:center; gap:6px; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid rgba(44,74,114,.4); }
+  .force-card-title { font-size:12px; font-weight:700; font-family:var(--font-label); }
+  .force-card-rows { display:flex; flex-direction:column; gap:3px; }
+  .force-card-row { display:flex; justify-content:space-between; align-items:center; font-size:11px; }
+  .force-card-pos { color:var(--silver); }
+  .force-card-count { font-weight:700; min-width:24px; text-align:right; }
+  .force-card-divider { border:none; border-top:1px solid rgba(44,74,114,.3); margin:5px 0; }
+  .force-card-total { display:flex; justify-content:space-between; font-size:12px; font-weight:700; margin-top:4px; }
+  .force-card-absent { color:#ff6b6b; font-size:10px; margin-top:3px; }
   .rv-summary { background:rgba(13,30,53,.95); border-top:2px solid rgba(200,145,42,.4); position:sticky; bottom:0; z-index:3; }
   .rv-summary td { padding:4px 2px; text-align:center; font-size:9px; font-family:var(--font-label); }
   .rv-stat-morning   { color:#3dba7a; font-weight:700; }
@@ -1343,6 +1354,7 @@
         </div>
 
         <!-- table -->
+        <div id="force-card-container" class="no-print"></div>
         <div class="rv-table-wrap">
           <table class="rv-table">
             <thead id="rv-thead"></thead>
@@ -1922,7 +1934,80 @@ async function loadRosterView() {
     rvGX.forEach(emp => { allRows += rvRenderRow(emp); });
   }
 
-  // Summary row
+  // ── render force card section 1 ──────────────────────
+  function renderForceCard() {
+    const container = document.getElementById('force-card-container');
+    if (!container || !rvG1.length) return;
+
+    // นับจำนวนตามตำแหน่งในแต่ละกะ วันปัจจุบัน
+    const today = new Date();
+    const todayStr = isThisMonth ? todayDate : 1;
+
+    const shiftGroups = { 'เช้า': {}, 'บ่าย': {}, 'ดึก': {} };
+    const shiftTotal  = { 'เช้า': 0, 'บ่าย': 0, 'ดึก': 0 };
+    const shiftAbsent = { 'เช้า': 0, 'บ่าย': 0, 'ดึก': 0 };
+    const shiftAll    = { 'เช้า': 0, 'บ่าย': 0, 'ดึก': 0 };
+
+    rvG1.forEach(emp => {
+      const id       = String(emp['รหัสพนักงาน']);
+      const dominant = rvDominantShift(id);
+      const gKey     = rvShiftGroup(dominant);
+      if (!['เช้า','บ่าย','ดึก'].includes(gKey)) return;
+      const pos = (emp['ตำแหน่ง'] || '').trim();
+      shiftGroups[gKey][pos] = (shiftGroups[gKey][pos] || 0) + 1;
+      shiftAll[gKey]++;
+      // เช็คว่าวันนี้ลาไหม
+      const leaveInfo = (leaveLookup[id] || {})[todayStr];
+      if (leaveInfo?.status === 'approved') shiftAbsent[gKey]++;
+    });
+
+    const SHIFT_CFG = [
+      { key:'เช้า',  icon:'🌅', color:'#3dba7a', border:'rgba(61,186,122,.4)'  },
+      { key:'บ่าย',  icon:'🌇', color:'#f0a030', border:'rgba(240,160,48,.4)'  },
+      { key:'ดึก',   icon:'🌙', color:'#6490ff', border:'rgba(100,140,255,.4)' },
+    ];
+
+    let html = `<div class="force-card-wrap">`;
+    SHIFT_CFG.forEach(({ key, icon, color, border }) => {
+      const posMap = shiftGroups[key];
+      const total  = shiftAll[key];
+      const absent = shiftAbsent[key];
+      const active = total - absent;
+      if (!total) return;
+
+      html += `<div class="force-card" style="border-color:${border};">
+        <div class="force-card-header">
+          <span style="font-size:16px;">${icon}</span>
+          <span class="force-card-title" style="color:${color};">กะ${key}</span>
+        </div>
+        <div class="force-card-rows">`;
+
+      Object.entries(posMap).sort().forEach(([pos, cnt]) => {
+        html += `<div class="force-card-row">
+          <span class="force-card-pos">${pos}</span>
+          <span class="force-card-count" style="color:${color};">${cnt}</span>
+        </div>`;
+      });
+
+      html += `</div>
+        <hr class="force-card-divider">
+        <div class="force-card-total">
+          <span style="color:var(--muted);">เต็ม</span>
+          <span>${total} คน</span>
+        </div>
+        <div class="force-card-total">
+          <span style="color:var(--muted);">ปฏิบัติงาน</span>
+          <span style="color:${color};">${active} คน</span>
+        </div>
+        ${absent > 0 ? `<div class="force-card-absent">⚠️ ลา ${absent} คน</div>` : ''}
+      </div>`;
+    });
+
+    html += `</div>`;
+    container.innerHTML = html;
+  }
+
+  renderForceCard();
   let sumRow = `<tr class="rv-summary">
     <td class="col-name-d" style="font-size:10px;font-weight:700;color:var(--gold);padding:6px 10px;white-space:nowrap;">
       📊 กำลังพล
