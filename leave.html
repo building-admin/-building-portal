@@ -1989,26 +1989,42 @@ async function loadRosterView() {
     const shiftWeekOff = { 'เช้า': 0, 'บ่าย': 0, 'ดึก': 0 };
     const shiftLeave   = { 'เช้า': 0, 'บ่าย': 0, 'ดึก': 0 };
 
+    // empList per shift: { 'เช้า': [{name, status}], ... }
+    const shiftEmps = { 'เช้า': [], 'บ่าย': [], 'ดึก': [] };
+
     rvG1.forEach(emp => {
       const id       = String(emp['รหัสพนักงาน']);
       const dominant = rvDominantShift(id);
       const gKey     = rvShiftGroup(dominant);
       if (!['เช้า','บ่าย','ดึก'].includes(gKey)) return;
-      const pos = (emp['ตำแหน่ง'] || '').trim();
+      const name = (emp['ชื่อ-นามสกุล'] || emp['ชื่อ'] || '').trim();
 
       // เช็ควันหยุด W
       const todayCode = (rvRosterData[id] || {})[todayStr] || '';
-      if (todayCode === 'W') { shiftWeekOff[gKey]++; return; }
+      if (todayCode === 'W') {
+        shiftWeekOff[gKey]++;
+        shiftEmps[gKey].push({ name, statusIcon: '🔴 W', color: 'var(--muted)' });
+        return;
+      }
 
-      shiftGroups[gKey][pos] = (shiftGroups[gKey][pos] || 0) + 1;
       shiftAll[gKey]++;
 
-      // เช็คการลา: ดึงจาก Attendance ก่อน ถ้าไม่มีดูจากใบลา
+      // เช็คการลา
       const attStatus = _attendanceLookup[id] || '';
       const leaveInfo = (leaveLookup[id] || {})[todayStr];
       const isAbsent  = attStatus === 'ลาป่วย'
                      || (leaveInfo?.status === 'approved' && attStatus !== 'เข้างาน');
-      if (isAbsent) shiftLeave[gKey]++;
+      const isCheckedIn = attStatus === 'เข้างาน';
+
+      if (isAbsent) {
+        shiftLeave[gKey]++;
+        const leaveType = leaveInfo?.type || 'ลาป่วย';
+        shiftEmps[gKey].push({ name, statusIcon: `🔵 ${leaveType}`, color: '#64b5f6' });
+      } else if (isCheckedIn) {
+        shiftEmps[gKey].push({ name, statusIcon: '✅', color: '#3dba7a' });
+      } else {
+        shiftEmps[gKey].push({ name, statusIcon: '', color: 'var(--white)' });
+      }
     });
 
     const SHIFT_CFG = [
@@ -2019,11 +2035,11 @@ async function loadRosterView() {
 
     let html = `<div class="force-card-wrap">`;
     SHIFT_CFG.forEach(({ key, icon, color, border }) => {
-      const posMap  = shiftGroups[key];
-      const total   = shiftAll[key];
-      const weekOff = shiftWeekOff[key];
-      const leave   = shiftLeave[key];
-      const active  = total - leave;
+      const emps     = shiftEmps[key];
+      const total    = shiftAll[key];
+      const weekOff  = shiftWeekOff[key];
+      const leave    = shiftLeave[key];
+      const active   = total - leave;
       const fullTotal = total + weekOff;
       if (!fullTotal) return;
 
@@ -2031,21 +2047,14 @@ async function loadRosterView() {
         <div class="force-card-header">
           <span style="font-size:16px;">${icon}</span>
           <span class="force-card-title" style="color:${color};">กะ${key}</span>
+          <span style="margin-left:auto;font-size:11px;color:${color};font-weight:700;">${active}/${fullTotal}</span>
         </div>
         <div class="force-card-rows">`;
 
-      function posOrder(p) {
-        if (p.includes('จป')) return 0;
-        if (p.includes('หัวหน้า')) return 1;
-        if (p.includes('ป้องกัน')) return 2;
-        if (p.includes('จราจร')) return 3;
-        return 4;
-      }
-      const sortedPos = Object.entries(posMap).sort((a,b) => posOrder(a[0]) - posOrder(b[0]));
-      sortedPos.forEach(([pos, cnt]) => {
+      emps.forEach(({ name, statusIcon, color: nameColor }) => {
         html += `<div class="force-card-row">
-          <span class="force-card-pos">${pos}</span>
-          <span class="force-card-count" style="color:${color};">${cnt}</span>
+          <span style="color:${nameColor};font-size:11px;">${name}</span>
+          <span style="font-size:11px;white-space:nowrap;">${statusIcon}</span>
         </div>`;
       });
 
@@ -2062,7 +2071,7 @@ async function loadRosterView() {
         </div>` : ''}
         ${leave > 0 ? `<div class="force-card-total">
           <span style="color:var(--muted);">หยุดจากการลา</span>
-          <span style="color:#ff6b6b;"><b>${leave}</b> คน</span>
+          <span style="color:#64b5f6;"><b>${leave}</b> คน</span>
         </div>` : ''}
         <div class="force-card-total" style="margin-top:4px;padding-top:4px;border-top:1px solid rgba(44,74,114,.3);">
           <span style="font-weight:700;">ปฏิบัติงาน</span>
