@@ -1016,10 +1016,7 @@
       <div class="nav-section" id="nav-ot-section">
         <div class="nav-section-label">สะสมวันหยุด OT</div>
         <a class="nav-item" id="nav-ot-record" onclick="showPage('ot-record')">
-          <span class="nav-icon">⏱</span> บันทึก OT
-        </a>
-        <a class="nav-item" id="nav-ot-balance" onclick="showPage('ot-balance')">
-          <span class="nav-icon">📊</span> ชั่วโมงสะสม
+          <span class="nav-icon">⏱</span> OT สะสมวันหยุด
         </a>
       </div>
       <div class="nav-section" id="nav-admin-section">
@@ -1531,9 +1528,10 @@
 
       <!-- ── OT RECORD SECTION ── -->
       <div class="page-section" id="section-ot-record">
-        <div style="max-width:720px;">
-          <div class="form-card">
+        <div class="form-page-layout">
 
+          <!-- ── คอลัมน์ซ้าย: บันทึก OT ── -->
+          <div class="form-card">
             <div class="form-section-title" style="margin-top:0;">รายการวันที่ทำ OT</div>
             <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px;">
               <div id="ot-rec-body"></div>
@@ -1545,7 +1543,7 @@
               </div>
             </div>
 
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(200,145,42,0.07);border:1px solid rgba(200,145,42,0.2);border-radius:8px;margin-bottom:24px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(200,145,42,0.07);border:1px solid rgba(200,145,42,0.2);border-radius:8px;margin-bottom:20px;">
               <span style="font-size:13px;color:var(--text-muted);">รวมทั้งหมด</span>
               <div style="display:flex;align-items:baseline;gap:6px;">
                 <span id="ot-rec-total" style="font-size:22px;font-weight:700;color:var(--gold-light);">0</span>
@@ -1562,51 +1560,51 @@
               <button class="btn-cancel" onclick="showPage('dashboard')">ยกเลิก</button>
               <button class="btn-submit" id="ot-rec-btn" onclick="submitOTBatch()">📤 ส่งขออนุมัติ</button>
             </div>
+          </div>
+
+          <!-- ── คอลัมน์ขวา: ยอดสะสม + ประวัติ ── -->
+          <div class="form-side">
+
+            <!-- ยอดสะสม -->
+            <div class="form-side-card">
+              <div class="form-side-title">ชั่วโมงสะสม OT</div>
+              <div id="ot-balance-cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px;"></div>
+            </div>
+
+            <!-- ยอดสะสมทีม -->
+            <div class="form-side-card" id="ot-all-staff-section" style="display:none;">
+              <div class="form-side-title">ยอดสะสมทีม</div>
+              <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                  <thead><tr style="border-bottom:1px solid var(--border);">
+                    <th style="padding:6px 8px;text-align:left;color:var(--text-muted);font-weight:500;">ชื่อ</th>
+                    <th style="padding:6px 4px;text-align:center;color:var(--text-muted);font-weight:500;">สะสม</th>
+                    <th style="padding:6px 4px;text-align:center;color:var(--text-muted);font-weight:500;">ใช้</th>
+                    <th style="padding:6px 4px;text-align:center;color:var(--gold-light);font-weight:500;">คงเหลือ</th>
+                  </tr></thead>
+                  <tbody id="ot-all-staff-body"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- ประวัติ Batch -->
+            <div class="form-side-card">
+              <div class="form-side-title">ประวัติการยื่น OT</div>
+              <div style="overflow-x:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                  <thead><tr style="border-bottom:1px solid var(--border);">
+                    <th style="padding:6px 8px;text-align:left;color:var(--text-muted);font-weight:500;">รหัส</th>
+                    <th style="padding:6px 4px;text-align:center;color:var(--text-muted);font-weight:500;">ชม.</th>
+                    <th style="padding:6px 4px;text-align:center;color:var(--text-muted);font-weight:500;">สถานะ</th>
+                  </tr></thead>
+                  <tbody id="ot-batch-history-body"></tbody>
+                </table>
+              </div>
+            </div>
 
           </div>
         </div>
-      </div>
-
-      <!-- ── OT BALANCE SECTION ── -->
-      <div class="page-section" id="section-ot-balance">
-        <div class="table-header">
-          <div class="table-title">📊 ชั่วโมงสะสม OT</div>
-        </div>
-
-        <!-- 3 cards -->
-        <div id="ot-balance-cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;"></div>
-
-        <!-- ตารางทีม -->
-        <div id="ot-all-staff-section" style="display:none;margin-bottom:24px;">
-          <div style="font-size:13px;font-weight:600;color:var(--silver);margin-bottom:10px;padding-left:2px;">ยอดสะสมทีม</div>
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead><tr>
-                <th>ชื่อพนักงาน</th>
-                <th style="text-align:center;">สะสม (ชม.)</th>
-                <th style="text-align:center;">ใช้ไป (ชม.)</th>
-                <th style="text-align:center;">คงเหลือ (ชม.)</th>
-              </tr></thead>
-              <tbody id="ot-all-staff-body"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <!-- ประวัติ Batch -->
-        <div style="font-size:13px;font-weight:600;color:var(--silver);margin-bottom:10px;padding-left:2px;">ประวัติการยื่น OT</div>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead><tr>
-              <th>รหัส Batch</th>
-              <th>วันที่ยื่น</th>
-              <th style="text-align:center;">ชม.รวม</th>
-              <th>หมายเหตุ</th>
-              <th style="text-align:center;">สถานะ</th>
-            </tr></thead>
-            <tbody id="ot-batch-history-body"></tbody>
-          </table>
-        </div>
-      </div>
+      </div>      </div>
 
     </div>
   </div>
@@ -2916,7 +2914,6 @@ async function loadUserFromPortal() {
       'bm_leave_all_leaves': 'all-leaves',  'bs_leave_all_leaves': 'all-leaves',
       'bm_leave_report':     'report',      'bs_leave_report':     'report',
       'ot-record':           'ot-record',
-      'ot-balance':          'ot-balance',
     };
     // รีเซ็ตก่อน แล้วเปิดเฉพาะที่มีสิทธิ์
     Object.values(PORTAL_TO_PAGE).forEach(page => { menuPerms[page] = false; });
@@ -2938,7 +2935,7 @@ async function loadUserFromPortal() {
   var navAdminSec = document.getElementById('nav-admin-section');
   if (navAdminSec) navAdminSec.style.display = (role === 'admin') ? '' : 'none';
   var navOtSec = document.getElementById('nav-ot-section');
-  if (navOtSec) navOtSec.style.display = (menuPerms['ot-record'] || menuPerms['ot-balance']) ? '' : 'none';
+  if (navOtSec) navOtSec.style.display = menuPerms['ot-record'] ? '' : 'none';
 
   // bottom nav (mobile)
   var bnavApproval = document.getElementById('bnav-approval');
@@ -2994,8 +2991,7 @@ const pageConfig = {
   'roster-view':{ title:'🛡️ กำลังพลรายวัน', sub:'ตารางรอบพร้อมข้อมูลใบลา สำหรับประกอบการพิจารณาอนุมัติ' },
   'report':     { title:'รายงานประจำเดือน', sub:'สรุปสถิติการลาเพื่อผู้บริหาร' },
   'settings':   { title:'ตั้งค่าระบบ',       sub:'จัดการผู้อนุมัติและการเชื่อมต่อ' },
-  'ot-record':  { title:'บันทึก OT',         sub:'ยื่นขออนุมัติสะสมชั่วโมง OT' },
-  'ot-balance': { title:'ชั่วโมงสะสม OT',   sub:'ยอดสะสม / ใช้ไป / คงเหลือ' },
+  'ot-record':  { title:'OT สะสมวันหยุด',    sub:'บันทึก OT + ยอดชั่วโมงสะสม' },
 };
 
 function setBnav(page) {
@@ -3031,8 +3027,7 @@ function showPage(page) {
   if (page === 'leave-form')  { loadApprovers(); initLeaveForm(); }
   if (page === 'settings')    { loadSettingsApprovers(); testConnection(); loadPermissions(); }
   if (page === 'report')      { setTimeout(initReportCharts, 100); initReportPeriod(); }
-  if (page === 'ot-record')   initOTForm();
-  if (page === 'ot-balance')  loadOTBalance();
+  if (page === 'ot-record')   { initOTForm(); loadOTBalance(); }
 }
 
 function openSidebar() {
@@ -3400,20 +3395,20 @@ async function loadOTBalance() {
     const balance = res.success ? (res.data.balance || 0) : 0;
 
     if (cards) cards.innerHTML = `
-      <div style="background:var(--navy-mid,#0f2340);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;">
-        <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.05em;margin-bottom:8px;">สะสมทั้งหมด</div>
-        <div style="font-size:32px;font-weight:700;color:var(--white);line-height:1;">${earned}</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">ชั่วโมง</div>
+      <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:12px 8px;text-align:center;">
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">สะสม</div>
+        <div style="font-size:22px;font-weight:700;color:var(--white);line-height:1;">${earned}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">ชม.</div>
       </div>
-      <div style="background:var(--navy-mid,#0f2340);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;">
-        <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.05em;margin-bottom:8px;">ใช้ไปแล้ว</div>
-        <div style="font-size:32px;font-weight:700;color:#e5a04a;line-height:1;">${used}</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">ชั่วโมง</div>
+      <div style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;padding:12px 8px;text-align:center;">
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">ใช้ไป</div>
+        <div style="font-size:22px;font-weight:700;color:#e5a04a;line-height:1;">${used}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">ชม.</div>
       </div>
-      <div style="background:var(--navy-mid,#0f2340);border:1px solid rgba(200,145,42,0.3);border-radius:12px;padding:20px;text-align:center;">
-        <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.05em;margin-bottom:8px;">คงเหลือ</div>
-        <div style="font-size:32px;font-weight:700;color:var(--gold-light);line-height:1;">${balance}</div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">ชั่วโมง</div>
+      <div style="background:rgba(200,145,42,0.08);border:1px solid rgba(200,145,42,0.3);border-radius:8px;padding:12px 8px;text-align:center;">
+        <div style="font-size:10px;color:var(--text-muted);margin-bottom:4px;">คงเหลือ</div>
+        <div style="font-size:22px;font-weight:700;color:var(--gold-light);line-height:1;">${balance}</div>
+        <div style="font-size:10px;color:var(--text-muted);margin-top:2px;">ชม.</div>
       </div>`;
 
     // ยอดทีม (admin/hr/bs001)
@@ -3441,15 +3436,13 @@ async function loadOTBalance() {
         ? bRes.data.map(b => {
             const sc = b['สถานะ']==='อนุมัติ' ? 'var(--success)' : b['สถานะ']==='ไม่อนุมัติ' ? '#e55' : 'var(--gold-light)';
             const si = b['สถานะ']==='อนุมัติ' ? '✅' : b['สถานะ']==='ไม่อนุมัติ' ? '❌' : '⏳';
-            return `<tr>
-              <td style="font-size:11px;">${b['รหัส Batch']}</td>
-              <td>${new Date(b['วันที่ยื่น']).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'})}</td>
-              <td style="text-align:center;font-weight:700;">${b['ชั่วโมงรวม']}</td>
-              <td style="font-size:12px;">${b['หมายเหตุ']||'-'}</td>
-              <td style="text-align:center;color:${sc};font-weight:600;">${si} ${b['สถานะ']}</td>
+            return `<tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:7px 8px;font-size:11px;">${b['รหัส Batch']}<br><span style="color:var(--text-muted);font-size:10px;">${new Date(b['วันที่ยื่น']).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'})}</span></td>
+              <td style="padding:7px 4px;text-align:center;font-weight:700;">${b['ชั่วโมงรวม']}</td>
+              <td style="padding:7px 4px;text-align:center;color:${sc};font-size:13px;">${si}</td>
             </tr>`;
           }).join('')
-        : '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;">ไม่มีประวัติการยื่น OT</td></tr>';
+        : '<tr><td colspan="3" style="text-align:center;color:var(--text-muted);padding:16px;font-size:12px;">ไม่มีประวัติ</td></tr>';
     }
 
   } catch(err) {
