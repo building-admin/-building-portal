@@ -1604,7 +1604,7 @@
 
           </div>
         </div>
-      </div>      </div>
+      </div>
 
     </div>
   </div>
@@ -3352,7 +3352,7 @@ async function submitOTBatch() {
   if (res.success) {
     showToast(`✅ ส่งขออนุมัติ OT เรียบร้อย (${res.batchId})`);
     _otRows = [];
-    setTimeout(() => showPage('ot-balance'), 1200);
+    setTimeout(() => showPage('ot-record'), 1200);
   } else {
     showToast('❌ ' + res.message);
   }
