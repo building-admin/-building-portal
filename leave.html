@@ -1534,35 +1534,49 @@
         <div class="table-header">
           <div class="table-title">⏱ บันทึก OT สะสมวันหยุด</div>
         </div>
-        <div class="form-layout" style="max-width:680px;margin:0 auto;">
-          <div class="form-main">
-            <div class="form-section-title">รายการวันที่ทำ OT</div>
-            <div id="ot-rec-table" style="margin-bottom:12px;">
-              <table style="width:100%;border-collapse:collapse;font-size:13px;">
-                <thead>
-                  <tr style="background:var(--navy-light);">
-                    <th style="padding:7px 10px;text-align:left;color:var(--silver);font-weight:600;">วันที่</th>
-                    <th style="padding:7px 10px;text-align:center;color:var(--silver);font-weight:600;width:100px;">ชั่วโมง</th>
-                    <th style="padding:7px 6px;width:36px;"></th>
-                  </tr>
-                </thead>
-                <tbody id="ot-rec-body"></tbody>
-              </table>
-              <button type="button" onclick="addOTRow()" style="margin-top:8px;padding:6px 14px;background:rgba(200,145,42,0.12);border:1px solid rgba(200,145,42,0.3);border-radius:6px;color:var(--gold-light);font-size:12px;cursor:pointer;width:100%;">+ เพิ่มรายการ</button>
+        <div style="max-width:600px;margin:0 auto;">
+
+          <!-- ตารางรายการ -->
+          <div style="background:var(--navy-mid,#0f2340);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;">
+            <div style="padding:14px 18px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;color:var(--silver);">รายการวันที่ทำ OT</div>
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <thead>
+                <tr style="background:rgba(255,255,255,0.03);">
+                  <th style="padding:10px 16px;text-align:left;color:var(--text-muted);font-weight:500;font-size:12px;border-bottom:1px solid var(--border);">วันที่</th>
+                  <th style="padding:10px 8px;text-align:center;color:var(--text-muted);font-weight:500;font-size:12px;width:100px;border-bottom:1px solid var(--border);">เริ่ม</th>
+                  <th style="padding:10px 8px;text-align:center;color:var(--text-muted);font-weight:500;font-size:12px;width:100px;border-bottom:1px solid var(--border);">สิ้นสุด</th>
+                  <th style="padding:10px 8px;text-align:center;color:var(--text-muted);font-weight:500;font-size:12px;width:80px;border-bottom:1px solid var(--border);">ชั่วโมง</th>
+                  <th style="padding:10px 10px;width:40px;border-bottom:1px solid var(--border);"></th>
+                </tr>
+              </thead>
+              <tbody id="ot-rec-body"></tbody>
+            </table>
+            <div style="padding:10px 16px;border-top:1px solid var(--border);">
+              <button type="button" onclick="addOTRow()" style="padding:7px 16px;background:rgba(200,145,42,0.1);border:1px dashed rgba(200,145,42,0.4);border-radius:7px;color:var(--gold-light);font-size:12px;cursor:pointer;width:100%;transition:background 0.2s;" onmouseover="this.style.background='rgba(200,145,42,0.2)'" onmouseout="this.style.background='rgba(200,145,42,0.1)'">＋ เพิ่มรายการ</button>
             </div>
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--navy-light);border-radius:6px;margin-bottom:14px;font-size:13px;">
-              <span style="color:var(--text-muted);">รวม</span>
-              <span id="ot-rec-total" style="font-weight:700;color:var(--gold-light);">0</span>
-              <span style="color:var(--text-muted);">ชั่วโมง</span>
+          </div>
+
+          <!-- รวมชั่วโมง -->
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:rgba(200,145,42,0.08);border:1px solid rgba(200,145,42,0.2);border-radius:10px;margin-bottom:16px;">
+            <span style="font-size:13px;color:var(--text-muted);">รวมทั้งหมด</span>
+            <div style="display:flex;align-items:baseline;gap:6px;">
+              <span id="ot-rec-total" style="font-size:22px;font-weight:700;color:var(--gold-light);">0</span>
+              <span style="font-size:13px;color:var(--text-muted);">ชั่วโมง</span>
             </div>
-            <div class="form-section-title">หมายเหตุ (เหตุผลการทำ OT)</div>
-            <div style="margin-bottom:14px;">
-              <textarea class="field-textarea" id="ot-rec-remark" placeholder="เช่น OT จากการเก็บของ, OT งานพิเศษ..."></textarea>
+          </div>
+
+          <!-- หมายเหตุ -->
+          <div style="background:var(--navy-mid,#0f2340);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px;">
+            <div style="padding:14px 18px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;color:var(--silver);">หมายเหตุ / เหตุผลการทำ OT <span style="color:#e55;margin-left:2px;">*</span></div>
+            <div style="padding:14px 16px;">
+              <textarea class="field-textarea" id="ot-rec-remark" placeholder="เช่น OT จากการเก็บของ, OT งานพิเศษ..." style="min-height:80px;margin:0;"></textarea>
             </div>
-            <div class="form-actions">
-              <button class="btn-cancel" onclick="showPage('dashboard')">ยกเลิก</button>
-              <button class="btn-submit" id="ot-rec-btn" onclick="submitOTBatch()">📤 ส่งขออนุมัติ</button>
-            </div>
+          </div>
+
+          <!-- ปุ่ม -->
+          <div class="form-actions" style="padding:0;">
+            <button class="btn-cancel" onclick="showPage('dashboard')">ยกเลิก</button>
+            <button class="btn-submit" id="ot-rec-btn" onclick="submitOTBatch()">📤 ส่งขออนุมัติ</button>
           </div>
         </div>
       </div>
@@ -1572,13 +1586,13 @@
         <div class="table-header">
           <div class="table-title">📊 ชั่วโมงสะสม OT</div>
         </div>
-        <!-- ยอดสรุป -->
-        <div id="ot-balance-cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;padding:0 4px;"></div>
-        <!-- ตารางพนักงานทุกคน (admin/hr/bs001) -->
-        <div id="ot-all-staff-section" style="display:none;margin-bottom:20px;">
-          <div class="table-header" style="margin-bottom:8px;">
-            <div class="table-title" style="font-size:14px;">ยอดสะสมทีม</div>
-          </div>
+
+        <!-- 3 cards -->
+        <div id="ot-balance-cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;"></div>
+
+        <!-- ตารางทีม -->
+        <div id="ot-all-staff-section" style="display:none;margin-bottom:24px;">
+          <div style="font-size:13px;font-weight:600;color:var(--silver);margin-bottom:10px;padding-left:2px;">ยอดสะสมทีม</div>
           <div class="table-wrap">
             <table class="data-table">
               <thead><tr>
@@ -1591,10 +1605,9 @@
             </table>
           </div>
         </div>
-        <!-- ประวัติ Batch ของตัวเอง -->
-        <div class="table-header" style="margin-bottom:8px;">
-          <div class="table-title" style="font-size:14px;">ประวัติการยื่น OT</div>
-        </div>
+
+        <!-- ประวัติ Batch -->
+        <div style="font-size:13px;font-weight:600;color:var(--silver);margin-bottom:10px;padding-left:2px;">ประวัติการยื่น OT</div>
         <div class="table-wrap">
           <table class="data-table">
             <thead><tr>
@@ -3254,7 +3267,7 @@ function initOTForm() {
 }
 
 function addOTRow() {
-  _otRows.push({ date:'', hours:4 });
+  _otRows.push({ date: '', timeStart: '', timeEnd: '', hours: 0 });
   renderOTTable();
 }
 
@@ -3267,18 +3280,25 @@ function renderOTTable() {
   const tbody = document.getElementById('ot-rec-body');
   if (!tbody) return;
   tbody.innerHTML = _otRows.map((row, i) => `
-    <tr>
-      <td style="padding:5px 6px;">
-        <input type="date" class="field-input" style="padding:5px 8px;font-size:12px;"
-          value="${row.date}" onchange="_otRows[${i}].date=this.value;calcOTTotal()">
+    <tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:10px 16px;">
+        <input type="date" class="field-input" style="padding:7px 10px;font-size:13px;width:100%;"
+          value="${row.date}" onchange="_otRows[${i}].date=this.value">
       </td>
-      <td style="padding:5px 6px;text-align:center;">
-        <input type="number" class="field-input" style="padding:5px 8px;font-size:12px;width:70px;text-align:center;"
-          value="${row.hours}" min="0.5" max="8" step="0.5"
-          onchange="_otRows[${i}].hours=Math.min(8,Math.max(0.5,Number(this.value)));this.value=_otRows[${i}].hours;calcOTTotal()">
+      <td style="padding:10px 8px;text-align:center;">
+        <input type="time" class="field-input" style="padding:7px 8px;font-size:13px;width:90px;text-align:center;"
+          value="${row.timeStart||''}" onchange="_otRows[${i}].timeStart=this.value;calcOTHours(${i})">
       </td>
-      <td style="padding:5px 4px;text-align:center;">
-        <button onclick="removeOTRow(${i})" style="background:none;border:none;color:#e55;cursor:pointer;font-size:15px;line-height:1;">🗑️</button>
+      <td style="padding:10px 8px;text-align:center;">
+        <input type="time" class="field-input" style="padding:7px 8px;font-size:13px;width:90px;text-align:center;"
+          value="${row.timeEnd||''}" onchange="_otRows[${i}].timeEnd=this.value;calcOTHours(${i})">
+      </td>
+      <td style="padding:10px 8px;text-align:center;">
+        <span id="ot-hours-${i}" style="font-weight:700;color:var(--gold-light);font-size:14px;">${row.hours||0}</span>
+        <span style="font-size:11px;color:var(--text-muted);"> ชม.</span>
+      </td>
+      <td style="padding:10px 10px;text-align:center;">
+        <button onclick="removeOTRow(${i})" style="background:none;border:none;color:rgba(220,80,80,0.7);cursor:pointer;font-size:16px;line-height:1;padding:2px 4px;border-radius:4px;transition:color 0.2s;" onmouseover="this.style.color='#e55'" onmouseout="this.style.color='rgba(220,80,80,0.7)'">🗑</button>
       </td>
     </tr>`).join('');
   calcOTTotal();
@@ -3293,6 +3313,20 @@ function renderOTTable() {
       });
     });
   }, 50);
+}
+
+function calcOTHours(idx) {
+  const row = _otRows[idx];
+  if (!row.timeStart || !row.timeEnd) return;
+  const [sh, sm] = row.timeStart.split(':').map(Number);
+  const [eh, em] = row.timeEnd.split(':').map(Number);
+  let mins = (eh * 60 + em) - (sh * 60 + sm);
+  if (mins < 0) mins += 24 * 60; // ข้ามเที่ยงคืน
+  const hours = Math.round((mins / 60) * 2) / 2; // round ทุก 0.5
+  _otRows[idx].hours = Math.min(8, Math.max(0, hours));
+  const el = document.getElementById('ot-hours-' + idx);
+  if (el) el.textContent = _otRows[idx].hours;
+  calcOTTotal();
 }
 
 function calcOTTotal() {
@@ -3347,20 +3381,20 @@ async function loadOTBalance() {
   if (res.success && cards) {
     const { earned, used, balance } = res.data;
     cards.innerHTML = `
-      <div style="background:var(--navy-light);border-radius:10px;padding:14px;text-align:center;">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">สะสมทั้งหมด</div>
-        <div style="font-size:26px;font-weight:700;color:var(--white);">${earned}</div>
-        <div style="font-size:11px;color:var(--muted);">ชั่วโมง</div>
+      <div style="background:var(--navy-mid,#0f2340);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;">
+        <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.05em;margin-bottom:8px;">สะสมทั้งหมด</div>
+        <div style="font-size:32px;font-weight:700;color:var(--white);line-height:1;">${earned}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">ชั่วโมง</div>
       </div>
-      <div style="background:var(--navy-light);border-radius:10px;padding:14px;text-align:center;">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">ใช้ไปแล้ว</div>
-        <div style="font-size:26px;font-weight:700;color:#e5a04a;">${used}</div>
-        <div style="font-size:11px;color:var(--muted);">ชั่วโมง</div>
+      <div style="background:var(--navy-mid,#0f2340);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;">
+        <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.05em;margin-bottom:8px;">ใช้ไปแล้ว</div>
+        <div style="font-size:32px;font-weight:700;color:#e5a04a;line-height:1;">${used}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">ชั่วโมง</div>
       </div>
-      <div style="background:var(--navy-light);border-radius:10px;padding:14px;text-align:center;">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;">คงเหลือ</div>
-        <div style="font-size:26px;font-weight:700;color:var(--gold-light);">${balance}</div>
-        <div style="font-size:11px;color:var(--muted);">ชั่วโมง</div>
+      <div style="background:var(--navy-mid,#0f2340);border:1px solid rgba(200,145,42,0.3);border-radius:12px;padding:20px;text-align:center;">
+        <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.05em;margin-bottom:8px;">คงเหลือ</div>
+        <div style="font-size:32px;font-weight:700;color:var(--gold-light);line-height:1;">${balance}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">ชั่วโมง</div>
       </div>`;
   }
 
