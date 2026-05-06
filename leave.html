@@ -2916,6 +2916,8 @@ async function loadUserFromPortal() {
       'bm_leave_approval':   'approval',    'bs_leave_approval':   'approval',
       'bm_leave_all_leaves': 'all-leaves',  'bs_leave_all_leaves': 'all-leaves',
       'bm_leave_report':     'report',      'bs_leave_report':     'report',
+      'ot-record':           'ot-record',
+      'ot-balance':          'ot-balance',
     };
     // รีเซ็ตก่อน แล้วเปิดเฉพาะที่มีสิทธิ์
     Object.values(PORTAL_TO_PAGE).forEach(page => { menuPerms[page] = false; });
@@ -2936,6 +2938,8 @@ async function loadUserFromPortal() {
     (menuPerms['approval'] || menuPerms['all-leaves']) ? '' : 'none';
   var navAdminSec = document.getElementById('nav-admin-section');
   if (navAdminSec) navAdminSec.style.display = (role === 'admin') ? '' : 'none';
+  var navOtSec = document.getElementById('nav-ot-section');
+  if (navOtSec) navOtSec.style.display = (menuPerms['ot-record'] || menuPerms['ot-balance']) ? '' : 'none';
 
   // bottom nav (mobile)
   var bnavApproval = document.getElementById('bnav-approval');
