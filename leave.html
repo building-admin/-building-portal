@@ -1557,7 +1557,7 @@
           </div>
 
           <!-- หมายเหตุ -->
-          <div style="background:var(--navy-mid,#0f2340);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px;">
+          <div style="background:var(--navy-mid,#0f2340);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px;">
             <div style="padding:14px 18px;border-bottom:1px solid var(--border);font-size:13px;font-weight:600;color:var(--silver);">หมายเหตุ / เหตุผลการทำ OT <span style="color:#e55;margin-left:2px;">*</span></div>
             <div style="padding:14px 16px;">
               <textarea class="field-textarea" id="ot-rec-remark" placeholder="เช่น OT จากการเก็บของ, OT งานพิเศษ..." style="min-height:80px;margin:0;"></textarea>
@@ -1565,7 +1565,7 @@
           </div>
 
           <!-- ปุ่ม -->
-          <div class="form-actions" style="padding:0;">
+          <div class="form-actions" style="padding:8px 0 20px;">
             <button class="btn-cancel" onclick="showPage('dashboard')">ยกเลิก</button>
             <button class="btn-submit" id="ot-rec-btn" onclick="submitOTBatch()">📤 ส่งขออนุมัติ</button>
           </div>
@@ -3375,10 +3375,12 @@ async function loadOTBalance() {
   const canSeeAll = ['admin','hr'].includes(role) || currentUser?.username === 'bs001';
 
   // ยอดตัวเอง
-  const res = await callAPI({ action:'getOTBalance', employeeId: empId });
+  const res   = await callAPI({ action:'getOTBalance', employeeId: empId });
   const cards = document.getElementById('ot-balance-cards');
-  if (res.success && cards) {
-    const { earned, used, balance } = res.data;
+  if (cards) {
+    const earned  = res.success ? res.data.earned  : 0;
+    const used    = res.success ? res.data.used    : 0;
+    const balance = res.success ? res.data.balance : 0;
     cards.innerHTML = `
       <div style="background:var(--navy-mid,#0f2340);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;">
         <div style="font-size:11px;color:var(--text-muted);letter-spacing:0.05em;margin-bottom:8px;">สะสมทั้งหมด</div>
@@ -3401,10 +3403,10 @@ async function loadOTBalance() {
   const allSection = document.getElementById('ot-all-staff-section');
   if (canSeeAll && allSection) {
     allSection.style.display = 'block';
-    const allRes = await callAPI({ action:'getOTSummaryAll' });
-    const tbody  = document.getElementById('ot-all-staff-body');
-    if (allRes.success && tbody) {
-      tbody.innerHTML = allRes.data.map(r => `
+    const allRes    = await callAPI({ action:'getOTSummaryAll' });
+    const tbodyTeam = document.getElementById('ot-all-staff-body');
+    if (allRes.success && tbodyTeam) {
+      tbodyTeam.innerHTML = allRes.data.map(r => `
         <tr>
           <td>${r['ชื่อพนักงาน']}</td>
           <td style="text-align:center;">${r['สะสมทั้งหมด']}</td>
@@ -3415,20 +3417,24 @@ async function loadOTBalance() {
   }
 
   // ประวัติ Batch ตัวเอง
-  const bRes  = await callAPI({ action:'getMyOTBatches', employeeId: empId });
-  const tbody = document.getElementById('ot-batch-history-body');
-  if (bRes.success && tbody) {
-    tbody.innerHTML = bRes.data.map(b => {
-      const statusColor = b['สถานะ'] === 'อนุมัติ' ? 'var(--success)' : b['สถานะ'] === 'ไม่อนุมัติ' ? '#e55' : 'var(--gold-light)';
-      const statusIcon  = b['สถานะ'] === 'อนุมัติ' ? '✅' : b['สถานะ'] === 'ไม่อนุมัติ' ? '❌' : '⏳';
-      return `<tr>
-        <td style="font-size:11px;">${b['รหัส Batch']}</td>
-        <td>${new Date(b['วันที่ยื่น']).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'})}</td>
-        <td style="text-align:center;font-weight:700;">${b['ชั่วโมงรวม']}</td>
-        <td style="font-size:12px;">${b['หมายเหตุ']||'-'}</td>
-        <td style="text-align:center;color:${statusColor};font-weight:600;">${statusIcon} ${b['สถานะ']}</td>
-      </tr>`;
-    }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted);">ไม่มีประวัติ</td></tr>';
+  const bRes       = await callAPI({ action:'getMyOTBatches', employeeId: empId });
+  const tbodyBatch = document.getElementById('ot-batch-history-body');
+  if (tbodyBatch) {
+    if (bRes.success && bRes.data?.length) {
+      tbodyBatch.innerHTML = bRes.data.map(b => {
+        const statusColor = b['สถานะ'] === 'อนุมัติ' ? 'var(--success)' : b['สถานะ'] === 'ไม่อนุมัติ' ? '#e55' : 'var(--gold-light)';
+        const statusIcon  = b['สถานะ'] === 'อนุมัติ' ? '✅' : b['สถานะ'] === 'ไม่อนุมัติ' ? '❌' : '⏳';
+        return `<tr>
+          <td style="font-size:11px;">${b['รหัส Batch']}</td>
+          <td>${new Date(b['วันที่ยื่น']).toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'})}</td>
+          <td style="text-align:center;font-weight:700;">${b['ชั่วโมงรวม']}</td>
+          <td style="font-size:12px;">${b['หมายเหตุ']||'-'}</td>
+          <td style="text-align:center;color:${statusColor};font-weight:600;">${statusIcon} ${b['สถานะ']}</td>
+        </tr>`;
+      }).join('');
+    } else {
+      tbodyBatch.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:24px;">ไม่มีประวัติ</td></tr>';
+    }
   }
 }
 
