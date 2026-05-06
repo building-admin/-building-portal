@@ -3422,10 +3422,10 @@ async function loadOTBalance() {
       if (tbodyTeam) {
         tbodyTeam.innerHTML = (allRes.success && allRes.data?.length)
           ? allRes.data.map(r => `<tr>
-              <td>${r['ชื่อพนักงาน']}</td>
-              <td style="text-align:center;">${r['สะสมทั้งหมด']}</td>
-              <td style="text-align:center;">${r['ใช้ไปแล้ว']}</td>
-              <td style="text-align:center;font-weight:700;color:var(--gold-light);">${r['คงเหลือ']}</td>
+              <td>${r['ชื่อพนักงาน']||'-'}</td>
+              <td style="text-align:center;">${r['สะสมทั้งหมด']??0}</td>
+              <td style="text-align:center;">${r['ใช้ไปแล้ว']??0}</td>
+              <td style="text-align:center;font-weight:700;color:var(--gold-light);">${r['คงเหลือ']??0}</td>
             </tr>`).join('')
           : '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:16px;">ไม่มีข้อมูล</td></tr>';
       }
