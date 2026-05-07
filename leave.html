@@ -2493,9 +2493,13 @@ function formatDateShort(d) {
 //  CANCEL LEAVE — พนักงานยกเลิกใบลาของตัวเอง
 // ════════════════════════════════════════════════════
 function canCancelByEmployee(leave) {
-  // ยกเลิกได้เฉพาะ รออนุมัติ หรือ CS อนุมัติแล้วแต่ HR ยังไม่ได้อนุมัติ
-  if (leave['สถานะ'] === 'อนุมัติ' || leave['สถานะ'] === 'ไม่อนุมัติ') return false;
-  if (leave['ผู้อนุมัติ2-สถานะ'] === 'อนุมัติ') return false; // HR อนุมัติแล้ว = ครบ ยกเลิกไม่ได้
+  const role = currentUser?.type || currentUser?.role || '';
+  const isAdmin = role === 'admin';
+  // admin ยกเลิกได้ทุกกรณี ยกเว้นที่ยกเลิกไปแล้ว
+  if (isAdmin) return leave['สถานะ'] !== 'ยกเลิก';
+  // พนักงานทั่วไป ยกเลิกได้เฉพาะ รออนุมัติ หรือ CS อนุมัติแล้วแต่ HR ยังไม่ได้
+  if (leave['สถานะ'] === 'อนุมัติ' || leave['สถานะ'] === 'ไม่อนุมัติ' || leave['สถานะ'] === 'ยกเลิก') return false;
+  if (leave['ผู้อนุมัติ2-สถานะ'] === 'อนุมัติ') return false;
   return true;
 }
 
