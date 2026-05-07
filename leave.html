@@ -2408,8 +2408,6 @@ function updateChartsFromData(all, allTime) {
     const t = (r['ประเภทลา'] || '').replace(/^[\p{Emoji}\s]+/u, '').trim();
     if (typeCounts[t] !== undefined) typeCounts[t]++;
   });
-  console.log('🔍 typeCounts:', typeCounts);
-  console.log('🔍 sample ประเภทลา:', data.slice(0,3).map(r => r['ประเภทลา']));
 
   // อัปเดต monthly bar chart
   if (window._monthlyChart) {
@@ -3047,20 +3045,6 @@ function selectType(btn, type) {
   if (el) el.textContent = type;
 }
 
-function calcDays() {
-  const s = document.getElementById('date-start').value;
-  const e = document.getElementById('date-end').value;
-  if (s) {
-    const end = e || s;
-    const diff = Math.max(0, Math.round((new Date(end) - new Date(s)) / 86400000) + 1);
-    document.getElementById('days-count').textContent = diff;
-    const fmt = d => new Date(d).toLocaleDateString('th-TH', { day:'numeric', month:'short', year:'2-digit' });
-    const elS = document.getElementById('summary-start');
-    const elE = document.getElementById('summary-end');
-    if (elS) elS.textContent = fmt(s);
-    if (elE) elE.textContent = fmt(end);
-  }
-}
 
 async function loadApprovers() {
   const container = document.getElementById('approvers-list');
