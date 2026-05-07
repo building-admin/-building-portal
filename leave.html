@@ -1279,7 +1279,7 @@
           <div class="table-wrap">
             <table>
               <thead><tr>
-                <th>รหัสใบลา</th><th>ประเภท</th><th>วันเริ่ม</th><th>วันสิ้นสุด</th><th>จำนวน</th><th>สถานะ</th><th>ผู้อนุมัติ</th>
+                <th>รหัสใบลา</th><th>ประเภท</th><th>วันเริ่ม</th><th>วันสิ้นสุด</th><th>จำนวน</th><th>สถานะ</th><th>ผู้อนุมัติ</th><th></th>
               </tr></thead>
               <tbody id="my-leaves-tbody">
                 <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:28px;">⏳ กำลังโหลด...</td></tr>
@@ -2489,6 +2489,37 @@ function formatDateShort(d) {
 // ════════════════════════════════════════════════════
 //  LOAD MY LEAVES
 // ════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════
+//  CANCEL LEAVE — พนักงานยกเลิกใบลาของตัวเอง
+// ════════════════════════════════════════════════════
+function canCancelByEmployee(leave) {
+  // ยกเลิกได้เฉพาะ รออนุมัติ หรือ CS อนุมัติแล้วแต่ HR ยังไม่ได้อนุมัติ
+  if (leave['สถานะ'] === 'อนุมัติ' || leave['สถานะ'] === 'ไม่อนุมัติ') return false;
+  if (leave['ผู้อนุมัติ2-สถานะ'] === 'อนุมัติ') return false; // HR อนุมัติแล้ว = ครบ ยกเลิกไม่ได้
+  return true;
+}
+
+async function cancelMyLeave(leaveId) {
+  if (!confirm(`ยืนยันยกเลิกใบลา ${leaveId} ?\nหลังยกเลิกสามารถยื่นใบลาใหม่ได้เลย`)) return;
+
+  const empId   = currentUser?.employeeId || currentUser?.empId || currentUser?.id;
+  const empName = currentUser?.name || '';
+
+  const res = await callAPI({
+    action:       'cancelLeaveByEmployee',
+    leaveId,
+    employeeId:   empId,
+    employeeName: empName
+  });
+
+  if (res.success) {
+    showToast('🚫 ยกเลิกใบลาเรียบร้อยแล้ว');
+    loadMyLeaves();
+  } else {
+    showToast('❌ ' + res.message);
+  }
+}
+
 async function loadMyLeaves() {
   const tbody = document.querySelector('#section-my-leaves .table-wrap tbody');
   if (!tbody) return;
@@ -2523,6 +2554,7 @@ async function loadMyLeaves() {
         <div class="approver-row"><div class="dot ${s1}"></div><span>ท่านที่ 1: ${r['ผู้อนุมัติ1-สถานะ'] || 'รอ'}</span></div>
         <div class="approver-row"><div class="dot ${s2}"></div><span>ท่านที่ 2: ${r['ผู้อนุมัติ2-สถานะ'] || 'รอ'}</span></div>
       </div></td>
+      <td>${canCancelByEmployee(r) ? `<button onclick="cancelMyLeave('${r['รหัสใบลา']}')" style="padding:4px 10px;font-size:11px;background:rgba(224,82,82,0.12);border:1px solid rgba(224,82,82,0.3);border-radius:6px;color:#e05252;cursor:pointer;">🚫 ยกเลิก</button>` : ''}</td>
     </tr>`;
   }).join('');
 
