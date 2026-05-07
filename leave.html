@@ -270,7 +270,7 @@
   .page-section.active { display: block; }
 
   /* ─── DASHBOARD ─── */
-  .stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 16px; margin-bottom: 24px; }
+  .stats-grid { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 16px; margin-bottom: 24px; }
   .stat-card {
     background: var(--card-bg);
     border: 1px solid var(--border);
@@ -824,7 +824,7 @@
 
   /* ─── TABLET ─── */
   @media (max-width: 1024px) {
-    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .stats-grid { grid-template-columns: repeat(3, 1fr); }
     .charts-grid { grid-template-columns: 1fr; }
     .recent-grid { grid-template-columns: 1fr; }
     .leave-info-grid { grid-template-columns: repeat(2, 1fr); }
