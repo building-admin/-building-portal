@@ -808,6 +808,12 @@ function thaiDateToJS(thaiDate) {
   return new Date(y - 543, m - 1, d);
 }
 
+// แปลง Thai date string → CE date string สำหรับ input type=date (ไม่ผ่าน Date object ป้องกัน timezone shift)
+function thaiDateToCEInput(thaiDate) {
+  const [ty, tm, td] = thaiDate.split('-');
+  return `${parseInt(ty) - 543}-${tm}-${td}`;
+}
+
 // ดึงวันหยุดของปี พ.ศ.
 function getHolidaysForYear(yearTH) {
   return (_holidays[yearTH] || []).slice().sort((a,b) => a.date.localeCompare(b.date));
@@ -866,7 +872,7 @@ function renderHolidayModal() {
     <div id="holiday-edit-list">`;
     holidays.forEach((h, i) => {
       html += `<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(44,74,114,.25);">
-        <input type="date" value="${thaiDateToJS(h.date).toISOString().split('T')[0]}"
+        <input type="date" value="${thaiDateToCEInput(h.date)}"
           data-idx="${i}" data-year="${yearTH}" class="holiday-date-input"
           style="background:var(--navy-light);border:1px solid var(--border);color:var(--white);border-radius:8px;padding:7px 10px;font-size:13px;font-family:var(--font-body);width:160px;"
           onchange="updateHolidayDate(${yearTH},${i},this.value)">
