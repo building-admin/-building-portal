@@ -2893,6 +2893,8 @@ async function loadUserFromPortal() {
     sessionStorage.removeItem('leave_params');
     const saveParams = { name: params.get('name'), position: params.get('position'), dept: params.get('dept'), division: params.get('division'), empId: params.get('empId') };
     sessionStorage.setItem('leave_params', JSON.stringify(saveParams));
+    // ล้าง token ออกจาก URL ทันที ป้องกัน bookmark เก็บ token ไว้
+    history.replaceState({}, '', window.location.pathname);
   }
 
   const savedParams = JSON.parse(sessionStorage.getItem('leave_params') || '{}');
