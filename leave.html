@@ -1204,8 +1204,7 @@
                 <thead>
                   <tr style="background:var(--navy-light);">
                     <th style="padding:7px 10px;text-align:left;color:var(--silver);font-weight:600;">วันที่</th>
-                    <th style="padding:7px 10px;text-align:center;color:var(--silver);font-weight:600;width:100px;">ชั่วโมง</th>
-                    <th style="padding:7px 6px;width:36px;"></th>
+                    <th style="padding:7px 10px;text-align:right;color:var(--silver);font-weight:600;">ชั่วโมง</th>
                   </tr>
                 </thead>
                 <tbody id="leave-dates-body"></tbody>
@@ -3214,20 +3213,20 @@ function renderLeaveDatesTable() {
   const tbody = document.getElementById('leave-dates-body');
   if (!tbody) return;
   tbody.innerHTML = _leaveDates.map((row, i) => `
-    <tr>
-      <td style="padding:5px 6px;">
-        <input type="date" class="field-input" style="padding:5px 8px;font-size:12px;"
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+      <td style="padding:6px 8px;">
+        <input type="date" class="field-input" style="padding:5px 8px;font-size:12px;width:100%;box-sizing:border-box;"
           value="${row.date}" onchange="_leaveDates[${i}].date=this.value;calcLeaveDays()">
       </td>
-      <td style="padding:5px 6px;text-align:center;">
-        <select class="field-input" style="padding:5px 8px;font-size:12px;width:80px;"
-          onchange="_leaveDates[${i}].hours=Number(this.value);calcLeaveDays()">
-          <option value="8"  ${row.hours==8?'selected':''}>8 ชม.</option>
-          <option value="4"  ${row.hours==4?'selected':''}>4 ชม.</option>
-        </select>
-      </td>
-      <td style="padding:5px 4px;text-align:center;">
-        <button onclick="removeLeaveDate(${i})" style="background:none;border:none;color:#e55;cursor:pointer;font-size:15px;line-height:1;">🗑️</button>
+      <td style="padding:6px 8px;white-space:nowrap;">
+        <div style="display:flex;align-items:center;gap:6px;justify-content:flex-end;">
+          <select class="field-input" style="padding:5px 8px;font-size:12px;width:80px;"
+            onchange="_leaveDates[${i}].hours=Number(this.value);calcLeaveDays()">
+            <option value="8"  ${row.hours==8?'selected':''}>8 ชม.</option>
+            <option value="4"  ${row.hours==4?'selected':''}>4 ชม.</option>
+          </select>
+          <button onclick="removeLeaveDate(${i})" style="background:none;border:none;color:#e55;cursor:pointer;font-size:15px;line-height:1;padding:2px 4px;flex-shrink:0;">🗑️</button>
+        </div>
       </td>
     </tr>`).join('');
   calcLeaveDays();
@@ -3473,33 +3472,35 @@ function renderOTTable() {
   const container = document.getElementById('ot-rec-body');
   if (!container) return;
   container.innerHTML = _otRows.map((row, i) => `
-    <div class="ot-row-wrap" style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:flex-end;gap:12px;">
-      <div style="flex:1;min-width:110px;">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px;font-weight:500;">วันที่</div>
-        <input type="date" class="field-input" style="padding:8px 10px;font-size:13px;width:100%;box-sizing:border-box;"
-          value="${row.date}" onchange="_otRows[${i}].date=this.value">
-      </div>
-      <div style="width:90px;">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px;font-weight:500;">เริ่ม</div>
-        <input type="time" class="field-input" style="padding:8px 6px;font-size:13px;width:100%;box-sizing:border-box;"
-          value="${row.timeStart||''}" onchange="_otRows[${i}].timeStart=this.value;calcOTHours(${i})">
-      </div>
-      <div style="width:90px;">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px;font-weight:500;">สิ้นสุด</div>
-        <input type="time" class="field-input" style="padding:8px 6px;font-size:13px;width:100%;box-sizing:border-box;"
-          value="${row.timeEnd||''}" onchange="_otRows[${i}].timeEnd=this.value;calcOTHours(${i})">
-      </div>
-      <div style="width:58px;text-align:center;">
-        <div style="font-size:11px;color:var(--text-muted);margin-bottom:5px;font-weight:500;">ชม.</div>
-        <div style="padding:8px 4px;background:rgba(200,145,42,0.1);border:1px solid rgba(200,145,42,0.25);border-radius:8px;min-height:36px;display:flex;align-items:center;justify-content:center;">
-          <span id="ot-hours-${i}" style="font-size:15px;font-weight:700;color:var(--gold-light);">${row.hours||0}</span>
+    <div style="padding:12px 16px;border-bottom:1px solid var(--border);">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;">วันที่</div>
+          <input type="date" class="field-input" style="padding:8px 10px;font-size:13px;width:100%;box-sizing:border-box;"
+            value="${row.date}" onchange="_otRows[${i}].date=this.value">
         </div>
-      </div>
-      <div class="ot-trash" style="padding-bottom:1px;">
-        <button onclick="removeOTRow(${i})" title="ลบ"
-          style="padding:8px 10px;background:none;border:1px solid rgba(220,80,80,0.25);color:rgba(220,80,80,0.6);cursor:pointer;font-size:14px;border-radius:8px;transition:all 0.2s;line-height:1;min-height:36px;"
-          onmouseover="this.style.background='rgba(220,80,80,0.1)';this.style.borderColor='#e55';this.style.color='#e55'"
-          onmouseout="this.style.background='none';this.style.borderColor='rgba(220,80,80,0.25)';this.style.color='rgba(220,80,80,0.6)'">🗑</button>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;">เริ่ม</div>
+          <input type="time" class="field-input" style="padding:8px 8px;font-size:13px;width:100%;box-sizing:border-box;"
+            value="${row.timeStart||''}" onchange="_otRows[${i}].timeStart=this.value;calcOTHours(${i})">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;">สิ้นสุด</div>
+          <input type="time" class="field-input" style="padding:8px 8px;font-size:13px;width:100%;box-sizing:border-box;"
+            value="${row.timeEnd||''}" onchange="_otRows[${i}].timeEnd=this.value;calcOTHours(${i})">
+        </div>
+        <div>
+          <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;">ชม.</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div style="flex:1;padding:8px;background:rgba(200,145,42,0.1);border:1px solid rgba(200,145,42,0.25);border-radius:8px;text-align:center;">
+              <span id="ot-hours-${i}" style="font-size:15px;font-weight:700;color:var(--gold-light);">${row.hours||0}</span>
+            </div>
+            <button onclick="removeOTRow(${i})" title="ลบ"
+              style="padding:8px 10px;background:none;border:1px solid rgba(220,80,80,0.25);color:rgba(220,80,80,0.6);cursor:pointer;font-size:14px;border-radius:8px;line-height:1;"
+              onmouseover="this.style.background='rgba(220,80,80,0.1)';this.style.borderColor='#e55';this.style.color='#e55'"
+              onmouseout="this.style.background='none';this.style.borderColor='rgba(220,80,80,0.25)';this.style.color='rgba(220,80,80,0.6)'">🗑</button>
+          </div>
+        </div>
       </div>
     </div>`).join('');
   calcOTTotal();
