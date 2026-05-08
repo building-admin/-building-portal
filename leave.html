@@ -2088,7 +2088,7 @@ async function loadRosterView() {
 
   // ── section / sub-group header rows ────────────────
   function rvSectionRow(icon, label, color='var(--gold-light)') {
-    return `<tr style="cursor:pointer;" onclick="showLeaveDatesModal(${idx})"><td colspan="${daysInMonth + 2}" style="
+    return `<tr><td colspan="${daysInMonth + 2}" style="
       background:rgba(26,52,96,.98);
       border-top:2px solid rgba(200,145,42,.5);
       border-bottom:1px solid rgba(200,145,42,.25);
@@ -2625,7 +2625,7 @@ async function loadMyLeaves() {
       : `<span class="badge badge-pending">⏳ รออนุมัติ</span>`;
     const remarkNote = r['หมายเหตุผู้อนุมัติ']
       ? `<div style="font-size:11px;color:#e05252;margin-top:4px;cursor:pointer;" onclick="showInfoModal('${r['หมายเหตุผู้อนุมัติ'].replace(/'/g, '\\\'').replace(/"/g, '&quot;')}')">📝 คลิกดูรายละเอียด</div>` : '';
-    return `<tr>
+    return `<tr style="cursor:pointer;" onclick="showLeaveDatesModal(${idx})">
       <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">${r['รหัสใบลา']}</td>
       <td><span class="badge badge-type">${r['ประเภทลา']}</span></td>
       <td>${formatDateShort(r['วันเริ่มลา'])}</td>
