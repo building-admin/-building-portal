@@ -1716,6 +1716,20 @@
   </div>
 </div>
 
+<!-- Modal แสดงรายละเอียดวันลา -->
+<div id="modal-leave-detail" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:420px;width:90%;">
+    <div style="font-size:28px;text-align:center;margin-bottom:8px;">📅</div>
+    <h3 id="modal-leave-detail-title" style="text-align:center;color:var(--white);margin-bottom:4px;"></h3>
+    <div id="modal-leave-detail-id" style="text-align:center;font-size:11px;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:16px;"></div>
+    <div id="modal-leave-detail-content" style="font-size:13px;color:var(--text);line-height:1.8;background:var(--input-bg);border-radius:8px;padding:14px;max-height:300px;overflow-y:auto;"></div>
+    <button onclick="document.getElementById('modal-leave-detail').style.display='none'"
+      style="width:100%;margin-top:16px;padding:10px;background:rgba(99,179,237,0.15);border:1px solid rgba(99,179,237,0.3);border-radius:8px;color:#63b3ed;cursor:pointer;font-weight:600;">
+      ปิด
+    </button>
+  </div>
+</div>
+
 <!-- Modal แสดงรายละเอียดยกเลิก (แทน alert) -->
 <div id="modal-info" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
   <div style="background:var(--card-bg);border:1px solid rgba(224,82,82,0.3);border-radius:16px;padding:28px;max-width:400px;width:90%;">
@@ -2598,7 +2612,8 @@ async function loadMyLeaves() {
     return;
   }
 
-  tbody.innerHTML = res.data.map(r => {
+  window._myLeaveData = res.data;
+  tbody.innerHTML = res.data.map((r, idx) => {
     const s1 = r['ผู้อนุมัติ1-สถานะ'] === 'อนุมัติ' ? 'dot-green'
       : (r['ผู้อนุมัติ1-สถานะ'] === 'ไม่อนุมัติ' || r['ผู้อนุมัติ1-สถานะ'] === 'ยกเลิก') ? 'dot-red' : 'dot-gray';
     const s2 = r['ผู้อนุมัติ2-สถานะ'] === 'อนุมัติ' ? 'dot-green'
@@ -2611,7 +2626,7 @@ async function loadMyLeaves() {
     const remarkNote = r['หมายเหตุผู้อนุมัติ']
       ? `<div style="font-size:11px;color:#e05252;margin-top:4px;cursor:pointer;" onclick="showInfoModal('${r['หมายเหตุผู้อนุมัติ'].replace(/'/g, '\\\'').replace(/"/g, '&quot;')}')">📝 คลิกดูรายละเอียด</div>` : '';
     return `<tr>
-      <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">${r['รหัสใบลา']}</td>
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">${r['รหัสใบลา']}<br><span onclick="showLeaveDatesModal(${idx})" style="cursor:pointer;color:#63b3ed;font-size:10px;font-family:var(--font-body);">🔍 ดูวันที่</span></td>
       <td><span class="badge badge-type">${r['ประเภทลา']}</span></td>
       <td>${formatDateShort(r['วันเริ่มลา'])}</td>
       <td>${formatDateShort(r['วันสิ้นสุด'])}</td>
@@ -3947,6 +3962,44 @@ function showInfoModal(text) {
   }
   document.getElementById('modal-info-content').innerHTML = html;
   document.getElementById('modal-info').style.display = 'flex';
+}
+
+function showLeaveDatesModal(idx) {
+  const r = window._myLeaveData?.[idx];
+  if (!r) return;
+
+  document.getElementById('modal-leave-detail-title').textContent = r['ประเภทลา'] || 'รายละเอียดใบลา';
+  document.getElementById('modal-leave-detail-id').textContent = r['รหัสใบลา'] || '';
+
+  let html = '';
+  let dates = [];
+  try { dates = JSON.parse(r['รายการวัน'] || '[]'); } catch(e) {}
+
+  if (dates.length > 0) {
+    const totalHours = dates.reduce((s, d) => s + Number(d.hours || 8), 0);
+    html += `<div style="margin-bottom:10px;color:var(--text-muted);font-size:12px;">วันที่ลาทั้งหมด ${dates.length} วัน • รวม ${totalHours} ชั่วโมง</div>`;
+    html += dates.map(d => {
+      const dateObj = new Date(d.date);
+      const dateTH  = dateObj.toLocaleDateString('th-TH', { weekday:'short', year:'numeric', month:'short', day:'numeric' });
+      const hrs = Number(d.hours || 8);
+      const hrsLabel = hrs >= 8 ? '1 วัน (8 ชม.)' : `ครึ่งวัน (${hrs} ชม.)`;
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06);">
+        <span>📅 ${dateTH}</span>
+        <span style="color:var(--text-muted);font-size:12px;">${hrsLabel}</span>
+      </div>`;
+    }).join('');
+  } else {
+    // fallback: แสดงช่วงวันแบบเดิม
+    const s = formatDateShort(r['วันเริ่มลา']);
+    const e = formatDateShort(r['วันสิ้นสุด']);
+    html = `<div>📅 ${s}${s !== e ? ' — ' + e : ''}</div><div style="color:var(--text-muted);font-size:12px;margin-top:4px;">รวม ${r['จำนวนวัน']} วัน</div>`;
+  }
+
+  if (r['เหตุผล']) html += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);">📝 ${r['เหตุผล']}</div>`;
+  if (r['หมายเหตุ']) html += `<div style="margin-top:4px;color:var(--text-muted);font-size:12px;">💬 ${r['หมายเหตุ']}</div>`;
+
+  document.getElementById('modal-leave-detail-content').innerHTML = html;
+  document.getElementById('modal-leave-detail').style.display = 'flex';
 }
 
 function openRevokeModal(leaveId, approverIdx) {
