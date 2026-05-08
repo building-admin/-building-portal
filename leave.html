@@ -1550,7 +1550,18 @@
 
           <!-- ── คอลัมน์ซ้าย: บันทึก OT ── -->
           <div class="form-card">
-            <div class="form-section-title" style="margin-top:0;">รายการวันที่ทำ OT</div>
+            <!-- dropdown เลือกพนักงาน (เฉพาะ admin/ot-view-all) -->
+            <div id="ot-emp-selector" style="display:none;margin-bottom:16px;">
+              <div class="form-section-title" style="margin-top:0;">บันทึก OT ให้พนักงาน</div>
+              <select id="ot-emp-select" class="field-input" onchange="onOTEmpChange()"
+                style="width:100%;padding:9px 12px;font-size:13px;">
+                <option value="">— เลือกพนักงาน —</option>
+              </select>
+            </div>
+            <div id="ot-emp-label" style="display:none;margin-bottom:16px;">
+              <div class="form-section-title" style="margin-top:0;color:var(--gold-light);">👤 <span id="ot-emp-name-show"></span></div>
+            </div>
+            <div class="form-section-title" style="margin-top:0;" id="ot-list-title">รายการวันที่ทำ OT</div>
             <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px;">
               <div id="ot-rec-body"></div>
               <div style="padding:10px 14px;background:rgba(255,255,255,0.02);">
@@ -3300,8 +3311,57 @@ async function submitLeave() {
 let _otRows = [];
 
 function initOTForm() {
-  _otRows = [];
+  _otRows = [{ date:'', timeStart:'', timeEnd:'', hours:0 }];
+  const remarkEl = document.getElementById('ot-rec-remark');
+  if (remarkEl) remarkEl.value = '';
+  const totalEl = document.getElementById('ot-rec-total');
+  if (totalEl) totalEl.textContent = '0';
+
+  const userType   = currentUser?.type || '';
+  const canViewAll = ['admin','hr'].includes(userType) ||
+                     (typeof menuPerms !== 'undefined' && menuPerms['ot-view-all']);
+
+  const selectorEl = document.getElementById('ot-emp-selector');
+  const labelEl    = document.getElementById('ot-emp-label');
+  const nameEl     = document.getElementById('ot-emp-name-show');
+
+  if (canViewAll) {
+    if (selectorEl) selectorEl.style.display = '';
+    if (labelEl)    labelEl.style.display = 'none';
+    loadOTEmpList();
+  } else {
+    if (selectorEl) selectorEl.style.display = 'none';
+    if (labelEl)    labelEl.style.display = '';
+    if (nameEl)     nameEl.textContent = currentUser?.name || '';
+  }
   renderOTTable();
+}
+
+async function loadOTEmpList() {
+  const sel = document.getElementById('ot-emp-select');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— เลือกพนักงาน —</option>';
+  try {
+    const res = await callAPI({ action: 'getAllEmployees' });
+    const list = res.success ? res.data : [];
+    list.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = JSON.stringify({ id: e['รหัสพนักงาน'], name: e['ชื่อ-นามสกุล'] });
+      opt.textContent = `${e['ชื่อ-นามสกุล']} (${e['รหัสพนักงาน']})`;
+      sel.appendChild(opt);
+    });
+    // set default เป็นตัวเอง
+    const selfId = currentUser?.employeeId || currentUser?.empId || currentUser?.id;
+    for (let i = 0; i < sel.options.length; i++) {
+      try {
+        const v = JSON.parse(sel.options[i].value);
+        if (String(v.id) === String(selfId)) { sel.selectedIndex = i; break; }
+      } catch(e) {}
+    }
+  } catch(err) { console.error('loadOTEmpList:', err); }
+}
+
+function onOTEmpChange() { /* อ่านค่าตอน submit */ }
   addOTRow();
   document.getElementById('ot-rec-remark').value = '';
 }
@@ -3396,11 +3456,21 @@ async function submitOTBatch() {
   const btn = document.getElementById('ot-rec-btn');
   btn.disabled = true; btn.textContent = '⏳ กำลังส่ง...';
 
-  const empId = currentUser?.employeeId || currentUser?.empId || currentUser?.id;
+  // หาพนักงานที่จะบันทึกให้
+  let empId   = currentUser?.employeeId || currentUser?.empId || currentUser?.id;
+  let empName = currentUser?.name || '';
+  const sel   = document.getElementById('ot-emp-select');
+  if (sel && sel.value) {
+    try {
+      const v = JSON.parse(sel.value);
+      if (v.id)   empId   = v.id;
+      if (v.name) empName = v.name;
+    } catch(e) {}
+  }
   const res = await callAPI({
     action:       'submitOTBatch',
     employeeId:   empId,
-    employeeName: currentUser.name,
+    employeeName: empName,
     items:        validRows,
     remark
   });
