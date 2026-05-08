@@ -1006,7 +1006,7 @@ async function openRoster() {
       role:     u.role     || 'employee',
       empId:    u.employeeId || ''
     });
-    window.location.href = `roster.html?${params.toString()}`;
+    params.set("v", Date.now()); window.location.href = `roster.html?${params.toString()}`;
   } catch(e) {
     showAlert('เปิดระบบตารางรอบไม่ได้: ' + e.message, '❌');
   }
@@ -1047,7 +1047,7 @@ async function openLeave() {
       division: u.division   || '',
       empId:    u.employeeId || '',
     });
-    window.location.href = `leave.html?${params.toString()}`;
+    params.set("v", Date.now()); window.location.href = `leave.html?${params.toString()}`;
   } catch(e) {
     console.error('openLeave error:', e);
     showAlert('เปิดระบบใบลาไม่ได้: ' + e.message, '❌');
