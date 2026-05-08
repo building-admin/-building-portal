@@ -3329,8 +3329,22 @@ async function submitLeave() {
   btn.disabled = false; btn.textContent = '📤 ส่งใบลา';
   if (res.success) {
     showToast(`✅ ${res.message}`);
-    _leaveDates = [];
-    setTimeout(() => showPage('my-leaves'), 1000);
+    // เคลียฟอร์มทั้งหมด
+    _leaveDates = [{ date: '', hours: 8 }];
+    document.querySelectorAll('.leave-type-btn').forEach(b => b.classList.remove('selected'));
+    const reasonEl = document.getElementById('leave-reason');
+    const remarkEl = document.getElementById('leave-remark');
+    if (reasonEl) reasonEl.value = '';
+    if (remarkEl) remarkEl.value = '';
+    renderLeaveDatesTable();
+    calcLeaveDays();
+    // อัปเดต summary card ขวา
+    const sumEl = document.getElementById('days-count');
+    if (sumEl) sumEl.textContent = '0';
+    const totalEl = document.getElementById('leave-total-days');
+    if (totalEl) totalEl.textContent = '0';
+    document.querySelectorAll('#summary-start,#summary-end').forEach(e => { if(e) e.textContent = '—'; });
+    setTimeout(() => showPage('my-leaves'), 1200);
   } else {
     showToast('❌ ' + res.message);
   }
