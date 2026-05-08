@@ -1553,10 +1553,20 @@
             <!-- dropdown เลือกพนักงาน (เฉพาะ admin/ot-view-all) -->
             <div id="ot-emp-selector" style="display:none;margin-bottom:16px;">
               <div class="form-section-title" style="margin-top:0;">บันทึก OT ให้พนักงาน</div>
-              <select id="ot-emp-select" class="field-input" onchange="onOTEmpChange()"
-                style="width:100%;padding:9px 12px;font-size:13px;">
-                <option value="">— เลือกพนักงาน —</option>
-              </select>
+              <!-- Custom dropdown -->
+              <div id="ot-emp-custom" style="position:relative;">
+                <div id="ot-emp-trigger" onclick="toggleOTEmpDropdown()"
+                  style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;background:var(--navy-mid,#0f2340);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:13px;color:var(--white);user-select:none;transition:border-color 0.2s;"
+                  onmouseover="this.style.borderColor='var(--gold-light)'"
+                  onmouseout="this.style.borderColor='var(--border)'">
+                  <span id="ot-emp-trigger-text" style="color:var(--text-muted);">— เลือกพนักงาน —</span>
+                  <span style="color:var(--text-muted);font-size:10px;">▼</span>
+                </div>
+                <div id="ot-emp-list" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:999;background:var(--navy-mid,#0f2340);border:1px solid var(--border);border-radius:8px;max-height:220px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.4);">
+                </div>
+              </div>
+              <!-- hidden input เก็บค่าจริง -->
+              <input type="hidden" id="ot-emp-select" value="">
             </div>
             <div id="ot-emp-label" style="display:none;margin-bottom:16px;">
               <div class="form-section-title" style="margin-top:0;color:var(--gold-light);">👤 <span id="ot-emp-name-show"></span></div>
@@ -3338,30 +3348,94 @@ function initOTForm() {
 }
 
 async function loadOTEmpList() {
-  const sel = document.getElementById('ot-emp-select');
-  if (!sel) return;
-  sel.innerHTML = '<option value="">— เลือกพนักงาน —</option>';
+  const list = document.getElementById('ot-emp-list');
+  const trigger = document.getElementById('ot-emp-trigger-text');
+  const hidden  = document.getElementById('ot-emp-select');
+  if (!list) return;
+
+  list.innerHTML = '<div style="padding:10px 14px;color:var(--text-muted);font-size:12px;">⏳ กำลังโหลด...</div>';
+
   try {
-    const res = await callAPI({ action: 'getAllEmployees' });
-    const list = res.success ? res.data : [];
-    list.forEach(e => {
-      const opt = document.createElement('option');
-      opt.value = JSON.stringify({ id: e['รหัสพนักงาน'], name: e['ชื่อ-นามสกุล'] });
-      opt.textContent = `${e['ชื่อ-นามสกุล']} (${e['รหัสพนักงาน']})`;
-      sel.appendChild(opt);
-    });
-    // set default เป็นตัวเอง
+    const res  = await callAPI({ action: 'getAllEmployees' });
+    const emps = res.success ? res.data : [];
+
+    list.innerHTML = '';
+
+    // เพิ่ม option เริ่มต้น
+    const defItem = document.createElement('div');
+    defItem.textContent = '— เลือกพนักงาน —';
+    defItem.style.cssText = 'padding:9px 14px;font-size:13px;color:var(--text-muted);cursor:pointer;';
+    defItem.onmouseover = () => defItem.style.background = 'rgba(255,255,255,0.05)';
+    defItem.onmouseout  = () => defItem.style.background = '';
+    defItem.onclick = () => {
+      hidden.value = '';
+      trigger.textContent = '— เลือกพนักงาน —';
+      trigger.style.color = 'var(--text-muted)';
+      closeOTEmpDropdown();
+    };
+    list.appendChild(defItem);
+
     const selfId = currentUser?.employeeId || currentUser?.empId || currentUser?.id;
-    for (let i = 0; i < sel.options.length; i++) {
-      try {
-        const v = JSON.parse(sel.options[i].value);
-        if (String(v.id) === String(selfId)) { sel.selectedIndex = i; break; }
-      } catch(e) {}
-    }
-  } catch(err) { console.error('loadOTEmpList:', err); }
+
+    emps.forEach(e => {
+      const id   = e['รหัสพนักงาน'];
+      const name = e['ชื่อ-นามสกุล'];
+      if (!id || !name) return;
+
+      const val  = JSON.stringify({ id, name });
+      const item = document.createElement('div');
+      item.style.cssText = 'padding:9px 14px;font-size:13px;color:var(--white);cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,0.04);transition:background 0.15s;';
+      item.innerHTML = `<span>${name}</span><span style="font-size:11px;color:var(--text-muted);">${id}</span>`;
+      item.onmouseover = () => item.style.background = 'rgba(200,145,42,0.12)';
+      item.onmouseout  = () => item.style.background = '';
+      item.onclick = () => {
+        hidden.value = val;
+        trigger.textContent = `${name} (${id})`;
+        trigger.style.color = 'var(--white)';
+        closeOTEmpDropdown();
+      };
+      list.appendChild(item);
+
+      // set default เป็นตัวเอง
+      if (String(id) === String(selfId)) {
+        hidden.value = val;
+        trigger.textContent = `${name} (${id})`;
+        trigger.style.color = 'var(--white)';
+      }
+    });
+
+  } catch(err) {
+    list.innerHTML = '<div style="padding:10px 14px;color:#e55;font-size:12px;">โหลดไม่สำเร็จ</div>';
+  }
 }
 
-function onOTEmpChange() { /* อ่านค่าตอน submit */ }
+function toggleOTEmpDropdown() {
+  const list = document.getElementById('ot-emp-list');
+  if (!list) return;
+  if (list.style.display === 'none') {
+    list.style.display = 'block';
+    // ปิดเมื่อคลิกนอก
+    setTimeout(() => {
+      document.addEventListener('click', closeOTEmpOnOutside);
+    }, 10);
+  } else {
+    closeOTEmpDropdown();
+  }
+}
+
+function closeOTEmpDropdown() {
+  const list = document.getElementById('ot-emp-list');
+  if (list) list.style.display = 'none';
+  document.removeEventListener('click', closeOTEmpOnOutside);
+}
+
+function closeOTEmpOnOutside(e) {
+  const custom = document.getElementById('ot-emp-custom');
+  if (custom && !custom.contains(e.target)) closeOTEmpDropdown();
+}
+
+function onOTEmpChange() { /* ไม่ใช้แล้ว — custom dropdown อัปเดต hidden input เอง */ }
+
 
 function addOTRow() {
   _otRows.push({ date: '', timeStart: '', timeEnd: '', hours: 0 });
