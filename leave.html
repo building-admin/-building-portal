@@ -3554,7 +3554,7 @@ function renderOTTable() {
         <div>
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;">เริ่ม</div>
           <div class="ot-time-wrap">
-          <div class="ot-time-display" onclick="otOpenPicker(this,${i},'start')">${_otRows[${i}].timeStart||'--:--'}</div>
+          <div class="ot-time-display" onclick="otOpenPicker(this,${i},'start')">${row.timeStart||'--:--'}</div>
           <div class="ot-picker-popup"><div class="ot-picker-header"><span>ชั่วโมง</span><span>นาที</span></div>
         <div style="position:relative;">
           <div class="ot-picker-highlight"></div>
@@ -3568,7 +3568,7 @@ function renderOTTable() {
         <div>
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;">สิ้นสุด</div>
           <div class="ot-time-wrap">
-          <div class="ot-time-display" onclick="otOpenPicker(this,${i},'end')">${_otRows[${i}].timeEnd||'--:--'}</div>
+          <div class="ot-time-display" onclick="otOpenPicker(this,${i},'end')">${row.timeEnd||'--:--'}</div>
           <div class="ot-picker-popup"><div class="ot-picker-header"><span>ชั่วโมง</span><span>นาที</span></div>
         <div style="position:relative;">
           <div class="ot-picker-highlight"></div>
