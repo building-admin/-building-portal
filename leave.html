@@ -3510,17 +3510,13 @@ function renderOTTable() {
         </div>
         <div>
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;">เริ่ม</div>
-          <input type="text" class="field-input ot-fp-time" readonly placeholder="--:--"
-            style="padding:8px 8px;font-size:13px;width:100%;box-sizing:border-box;cursor:pointer;"
-            data-ot-idx="${i}" data-ot-field="timeStart"
-            value="${row.timeStart||''}" >
+          <input type="time" class="field-input" style="padding:8px 8px;font-size:13px;width:100%;box-sizing:border-box;"
+            value="${row.timeStart||''}" onchange="_otRows[${i}].timeStart=this.value;calcOTHours(${i})">
         </div>
         <div>
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;">สิ้นสุด</div>
-          <input type="text" class="field-input ot-fp-time" readonly placeholder="--:--"
-            style="padding:8px 8px;font-size:13px;width:100%;box-sizing:border-box;cursor:pointer;"
-            data-ot-idx="${i}" data-ot-field="timeEnd"
-            value="${row.timeEnd||''}" >
+          <input type="time" class="field-input" style="padding:8px 8px;font-size:13px;width:100%;box-sizing:border-box;"
+            value="${row.timeEnd||''}" onchange="_otRows[${i}].timeEnd=this.value;calcOTHours(${i})">
         </div>
         <div>
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;">ชม.</div>
@@ -3538,22 +3534,6 @@ function renderOTTable() {
     </div>`).join('');
   calcOTTotal();
   setTimeout(() => {
-    // flatpickr 24hr time picker
-    container.querySelectorAll('.ot-fp-time').forEach(inp => {
-      if (inp._flatpickr) inp._flatpickr.destroy();
-      flatpickr(inp, {
-        enableTime: true, noCalendar: true,
-        time_24hr: true, dateFormat: 'H:i', minuteIncrement: 5,
-        onChange(sel, str) {
-          const idx   = parseInt(inp.dataset.otIdx);
-          const field = inp.dataset.otField;
-          if (_otRows[idx] !== undefined) {
-            _otRows[idx][field] = str;
-            calcOTHours(idx);
-          }
-        }
-      });
-    });
     container.querySelectorAll('input[type=date]').forEach((inp, idx) => {
       if (!inp._flatpickr) flatpickr(inp, { dateFormat:'Y-m-d', altInput:true, altFormat:'d/m/Y',
         locale:{ firstDayOfWeek:1,
