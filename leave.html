@@ -3510,13 +3510,27 @@ function renderOTTable() {
         </div>
         <div>
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;">เริ่ม</div>
-          <input type="time" class="field-input" style="padding:8px 8px;font-size:13px;width:100%;box-sizing:border-box;"
-            value="${row.timeStart||''}" onchange="_otRows[${i}].timeStart=this.value;calcOTHours(${i})">
+          <div style="display:flex;align-items:center;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+            <select style="background:transparent;border:none;outline:none;color:var(--text-primary);font-size:13px;padding:8px 4px;cursor:pointer;flex:1;text-align:center;" onchange="_otRows[${i}].timeStart=this.value.padStart(2,'0')+':'+(_otRows[${i}].timeStart||'00:00').split(':')[1];calcOTHours(${i})">
+              <option value="">ชม.</option><option value="00">00</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option>
+            </select>
+            <span style="color:var(--text-muted);font-weight:bold;">:</span>
+            <select style="background:transparent;border:none;outline:none;color:var(--text-primary);font-size:13px;padding:8px 4px;cursor:pointer;flex:1;text-align:center;" onchange="_otRows[${i}].timeStart=(_otRows[${i}].timeStart||'00:00').split(':')[0]+':'+this.value;calcOTHours(${i})">
+              <option value="">นาที</option><option value="00">00</option><option value="05">05</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50">50</option><option value="55">55</option>
+            </select>
+          </div>
         </div>
         <div>
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;">สิ้นสุด</div>
-          <input type="time" class="field-input" style="padding:8px 8px;font-size:13px;width:100%;box-sizing:border-box;"
-            value="${row.timeEnd||''}" onchange="_otRows[${i}].timeEnd=this.value;calcOTHours(${i})">
+          <div style="display:flex;align-items:center;background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+            <select style="background:transparent;border:none;outline:none;color:var(--text-primary);font-size:13px;padding:8px 4px;cursor:pointer;flex:1;text-align:center;" onchange="_otRows[${i}].timeEnd=this.value.padStart(2,'0')+':'+(_otRows[${i}].timeEnd||'00:00').split(':')[1];calcOTHours(${i})">
+              <option value="">ชม.</option><option value="00">00</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option>
+            </select>
+            <span style="color:var(--text-muted);font-weight:bold;">:</span>
+            <select style="background:transparent;border:none;outline:none;color:var(--text-primary);font-size:13px;padding:8px 4px;cursor:pointer;flex:1;text-align:center;" onchange="_otRows[${i}].timeEnd=(_otRows[${i}].timeEnd||'00:00').split(':')[0]+':'+this.value;calcOTHours(${i})">
+              <option value="">นาที</option><option value="00">00</option><option value="05">05</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50">50</option><option value="55">55</option>
+            </select>
+          </div>
         </div>
         <div>
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;">ชม.</div>
