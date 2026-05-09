@@ -945,6 +945,9 @@
   }
 
   /* ─── SMALL MOBILE ─── */
+  @media (max-width: 768px) {
+    .reason-note-grid { grid-template-columns: 1fr !important; }
+  }
   @media (max-width: 380px) {
     .stats-grid { grid-template-columns: 1fr 1fr; gap: 6px; }
     .stat-value { font-size: 24px; }
@@ -1229,13 +1232,15 @@
             </div>
 
             <div class="form-section-title">รายละเอียด</div>
-            <div style="margin-bottom:14px;">
-              <label class="field-label">เหตุผลการลา<span class="field-required">*</span></label>
-              <textarea class="field-textarea" id="leave-reason" placeholder="ระบุเหตุผลการลา..."></textarea>
-            </div>
-            <div>
-              <label class="field-label">หมายเหตุเพิ่มเติม (ไม่บังคับ)</label>
-              <textarea class="field-textarea" id="leave-remark" style="min-height:60px" placeholder="เช่น กรณีเปลี่ยนรอบ ระบุชื่อผู้ที่สลับด้วย..."></textarea>
+            <div class="reason-note-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+              <div>
+                <label class="field-label">เหตุผลการลา<span class="field-required">*</span></label>
+                <textarea class="field-textarea" id="leave-reason" style="min-height:80px;resize:vertical;" placeholder="ระบุเหตุผลการลา..."></textarea>
+              </div>
+              <div>
+                <label class="field-label">หมายเหตุเพิ่มเติม (ไม่บังคับ)</label>
+                <textarea class="field-textarea" id="leave-remark" style="min-height:80px;resize:vertical;" placeholder="เช่น กรณีเปลี่ยนรอบ ระบุชื่อผู้ที่สลับด้วย..."></textarea>
+              </div>
             </div>
 
             <div class="form-section-title">เอกสารแนบ (ถ้ามี)</div>
