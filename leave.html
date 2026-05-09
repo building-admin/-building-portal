@@ -1718,6 +1718,25 @@
   </div>
 </div>
 
+<!-- Confirm Modal -->
+<div id="modal-confirm" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
+  <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:380px;width:90%;text-align:center;">
+    <div id="modal-confirm-icon" style="font-size:32px;margin-bottom:8px;">⚠️</div>
+    <h3 id="modal-confirm-title" style="color:var(--white);margin-bottom:12px;"></h3>
+    <div id="modal-confirm-msg" style="font-size:13px;color:var(--text);margin-bottom:20px;line-height:1.6;"></div>
+    <div style="display:flex;gap:10px;">
+      <button onclick="document.getElementById('modal-confirm').style.display='none'"
+        style="flex:1;padding:10px;background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:8px;color:var(--text);cursor:pointer;font-weight:600;">
+        ยกเลิก
+      </button>
+      <button id="modal-confirm-ok"
+        style="flex:1;padding:10px;background:rgba(220,80,80,0.15);border:1px solid rgba(220,80,80,0.4);border-radius:8px;color:#e57373;cursor:pointer;font-weight:600;">
+        ยืนยัน
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal แสดงรายละเอียดวันลา -->
 <div id="modal-leave-detail" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;">
   <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:420px;width:90%;">
@@ -2582,25 +2601,25 @@ function canCancelByEmployee(leave) {
   return true;
 }
 
-async function cancelMyLeave(leaveId) {
-  if (!confirm(`ยืนยันยกเลิกใบลา ${leaveId} ?\nหลังยกเลิกสามารถยื่นใบลาใหม่ได้เลย`)) return;
-
-  const empId   = currentUser?.employeeId || currentUser?.empId || currentUser?.id;
-  const empName = currentUser?.name || '';
-
-  const res = await callAPI({
-    action:       'cancelLeaveByEmployee',
-    leaveId,
-    employeeId:   empId,
-    employeeName: empName
-  });
-
-  if (res.success) {
-    showToast('🚫 ยกเลิกใบลาเรียบร้อยแล้ว');
-    loadMyLeaves();
-  } else {
-    showToast('❌ ' + res.message);
-  }
+function cancelMyLeave(leaveId) {
+  showConfirmModal(
+    '🚫 ยกเลิกใบลา',
+    `ยืนยันยกเลิกใบลา <b>${leaveId}</b> ?<br><small style="color:var(--text-muted);">หลังยกเลิกสามารถยื่นใบลาใหม่ได้เลย</small>`,
+    async () => {
+      const empId   = currentUser?.employeeId || currentUser?.empId || currentUser?.id;
+      const empName = currentUser?.name || '';
+      const res = await callAPI({
+        action: 'cancelLeaveByEmployee', leaveId,
+        employeeId: empId, employeeName: empName
+      });
+      if (res.success) {
+        showToast('🚫 ยกเลิกใบลาเรียบร้อยแล้ว');
+        loadMyLeaves();
+      } else {
+        showToast('❌ ' + res.message);
+      }
+    }
+  );
 }
 
 async function loadMyLeaves() {
@@ -4196,6 +4215,21 @@ function initReportCharts() {
     options: { responsive:true, plugins:{ legend:{ display:false } }, scales:{ x:{ grid:{ display:false } }, y:{ grid:{ color:'rgba(44,74,114,0.3)' }, ticks:{ stepSize:1, precision:0 } } } }
   });
 }
+
+function showConfirmModal(title, msg, onConfirm) {
+  document.getElementById('modal-confirm-title').textContent = title;
+  document.getElementById('modal-confirm-msg').innerHTML = msg;
+  const modal = document.getElementById('modal-confirm');
+  modal.style.display = 'flex';
+  const okBtn = document.getElementById('modal-confirm-ok');
+  const newBtn = okBtn.cloneNode(true);
+  okBtn.parentNode.replaceChild(newBtn, okBtn);
+  newBtn.addEventListener('click', () => {
+    modal.style.display = 'none';
+    onConfirm();
+  });
+}
+
 </script>
 
 </body>
