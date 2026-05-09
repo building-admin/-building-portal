@@ -981,43 +981,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <style>
     .flatpickr-input[readonly] { cursor: pointer; }
-    .flatpickr-calendar { font-family: var(--font-body); }
-  
-  /* Custom OT Time Picker */
-  .ot-time-wrap { position:relative; display:inline-block; width:100%; }
-  .ot-time-display {
-    display:flex; align-items:center; justify-content:center;
-    background:rgba(255,255,255,0.05); border:1px solid var(--border);
-    border-radius:8px; padding:8px 12px; cursor:pointer;
-    color:var(--text-primary); font-size:14px; font-weight:600;
-    letter-spacing:2px; user-select:none;
-  }
-  .ot-time-display:hover { border-color:var(--gold); }
-  .ot-picker-popup {
-    display:none; position:absolute; top:calc(100% + 4px); left:0; right:0;
-    background:#0f2032; border:1px solid rgba(99,179,237,0.3);
-    border-radius:12px; z-index:9999; overflow:hidden;
-    box-shadow:0 8px 32px rgba(0,0,0,0.5);
-  }
-  .ot-picker-popup.open { display:block; }
-  .ot-picker-cols { display:flex; }
-  .ot-picker-col { flex:1; height:200px; overflow-y:auto; scroll-snap-type:y mandatory; }
-  .ot-picker-col::-webkit-scrollbar { width:0; }
-  .ot-picker-col:first-child { border-right:1px solid rgba(255,255,255,0.1); }
-  .ot-picker-item {
-    padding:10px 0; text-align:center; cursor:pointer;
-    color:rgba(255,255,255,0.45); font-size:18px; font-weight:500;
-    scroll-snap-align:start; transition:all 0.15s;
-  }
-  .ot-picker-item:hover { color:#fff; background:rgba(255,255,255,0.05); }
-  .ot-picker-item.selected { color:#fff; font-weight:700; font-size:20px; }
-  .ot-picker-highlight {
-    position:absolute; top:50%; left:0; right:0; height:42px;
-    transform:translateY(-50%); background:rgba(99,179,237,0.15);
-    border-top:1px solid rgba(99,179,237,0.3);
-    border-bottom:1px solid rgba(99,179,237,0.3); pointer-events:none;
-  }
-  .ot-picker-header {
+    .flatpickr-calendar { font-family: var(--font-body); }.ot-picker-header {
     display:flex; border-bottom:1px solid rgba(255,255,255,0.1);
     padding:8px 0;
   }
@@ -1025,6 +989,8 @@
     flex:1; text-align:center; font-size:11px;
     color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:1px;
   }
+
+  select option { background:#0f2032; color:#e2e8f0; }
 </style>
 </head>
 <body>
@@ -3553,28 +3519,28 @@ function renderOTTable() {
         </div>
         <div>
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;">เริ่ม</div>
-          <div class="ot-time-wrap">
-          <div class="ot-time-display" onclick="otOpenPicker(this,${i},'start')">${row.timeStart||'--:--'}</div>
-          <div class="ot-picker-popup"><div class="ot-picker-header"><span>ชั่วโมง</span><span>นาที</span></div>
-        <div style="position:relative;">
-          <div class="ot-picker-highlight"></div>
-          <div class="ot-picker-cols">
-            <div class="ot-picker-col ot-hh"><div class="ot-picker-item" data-val="00" onclick="otPickTime(this)">00</div><div class="ot-picker-item" data-val="01" onclick="otPickTime(this)">01</div><div class="ot-picker-item" data-val="02" onclick="otPickTime(this)">02</div><div class="ot-picker-item" data-val="03" onclick="otPickTime(this)">03</div><div class="ot-picker-item" data-val="04" onclick="otPickTime(this)">04</div><div class="ot-picker-item" data-val="05" onclick="otPickTime(this)">05</div><div class="ot-picker-item" data-val="06" onclick="otPickTime(this)">06</div><div class="ot-picker-item" data-val="07" onclick="otPickTime(this)">07</div><div class="ot-picker-item" data-val="08" onclick="otPickTime(this)">08</div><div class="ot-picker-item" data-val="09" onclick="otPickTime(this)">09</div><div class="ot-picker-item" data-val="10" onclick="otPickTime(this)">10</div><div class="ot-picker-item" data-val="11" onclick="otPickTime(this)">11</div><div class="ot-picker-item" data-val="12" onclick="otPickTime(this)">12</div><div class="ot-picker-item" data-val="13" onclick="otPickTime(this)">13</div><div class="ot-picker-item" data-val="14" onclick="otPickTime(this)">14</div><div class="ot-picker-item" data-val="15" onclick="otPickTime(this)">15</div><div class="ot-picker-item" data-val="16" onclick="otPickTime(this)">16</div><div class="ot-picker-item" data-val="17" onclick="otPickTime(this)">17</div><div class="ot-picker-item" data-val="18" onclick="otPickTime(this)">18</div><div class="ot-picker-item" data-val="19" onclick="otPickTime(this)">19</div><div class="ot-picker-item" data-val="20" onclick="otPickTime(this)">20</div><div class="ot-picker-item" data-val="21" onclick="otPickTime(this)">21</div><div class="ot-picker-item" data-val="22" onclick="otPickTime(this)">22</div><div class="ot-picker-item" data-val="23" onclick="otPickTime(this)">23</div></div>
-            <div class="ot-picker-col ot-mm"><div class="ot-picker-item" data-val="00" onclick="otPickTime(this)">00</div><div class="ot-picker-item" data-val="05" onclick="otPickTime(this)">05</div><div class="ot-picker-item" data-val="10" onclick="otPickTime(this)">10</div><div class="ot-picker-item" data-val="15" onclick="otPickTime(this)">15</div><div class="ot-picker-item" data-val="20" onclick="otPickTime(this)">20</div><div class="ot-picker-item" data-val="25" onclick="otPickTime(this)">25</div><div class="ot-picker-item" data-val="30" onclick="otPickTime(this)">30</div><div class="ot-picker-item" data-val="35" onclick="otPickTime(this)">35</div><div class="ot-picker-item" data-val="40" onclick="otPickTime(this)">40</div><div class="ot-picker-item" data-val="45" onclick="otPickTime(this)">45</div><div class="ot-picker-item" data-val="50" onclick="otPickTime(this)">50</div><div class="ot-picker-item" data-val="55" onclick="otPickTime(this)">55</div></div>
+          <div style="display:flex;align-items:center;background:#0f2032;border:1px solid rgba(99,179,237,0.3);border-radius:8px;overflow:hidden;">
+            <select style="background:transparent;border:none;outline:none;color:#e2e8f0;font-size:15px;font-weight:600;padding:7px 2px;cursor:pointer;width:48%;text-align:center;" onchange="_otRows[${i}].timeStart=(this.value||'00')+':'+(_otRows[${i}].timeStart||'00:00').split(':')[1];calcOTHours(${i})">
+              <option value="">ชม.</option><option value="00">00</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option>
+            </select>
+            <span style="color:#63b3ed;font-weight:700;font-size:16px;">:</span>
+            <select style="background:transparent;border:none;outline:none;color:#e2e8f0;font-size:15px;font-weight:600;padding:7px 2px;cursor:pointer;width:48%;text-align:center;" onchange="_otRows[${i}].timeStart=(_otRows[${i}].timeStart||'00:00').split(':')[0]+':'+(this.value||'00');calcOTHours(${i})">
+              <option value="">นาที</option><option value="00">00</option><option value="05">05</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50">50</option><option value="55">55</option>
+            </select>
           </div>
         </div></div>
         </div>
         </div>
         <div>
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;">สิ้นสุด</div>
-          <div class="ot-time-wrap">
-          <div class="ot-time-display" onclick="otOpenPicker(this,${i},'end')">${row.timeEnd||'--:--'}</div>
-          <div class="ot-picker-popup"><div class="ot-picker-header"><span>ชั่วโมง</span><span>นาที</span></div>
-        <div style="position:relative;">
-          <div class="ot-picker-highlight"></div>
-          <div class="ot-picker-cols">
-            <div class="ot-picker-col ot-hh"><div class="ot-picker-item" data-val="00" onclick="otPickTime(this)">00</div><div class="ot-picker-item" data-val="01" onclick="otPickTime(this)">01</div><div class="ot-picker-item" data-val="02" onclick="otPickTime(this)">02</div><div class="ot-picker-item" data-val="03" onclick="otPickTime(this)">03</div><div class="ot-picker-item" data-val="04" onclick="otPickTime(this)">04</div><div class="ot-picker-item" data-val="05" onclick="otPickTime(this)">05</div><div class="ot-picker-item" data-val="06" onclick="otPickTime(this)">06</div><div class="ot-picker-item" data-val="07" onclick="otPickTime(this)">07</div><div class="ot-picker-item" data-val="08" onclick="otPickTime(this)">08</div><div class="ot-picker-item" data-val="09" onclick="otPickTime(this)">09</div><div class="ot-picker-item" data-val="10" onclick="otPickTime(this)">10</div><div class="ot-picker-item" data-val="11" onclick="otPickTime(this)">11</div><div class="ot-picker-item" data-val="12" onclick="otPickTime(this)">12</div><div class="ot-picker-item" data-val="13" onclick="otPickTime(this)">13</div><div class="ot-picker-item" data-val="14" onclick="otPickTime(this)">14</div><div class="ot-picker-item" data-val="15" onclick="otPickTime(this)">15</div><div class="ot-picker-item" data-val="16" onclick="otPickTime(this)">16</div><div class="ot-picker-item" data-val="17" onclick="otPickTime(this)">17</div><div class="ot-picker-item" data-val="18" onclick="otPickTime(this)">18</div><div class="ot-picker-item" data-val="19" onclick="otPickTime(this)">19</div><div class="ot-picker-item" data-val="20" onclick="otPickTime(this)">20</div><div class="ot-picker-item" data-val="21" onclick="otPickTime(this)">21</div><div class="ot-picker-item" data-val="22" onclick="otPickTime(this)">22</div><div class="ot-picker-item" data-val="23" onclick="otPickTime(this)">23</div></div>
-            <div class="ot-picker-col ot-mm"><div class="ot-picker-item" data-val="00" onclick="otPickTime(this)">00</div><div class="ot-picker-item" data-val="05" onclick="otPickTime(this)">05</div><div class="ot-picker-item" data-val="10" onclick="otPickTime(this)">10</div><div class="ot-picker-item" data-val="15" onclick="otPickTime(this)">15</div><div class="ot-picker-item" data-val="20" onclick="otPickTime(this)">20</div><div class="ot-picker-item" data-val="25" onclick="otPickTime(this)">25</div><div class="ot-picker-item" data-val="30" onclick="otPickTime(this)">30</div><div class="ot-picker-item" data-val="35" onclick="otPickTime(this)">35</div><div class="ot-picker-item" data-val="40" onclick="otPickTime(this)">40</div><div class="ot-picker-item" data-val="45" onclick="otPickTime(this)">45</div><div class="ot-picker-item" data-val="50" onclick="otPickTime(this)">50</div><div class="ot-picker-item" data-val="55" onclick="otPickTime(this)">55</div></div>
+          <div style="display:flex;align-items:center;background:#0f2032;border:1px solid rgba(99,179,237,0.3);border-radius:8px;overflow:hidden;">
+            <select style="background:transparent;border:none;outline:none;color:#e2e8f0;font-size:15px;font-weight:600;padding:7px 2px;cursor:pointer;width:48%;text-align:center;" onchange="_otRows[${i}].timeEnd=(this.value||'00')+':'+(_otRows[${i}].timeEnd||'00:00').split(':')[1];calcOTHours(${i})">
+              <option value="">ชม.</option><option value="00">00</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option>
+            </select>
+            <span style="color:#63b3ed;font-weight:700;font-size:16px;">:</span>
+            <select style="background:transparent;border:none;outline:none;color:#e2e8f0;font-size:15px;font-weight:600;padding:7px 2px;cursor:pointer;width:48%;text-align:center;" onchange="_otRows[${i}].timeEnd=(_otRows[${i}].timeEnd||'00:00').split(':')[0]+':'+(this.value||'00');calcOTHours(${i})">
+              <option value="">นาที</option><option value="00">00</option><option value="05">05</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50">50</option><option value="55">55</option>
+            </select>
           </div>
         </div></div>
         </div>
@@ -4242,74 +4208,6 @@ function initReportCharts() {
   });
 }
 </script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr">
 
-
-
-// ── Custom OT Time Picker ────────────────────────────
-let _otPickerTarget = null;
-
-function otOpenPicker(displayEl, rowIdx, field) {
-  // ปิด picker อื่นที่เปิดอยู่
-  document.querySelectorAll('.ot-picker-popup.open').forEach(p => {
-    if (p !== displayEl.nextElementSibling) p.classList.remove('open');
-  });
-  const popup = displayEl.nextElementSibling;
-  popup.classList.toggle('open');
-  if (!popup.classList.contains('open')) return;
-
-  _otPickerTarget = { rowIdx, field };
-  popup.dataset.rowIdx = rowIdx;
-  popup.dataset.field  = field;
-
-  // ไฮไลต์ค่าปัจจุบัน
-  const cur = (_otRows[rowIdx]?.[field === 'start' ? 'timeStart' : 'timeEnd'] || '').split(':');
-  const hh  = cur[0] || '';
-  const mm  = cur[1] || '';
-  popup.querySelectorAll('.ot-hh .ot-picker-item').forEach(el => {
-    el.classList.toggle('selected', el.dataset.val === hh);
-  });
-  popup.querySelectorAll('.ot-mm .ot-picker-item').forEach(el => {
-    el.classList.toggle('selected', el.dataset.val === mm);
-  });
-}
-
-function otPickTime(itemEl) {
-  const col   = itemEl.closest('.ot-picker-col');
-  const popup = itemEl.closest('.ot-picker-popup');
-  const isHH  = col.classList.contains('ot-hh');
-  const val   = itemEl.dataset.val;
-  const rowIdx = parseInt(popup.dataset.rowIdx);
-  const field  = popup.dataset.field;
-  const key    = field === 'start' ? 'timeStart' : 'timeEnd';
-
-  col.querySelectorAll('.ot-picker-item').forEach(el => el.classList.remove('selected'));
-  itemEl.classList.add('selected');
-
-  const cur = (_otRows[rowIdx]?.[key] || '00:00').split(':');
-  if (isHH) cur[0] = val; else cur[1] = val;
-  _otRows[rowIdx][key] = cur[0] + ':' + cur[1];
-
-  // อัปเดต display
-  const display = popup.previousElementSibling;
-  display.textContent = _otRows[rowIdx][key];
-
-  // ถ้าเลือกครบทั้ง hh และ mm → ปิด popup
-  const hasHH = popup.querySelector('.ot-hh .selected');
-  const hasMM = popup.querySelector('.ot-mm .selected');
-  if (hasHH && hasMM) {
-    popup.classList.remove('open');
-    calcOTHours(rowIdx);
-  }
-}
-
-// ปิด picker เมื่อคลิกข้างนอก
-document.addEventListener('click', function(e) {
-  if (!e.target.closest('.ot-time-wrap')) {
-    document.querySelectorAll('.ot-picker-popup.open').forEach(p => p.classList.remove('open'));
-  }
-});
-
-</script>
 </body>
 </html>
