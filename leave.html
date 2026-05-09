@@ -433,6 +433,7 @@
   .form-row.full { grid-template-columns: 1fr; }
   .field-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; display: block; font-family: var(--font-label); letter-spacing: 0.07em; text-transform: uppercase; }
   .field-required { color: var(--danger); margin-left: 2px; }
+  select option { background: #0f2032; color: #e2e8f0; }
   .field-input, .field-select, .field-textarea {
     width: 100%; padding: 10px 14px;
     background: rgba(255,255,255,0.05);
@@ -989,8 +990,6 @@
     flex:1; text-align:center; font-size:11px;
     color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:1px;
   }
-
-  select option { background:#0f2032; color:#e2e8f0; }
 </style>
 </head>
 <body>
@@ -3519,30 +3518,28 @@ function renderOTTable() {
         </div>
         <div>
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;">เริ่ม</div>
-          <div style="display:flex;align-items:center;background:#0f2032;border:1px solid rgba(99,179,237,0.3);border-radius:8px;overflow:hidden;">
-            <select style="background:transparent;border:none;outline:none;color:#e2e8f0;font-size:15px;font-weight:600;padding:7px 2px;cursor:pointer;width:48%;text-align:center;" onchange="_otRows[${i}].timeStart=(this.value||'00')+':'+(_otRows[${i}].timeStart||'00:00').split(':')[1];calcOTHours(${i})">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <select class="field-select" style="flex:1;" onchange="_otRows[${i}].timeStart=(this.value||'00')+':'+(_otRows[${i}].timeStart||'00:00').split(':')[1];calcOTHours(${i})">
               <option value="">ชม.</option><option value="00">00</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option>
             </select>
-            <span style="color:#63b3ed;font-weight:700;font-size:16px;">:</span>
-            <select style="background:transparent;border:none;outline:none;color:#e2e8f0;font-size:15px;font-weight:600;padding:7px 2px;cursor:pointer;width:48%;text-align:center;" onchange="_otRows[${i}].timeStart=(_otRows[${i}].timeStart||'00:00').split(':')[0]+':'+(this.value||'00');calcOTHours(${i})">
+            <span style="color:var(--text-muted);">:</span>
+            <select class="field-select" style="flex:1;" onchange="_otRows[${i}].timeStart=(_otRows[${i}].timeStart||'00:00').split(':')[0]+':'+(this.value||'00');calcOTHours(${i})">
               <option value="">นาที</option><option value="00">00</option><option value="05">05</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50">50</option><option value="55">55</option>
             </select>
-          </div>
-        </div></div>
+          </div></div>
         </div>
         </div>
         <div>
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;">สิ้นสุด</div>
-          <div style="display:flex;align-items:center;background:#0f2032;border:1px solid rgba(99,179,237,0.3);border-radius:8px;overflow:hidden;">
-            <select style="background:transparent;border:none;outline:none;color:#e2e8f0;font-size:15px;font-weight:600;padding:7px 2px;cursor:pointer;width:48%;text-align:center;" onchange="_otRows[${i}].timeEnd=(this.value||'00')+':'+(_otRows[${i}].timeEnd||'00:00').split(':')[1];calcOTHours(${i})">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <select class="field-select" style="flex:1;" onchange="_otRows[${i}].timeEnd=(this.value||'00')+':'+(_otRows[${i}].timeEnd||'00:00').split(':')[1];calcOTHours(${i})">
               <option value="">ชม.</option><option value="00">00</option><option value="01">01</option><option value="02">02</option><option value="03">03</option><option value="04">04</option><option value="05">05</option><option value="06">06</option><option value="07">07</option><option value="08">08</option><option value="09">09</option><option value="10">10</option><option value="11">11</option><option value="12">12</option><option value="13">13</option><option value="14">14</option><option value="15">15</option><option value="16">16</option><option value="17">17</option><option value="18">18</option><option value="19">19</option><option value="20">20</option><option value="21">21</option><option value="22">22</option><option value="23">23</option>
             </select>
-            <span style="color:#63b3ed;font-weight:700;font-size:16px;">:</span>
-            <select style="background:transparent;border:none;outline:none;color:#e2e8f0;font-size:15px;font-weight:600;padding:7px 2px;cursor:pointer;width:48%;text-align:center;" onchange="_otRows[${i}].timeEnd=(_otRows[${i}].timeEnd||'00:00').split(':')[0]+':'+(this.value||'00');calcOTHours(${i})">
+            <span style="color:var(--text-muted);">:</span>
+            <select class="field-select" style="flex:1;" onchange="_otRows[${i}].timeEnd=(_otRows[${i}].timeEnd||'00:00').split(':')[0]+':'+(this.value||'00');calcOTHours(${i})">
               <option value="">นาที</option><option value="00">00</option><option value="05">05</option><option value="10">10</option><option value="15">15</option><option value="20">20</option><option value="25">25</option><option value="30">30</option><option value="35">35</option><option value="40">40</option><option value="45">45</option><option value="50">50</option><option value="55">55</option>
             </select>
-          </div>
-        </div></div>
+          </div></div>
         </div>
         </div>
         <div>
