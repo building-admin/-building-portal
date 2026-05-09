@@ -982,11 +982,7 @@
   <style>
     .flatpickr-input[readonly] { cursor: pointer; }
     .flatpickr-calendar { font-family: var(--font-body); }
-  
-/* บังคับ time input เป็น 24 ชั่วโมง */
-input[type="time"]::-webkit-datetime-edit-ampm-field { display: none; }
-input[type="time"] { -webkit-appearance: none; }
-</style>
+  </style>
 </head>
 <body>
 
@@ -3514,12 +3510,12 @@ function renderOTTable() {
         </div>
         <div>
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;">เริ่ม</div>
-          <input type="time" class="field-input" style="padding:8px 8px;font-size:13px;width:100%;box-sizing:border-box;" lang="th"
+          <input type="text" inputmode="numeric" placeholder="HH:MM" maxlength="5" class="field-input ot-time-input" style="padding:8px 8px;font-size:13px;width:100%;box-sizing:border-box;"
             value="${row.timeStart||''}" onchange="_otRows[${i}].timeStart=this.value;calcOTHours(${i})">
         </div>
         <div>
           <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;font-weight:500;">สิ้นสุด</div>
-          <input type="time" class="field-input" style="padding:8px 8px;font-size:13px;width:100%;box-sizing:border-box;" lang="th"
+          <input type="text" inputmode="numeric" placeholder="HH:MM" maxlength="5" class="field-input ot-time-input" style="padding:8px 8px;font-size:13px;width:100%;box-sizing:border-box;"
             value="${row.timeEnd||''}" onchange="_otRows[${i}].timeEnd=this.value;calcOTHours(${i})">
         </div>
         <div>
@@ -4185,6 +4181,34 @@ function initReportCharts() {
   });
 }
 </script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr">
+// ── Auto-format OT time input (HH:MM 24hr) ──────────
+document.addEventListener('input', function(e) {
+  if (!e.target.classList.contains('ot-time-input')) return;
+  let v = e.target.value.replace(/[^0-9]/g, '');
+  if (v.length >= 3) v = v.slice(0,2) + ':' + v.slice(2,4);
+  // validate hour/minute
+  if (v.includes(':')) {
+    let [h, m] = v.split(':');
+    if (parseInt(h) > 23) h = '23';
+    if (m && parseInt(m) > 59) m = '59';
+    v = h + ':' + (m || '');
+  }
+  e.target.value = v;
+});
+document.addEventListener('blur', function(e) {
+  if (!e.target.classList.contains('ot-time-input')) return;
+  let v = e.target.value.replace(/[^0-9:]/g,'');
+  const parts = v.split(':');
+  if (parts.length === 2) {
+    const h = parts[0].padStart(2,'0');
+    const m = (parts[1]||'00').padStart(2,'0').slice(0,2);
+    e.target.value = `${h}:${m}`;
+  } else if (v.replace(':','').length > 0) {
+    e.target.value = '';
+  }
+}, true);
+
+</script>
 </body>
 </html>
