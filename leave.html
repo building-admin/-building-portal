@@ -993,6 +993,7 @@
     flex:1; text-align:center; font-size:11px;
     color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:1px;
   }
+  .badge-cancelled { background: rgba(150,150,150,0.15); color: #aaa; border-color: rgba(150,150,150,0.3); }
 </style>
 </head>
 <body>
@@ -2567,6 +2568,8 @@ function renderRecentTable(leaves) {
       ? `<span class="badge badge-approved">✓ อนุมัติ</span>`
       : r['สถานะ'] === 'ไม่อนุมัติ'
       ? `<span class="badge badge-rejected">✗ ไม่อนุมัติ</span>`
+      : r['สถานะ'] === 'ยกเลิก'
+      ? `<span class="badge badge-cancelled">🚫 ยกเลิก</span>`
       : (r['ผู้อนุมัติ1-สถานะ'] === 'อนุมัติ' || r['ผู้อนุมัติ2-สถานะ'] === 'อนุมัติ')
       ? `<span class="badge badge-partial">1/2</span>`
       : `<span class="badge badge-pending">⏳ รอ</span>`;
