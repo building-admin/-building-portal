@@ -3885,8 +3885,8 @@ async function loadReportData() {
       callAPI({ action: 'getAllLeaves' })
     ]);
 
-    const data   = monthRes.success ? (monthRes.data || []) : [];
-    const allData = allRes.success  ? (allRes.data  || []) : [];
+    const data   = (monthRes.success ? (monthRes.data || []) : []).filter(r => r['สถานะ'] !== 'ยกเลิก');
+    const allData = (allRes.success  ? (allRes.data  || []) : []).filter(r => r['สถานะ'] !== 'ยกเลิก');
 
     // ── subtitle ──
     const monthNames = ['','ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
