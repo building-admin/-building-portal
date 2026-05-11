@@ -1384,7 +1384,7 @@
               <thead><tr>
                 <th>รหัสใบลา</th><th>พนักงาน</th><th>ตำแหน่ง</th><th>ประเภท</th>
                 <th>วันเริ่ม</th><th>วันสิ้นสุด</th><th>จำนวน</th>
-                <th>ท่านที่ 1</th><th>ท่านที่ 2</th><th>สถานะรวม</th>
+                <th>ท่านที่ 1</th><th>ท่านที่ 2</th><th>สถานะรวม</th><th>Action</th>
               </tr></thead>
               <tbody id="all-leaves-tbody">
                 <tr><td colspan="10" style="text-align:center;color:var(--muted);padding:28px;">⏳ กำลังโหลด...</td></tr>
@@ -2732,9 +2732,19 @@ async function loadAllLeaves() {
     // approverIndex ดูจากสถานะใบลา — ยกเลิกท่านสุดท้ายที่อนุมัติ
     const myApproverIdx = (r['ผู้อนุมัติ1-สถานะ'] === 'อนุมัติ' && r['ผู้อนุมัติ2-สถานะ'] === 'อนุมัติ') ? 1 : 0;
     const userType = currentUser.type || currentUser.role || '';
-    const canRevoke = r['สถานะ'] === 'อนุมัติ' &&
-      ['approver','hr','admin'].includes(userType);
-    const revokeBtn = canRevoke
+    const isAdmin = userType === 'admin';
+    // admin: ยกเลิกได้ทุกสถานะ ยกเว้น "ยกเลิก" และ "ไม่อนุมัติ" (ไม่มีอะไรให้ยกเลิก)
+    const canAdminCancel = isAdmin && r['สถานะ'] !== 'ยกเลิก' && r['สถานะ'] !== 'ไม่อนุมัติ';
+    // approver/hr: ยกเลิกอนุมัติได้เฉพาะใบที่ approved แล้ว
+    const canRevoke = !isAdmin && r['สถานะ'] === 'อนุมัติ' && ['approver','hr'].includes(userType);
+    const _empIdSafe   = String(r['รหัสพนักงาน']||'').replace(/'/g,"\\'");
+    const _empNameSafe = String(r['ชื่อพนักงาน']||'').replace(/'/g,"\\'");
+    const _ltypeSafe   = String(r['ประเภทลา']||'').replace(/'/g,"\\'");
+    const revokeBtn = canAdminCancel
+      ? `<button onclick="adminCancelLeave('${r['รหัสใบลา']}','${_empIdSafe}','${_empNameSafe}','${_ltypeSafe}',${r['จำนวนวัน']})"
+           style="padding:3px 10px;font-size:11px;background:rgba(224,82,82,0.15);border:1px solid rgba(224,82,82,0.3);border-radius:6px;color:#e05252;cursor:pointer;white-space:nowrap;">
+           🚫 ยกเลิก</button>`
+      : canRevoke
       ? `<button onclick="openRevokeModal('${r['รหัสใบลา']}', ${myApproverIdx})"
            style="padding:3px 10px;font-size:11px;background:rgba(224,82,82,0.15);border:1px solid rgba(224,82,82,0.3);border-radius:6px;color:#e05252;cursor:pointer;">
            ยกเลิก</button>`
@@ -4080,6 +4090,34 @@ async function confirmRevoke() {
   } else {
     showToast('❌ ' + res.message);
   }
+}
+
+// ════════════════════════════════════════════════════
+//  ADMIN CANCEL LEAVE — ยกเลิกใบลาโดย Admin
+// ════════════════════════════════════════════════════
+function adminCancelLeave(leaveId, empId, empName, leaveType, days) {
+  showConfirmModal(
+    '🚫 ยกเลิกใบลา (Admin)',
+    `ยืนยันยกเลิกใบลา <b>${leaveId}</b><br>
+     <small style="color:var(--text-muted);">${empName} · ${leaveType} · ${days} วัน</small><br>
+     <small style="color:#e05252;">⚠️ พนักงานและผู้อนุมัติจะได้รับแจ้งทาง Telegram</small>`,
+    async () => {
+      const res = await callAPI({
+        action:       'cancelLeaveByEmployee',
+        leaveId,
+        employeeId:   empId,
+        employeeName: empName,
+        adminCancel:  true,
+        adminName:    currentUser?.name || 'Admin'
+      });
+      if (res.success) {
+        showToast('🚫 ยกเลิกใบลาเรียบร้อยแล้ว');
+        loadAllLeaves();
+      } else {
+        showToast('❌ ' + (res.message || 'เกิดข้อผิดพลาด'));
+      }
+    }
+  );
 }
 
 // ════════════════════════════════════════════════════
