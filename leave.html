@@ -2662,6 +2662,8 @@ async function loadMyLeaves() {
       ? `<span class="badge badge-approved">✓ อนุมัติ</span>`
       : r['สถานะ'] === 'ไม่อนุมัติ'
       ? `<span class="badge badge-rejected">✗ ไม่อนุมัติ</span>`
+      : r['สถานะ'] === 'ยกเลิก'
+      ? `<span class="badge badge-cancelled">🚫 ยกเลิก</span>`
       : `<span class="badge badge-pending">⏳ รออนุมัติ</span>`;
     const remarkNote = r['หมายเหตุผู้อนุมัติ']
       ? `<div style="font-size:11px;color:#e05252;margin-top:4px;cursor:pointer;" onclick="showInfoModal('${r['หมายเหตุผู้อนุมัติ'].replace(/'/g, '\\\'').replace(/"/g, '&quot;')}')">📝 คลิกดูรายละเอียด</div>` : '';
