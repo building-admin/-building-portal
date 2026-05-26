@@ -1869,6 +1869,7 @@ async function saveEmployee() {
         const ri = rosterEmployees.findIndex(e => String(e['รหัสพนักงาน']) === id);
         if (ri >= 0) rosterEmployees[ri] = { ...rosterEmployees[ri], ...updatedEmp };
       }
+      renderEmpTable();          // อัปเดตตารางจัดการพนักงานด้วย
       buildRosterTable();
       if (isAdmin) buildInputTable();
     } else {
