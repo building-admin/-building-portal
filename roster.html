@@ -1411,11 +1411,17 @@ function buildRosterTable() {
   const sub1 = { 'เช้า':[], 'บ่าย':[], 'ดึก':[], 'อื่นๆ':[] };
   group1.forEach(emp => sub1[getShiftLabel(getDominantShift(emp['รหัสพนักงาน']))].push(emp));
 
-  // เรียง "จราจร" ให้อยู่ท้ายสุดในแต่ละกะ (ตาม ลำดับ ปกติ → จราจรสุดท้าย)
+  // เรียง "จราจร" ให้อยู่ท้ายสุดในแต่ละกะ แต่ "หัวหน้า" อยู่อันดับแรกเสมอ
+  const empPriority = emp => {
+    const pos = emp['ตำแหน่ง'] || '';
+    if (pos.includes('หัวหน้า')) return 0;  // หัวหน้าทุกคนอยู่อันดับแรก
+    if (pos.includes('จราจร'))   return 2;  // จราจร (ไม่ใช่หัวหน้า) อยู่ท้ายสุด
+    return 1;                               // อื่นๆ อยู่กลาง
+  };
   const isTraffic = emp => (emp['ตำแหน่ง'] || '').includes('จราจร') ? 1 : 0;
   Object.keys(sub1).forEach(key => {
     sub1[key].sort((a, b) =>
-      isTraffic(a) - isTraffic(b) ||
+      empPriority(a) - empPriority(b) ||
       parseInt(a['ลำดับ'] || 99) - parseInt(b['ลำดับ'] || 99)
     );
   });
@@ -1518,11 +1524,17 @@ function openPrintView(autoPrint = true) {
   const subGroups = { 'เช้า':[], 'บ่าย':[], 'ดึก':[], 'อื่นๆ':[] };
   group1.forEach(emp => subGroups[getShiftLabel(getDominantShift(emp['รหัสพนักงาน']))].push(emp));
 
-  // เรียง "จราจร" ให้อยู่ท้ายสุดในแต่ละกะ
+  // เรียง "จราจร" ให้อยู่ท้ายสุดในแต่ละกะ แต่ "หัวหน้า" อยู่อันดับแรกเสมอ
+  const empPriorityPrint = emp => {
+    const pos = emp['ตำแหน่ง'] || '';
+    if (pos.includes('หัวหน้า')) return 0;
+    if (pos.includes('จราจร'))   return 2;
+    return 1;
+  };
   const isTrafficEmp = emp => (emp['ตำแหน่ง'] || '').includes('จราจร') ? 1 : 0;
   Object.keys(subGroups).forEach(key => {
     subGroups[key].sort((a, b) =>
-      isTrafficEmp(a) - isTrafficEmp(b) ||
+      empPriorityPrint(a) - empPriorityPrint(b) ||
       parseInt(a['ลำดับ'] || 99) - parseInt(b['ลำดับ'] || 99)
     );
   });
