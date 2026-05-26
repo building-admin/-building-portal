@@ -723,14 +723,15 @@ function getShiftClass(code) {
 }
 
 // ── STATE ────────────────────────────────────────────
-let currentUser  = null;
-let isAdmin      = false;
-let employees    = [];
-let rosterData   = {};  // { empId: { 1:'02', 2:'W', ... } }
-let empOffDays   = {};  // { empId: วันหยุดประจำ } จากข้อมูล roster บันทึกของเดือนนั้น
-let currentMonth = '';
-let pickerTarget = null; // { empId, day }
-let hasChanges   = false;
+let currentUser      = null;
+let isAdmin          = false;
+let employees        = [];         // live list จาก getEmployees (master)
+let rosterEmployees  = [];         // list สำหรับเดือนที่กำลังดู (snapshot ถ้ามี / employees ถ้าไม่มี)
+let rosterData       = {};         // { empId: { 1:'02', 2:'W', ... } }
+let empOffDays       = {};         // { empId: วันหยุดประจำ } snapshot ของเดือนนั้น
+let currentMonth     = '';
+let pickerTarget     = null;       // { empId, day }
+let hasChanges       = false;
 
 // ── INIT ─────────────
 
@@ -1093,6 +1094,7 @@ async function loadRoster() {
   rosterData = {};
   empOffDays = {};
   if (res.success && res.data.length) {
+    const seen = new Set();
     res.data.forEach(row => {
       const id = String(row['รหัสพนักงาน']);
       if (!rosterData[id]) rosterData[id] = {};
@@ -1104,6 +1106,28 @@ async function loadRoster() {
         rosterData[id][d] = String(val || '').trim();
       }
     });
+
+    // สร้าง rosterEmployees จาก snapshot (เดือนใครเดือนมัน)
+    rosterEmployees = [];
+    res.data.forEach(row => {
+      const id = String(row['รหัสพนักงาน']);
+      if (rosterEmployees.find(e => String(e['รหัสพนักงาน']) === id)) return; // dedup
+      // merge กับ current employee สำหรับ กลุ่ม / ลำดับ ที่ไม่ได้บันทึกใน snapshot
+      const cur = employees.find(e => String(e['รหัสพนักงาน']) === id) || {};
+      rosterEmployees.push({
+        ...cur,
+        'รหัสพนักงาน': id,
+        'ชื่อ-นามสกุล': String(row['ชื่อ'] || row['ชื่อ-นามสกุล'] || cur['ชื่อ-นามสกุล'] || ''),
+        'ตำแหน่ง':      String(row['ตำแหน่ง'] || cur['ตำแหน่ง'] || ''),
+        'วันหยุดประจำ': String(row['วันหยุดประจำ'] || cur['วันหยุดประจำ'] || ''),
+      });
+    });
+    // เรียงตาม ลำดับ
+    rosterEmployees.sort((a, b) => parseInt(a['ลำดับ'] || 99) - parseInt(b['ลำดับ'] || 99));
+
+  } else {
+    // ไม่มีข้อมูลบันทึกไว้ → ใช้พนักงานปัจจุบันทั้งหมด (เดือนใหม่ / เริ่มกรอกใหม่)
+    rosterEmployees = [...employees];
   }
 
   buildRosterTable();
@@ -1133,7 +1157,7 @@ function buildInputTable() {
   const isThisMonth = todayD.getFullYear() === yearAD && todayD.getMonth() + 1 === monthNum;
   const todayDate   = todayD.getDate();
 
-  if (!employees.length) {
+  if (!rosterEmployees.length) {
     document.getElementById('roster-tbody-input').innerHTML =
       `<tr><td colspan="99" style="text-align:center;padding:40px;color:var(--muted);">ไม่พบข้อมูลพนักงาน</td></tr>`;
     return;
@@ -1166,7 +1190,7 @@ function buildInputTable() {
   }
 
   // ROWS — flat list ตาม ลำดับ (ไม่จัดกลุ่ม)
-  const empRows = employees.map(emp => {
+  const empRows = rosterEmployees.map(emp => {
     const id        = String(emp['รหัสพนักงาน']);
     const empRoster = rosterData[id] || {};
     let cells = '';
@@ -1260,7 +1284,7 @@ function buildRosterTable() {
   const isThisMonth = todayD.getFullYear() === yearAD && todayD.getMonth() + 1 === monthNum;
   const todayDate   = todayD.getDate();
 
-  if (!employees.length) {
+  if (!rosterEmployees.length) {
     document.getElementById('roster-tbody').innerHTML =
       `<tr><td colspan="99" style="text-align:center;padding:40px;color:var(--muted);">ไม่พบข้อมูลพนักงาน</td></tr>`;
     return;
@@ -1378,10 +1402,10 @@ function buildRosterTable() {
   }
 
   // ── จัดกลุ่มพนักงาน ──────────────────────────────
-  const group1 = employees.filter(e => String(e['กลุ่ม']) === '1');
-  const group2 = employees.filter(e => String(e['กลุ่ม']) === '2');
-  const group3 = employees.filter(e => String(e['กลุ่ม']) === '3');
-  const noGroup = employees.filter(e => !['1','2','3'].includes(String(e['กลุ่ม'])));
+  const group1  = rosterEmployees.filter(e => String(e['กลุ่ม']) === '1');
+  const group2  = rosterEmployees.filter(e => String(e['กลุ่ม']) === '2');
+  const group3  = rosterEmployees.filter(e => String(e['กลุ่ม']) === '3');
+  const noGroup = rosterEmployees.filter(e => !['1','2','3'].includes(String(e['กลุ่ม'])));
 
   // group1 แยกกะ
   const sub1 = { 'เช้า':[], 'บ่าย':[], 'ดึก':[], 'อื่นๆ':[] };
@@ -1477,10 +1501,10 @@ function openPrintView(autoPrint = true) {
   const monthNames  = ['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
                        'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
-  // จัดกลุ่มตามคอลัมน์ กลุ่ม
-  const group1 = employees.filter(e => String(e['กลุ่ม']) === '1');
-  const group2 = employees.filter(e => String(e['กลุ่ม']) === '2');
-  const group3 = employees.filter(e => String(e['กลุ่ม']) === '3');
+  // จัดกลุ่มตามคอลัมน์ กลุ่ม (ใช้ rosterEmployees = snapshot ของเดือนนั้น)
+  const group1 = rosterEmployees.filter(e => String(e['กลุ่ม']) === '1');
+  const group2 = rosterEmployees.filter(e => String(e['กลุ่ม']) === '2');
+  const group3 = rosterEmployees.filter(e => String(e['กลุ่ม']) === '3');
 
   const subGroups = { 'เช้า':[], 'บ่าย':[], 'ดึก':[], 'อื่นๆ':[] };
   group1.forEach(emp => subGroups[getShiftLabel(getDominantShift(emp['รหัสพนักงาน']))].push(emp));
@@ -1705,14 +1729,14 @@ async function saveRoster() {
   btn.disabled = true;
   btn.textContent = '⏳ กำลังบันทึก...';
 
-  // แปลง rosterData → array
-  const data = employees.map(emp => {
+  // แปลง rosterData → array โดยใช้ rosterEmployees (พนักงานของเดือนนั้น)
+  const data = rosterEmployees.map(emp => {
     const id = String(emp['รหัสพนักงาน']);
     const row = {
       'รหัสพนักงาน':  id,
       'ชื่อ':          emp['ชื่อ-นามสกุล'],
       'ตำแหน่ง':      emp['ตำแหน่ง'],
-      'วันหยุดประจำ': emp['วันหยุดประจำ']
+      'วันหยุดประจำ': empOffDays[id] || emp['วันหยุดประจำ']  // snapshot ก่อน / fallback current
     };
     for (let d = 1; d <= 31; d++) {
       row[String(d)] = (rosterData[id] || {})[d] || '';
@@ -1830,8 +1854,7 @@ async function saveEmployee() {
     showToast(res.message, 'success');
     closeEmpModal();
     await loadEmployees();
-    buildRosterTable();
-    buildInputTable();
+    await loadRoster(); // reload ใหม่เพื่อให้ rosterEmployees ถูกต้องตามเดือนที่กำลังดู
   } else {
     showToast(res.message, 'error');
   }
@@ -1847,8 +1870,7 @@ async function deleteEmployee(empId) {
       if (res.success) {
         showToast('ปิดใช้งานเรียบร้อยแล้ว', 'success');
         await loadEmployees();
-        buildRosterTable();
-        buildInputTable();
+        await loadRoster(); // reload ใหม่เพื่อให้ rosterEmployees ถูกต้อง
       } else {
         showToast(res.message, 'error');
       }
@@ -2018,9 +2040,9 @@ function exportCSV() {
   for (let d = 1; d <= daysInMonth; d++) csv += `,${d}`;
   csv += '\n';
 
-  employees.forEach(emp => {
+  rosterEmployees.forEach(emp => {
     const id = String(emp['รหัสพนักงาน']);
-    csv += `${currentMonth},${id},"${emp['ชื่อ-นามสกุล']}","${emp['ตำแหน่ง']}","${emp['วันหยุดประจำ'] || ''}"`;
+    csv += `${currentMonth},${id},"${emp['ชื่อ-นามสกุล']}","${emp['ตำแหน่ง']}","${empOffDays[id] || emp['วันหยุดประจำ'] || ''}"`;
     for (let d = 1; d <= daysInMonth; d++) {
       csv += `,${(rosterData[id] || {})[d] || ''}`;
     }
