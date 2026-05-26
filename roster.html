@@ -727,6 +727,7 @@ let currentUser  = null;
 let isAdmin      = false;
 let employees    = [];
 let rosterData   = {};  // { empId: { 1:'02', 2:'W', ... } }
+let empOffDays   = {};  // { empId: วันหยุดประจำ } จากข้อมูล roster บันทึกของเดือนนั้น
 let currentMonth = '';
 let pickerTarget = null; // { empId, day }
 let hasChanges   = false;
@@ -1090,10 +1091,13 @@ async function loadRoster() {
 
   // สร้าง rosterData จาก response
   rosterData = {};
+  empOffDays = {};
   if (res.success && res.data.length) {
     res.data.forEach(row => {
       const id = String(row['รหัสพนักงาน']);
       if (!rosterData[id]) rosterData[id] = {};
+      // เก็บ วันหยุดประจำ จากข้อมูลที่บันทึกไว้ของเดือนนั้น
+      if (row['วันหยุดประจำ']) empOffDays[id] = String(row['วันหยุดประจำ']);
       for (let d = 1; d <= 31; d++) {
         // Sheet อาจส่งมาเป็น key ตัวเลขหรือ string ให้ลองทั้งสองแบบ
         const val = row[d] !== undefined ? row[d] : (row[String(d)] !== undefined ? row[String(d)] : '');
@@ -1198,7 +1202,7 @@ function buildInputTable() {
           <div class="emp-position">${emp['ตำแหน่ง']}</div>
         </div>
       </td>
-      <td class="emp-off">${emp['วันหยุดประจำ']||'-'}</td>
+      <td class="emp-off">${(empOffDays[String(emp['รหัสพนักงาน'])] || emp['วันหยุดประจำ'] || '-')}</td>
       ${cells}
     </tr>`;
   }).join('');
@@ -1334,7 +1338,7 @@ function buildRosterTable() {
           <div class="emp-position">${emp['ตำแหน่ง']}</div>
         </div>
       </td>
-      <td class="emp-off">${emp['วันหยุดประจำ']||'-'}</td>
+      <td class="emp-off">${(empOffDays[String(emp['รหัสพนักงาน'])] || emp['วันหยุดประจำ'] || '-')}</td>
       ${cells}
     </tr>`;
   }
@@ -1557,7 +1561,7 @@ function openPrintView(autoPrint = true) {
       <td class="pos-cell" style="${rowStyle}">${emp['ตำแหน่ง']}</td>
       <td class="name-cell" style="font-weight:600;${rowStyle}">${emp['ชื่อ-นามสกุล']}</td>
       ${cells}
-      <td style="font-size:8px;">${emp['วันหยุดประจำ']||'-'}</td>
+      <td style="font-size:8px;">${(empOffDays[String(emp['รหัสพนักงาน'])] || emp['วันหยุดประจำ'] || '-')}</td>
     </tr>`;
   }
 
@@ -1756,7 +1760,7 @@ function renderEmpTable() {
       <td style="font-family:var(--font-mono);font-size:12px;">${emp['รหัสพนักงาน']}</td>
       <td>${emp['ชื่อ-นามสกุล']}</td>
       <td style="color:var(--silver);">${emp['ตำแหน่ง']}</td>
-      <td style="color:var(--muted);">${emp['วันหยุดประจำ'] || '-'}</td>
+      <td style="color:var(--muted);">${empOffDays[String(emp['รหัสพนักงาน'])] || emp['วันหยุดประจำ'] || '-'}</td>
       <td><span class="badge badge-active">active</span></td>
       <td class="no-print">${actions}</td>
     </tr>`;
