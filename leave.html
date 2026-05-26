@@ -2443,52 +2443,46 @@ async function loadDashboardData() {
   if (_dashboardLoading) return;
   _dashboardLoading = true;
   try {
-    const role  = currentUser?.type || 'employee';
-    const empId = currentUser?.employeeId || currentUser?.empId || currentUser?.id;
-    const isAdminRole = ['admin','hr','approver'].includes(role);
+    const empId       = currentUser?.employeeId || currentUser?.empId || currentUser?.id;
+    const role        = currentUser?.type || 'employee';
+    const isAdminRole = ['admin','hr'].includes(role);
 
-    // employee เห็นเฉพาะข้อมูลตัวเอง / admin-hr-approver เห็นทั้งหมด
     const [allRes, pendingRes, allTimeRes, otRes] = await Promise.all([
-      isAdminRole
-        ? callAPI({ action: 'getAllLeaves', month: new Date().getMonth()+1, year: new Date().getFullYear() })
-        : callAPI({ action: 'getMyLeaves', employeeId: empId }),
-      isAdminRole
-        ? callAPI({ action: 'getPendingLeaves' })
-        : callAPI({ action: 'getMyLeaves', employeeId: empId }),
-      isAdminRole
-        ? callAPI({ action: 'getAllLeaves' })
-        : callAPI({ action: 'getMyLeaves', employeeId: empId }),
+      callAPI({ action: 'getAllLeaves', month: new Date().getMonth()+1, year: new Date().getFullYear() }),
+      callAPI({ action: 'getPendingLeaves' }),
+      callAPI({ action: 'getAllLeaves' }),
       callAPI({ action: 'getOTBalance', employeeId: empId })
     ]);
 
-    const all     = (allRes.success ? (allRes.data || []) : []).filter(r => r['สถานะ'] !== 'ยกเลิก');
-    // เดือนนี้ (สำหรับ admin ดึงมาครบแล้ว / employee ต้องกรองเอง)
-    const now     = new Date();
-    const allMonth = isAdminRole
-      ? all
-      : all.filter(r => {
-          const d = new Date(r['วันเริ่มลา']);
-          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
-        });
-    const allTime  = allTimeRes.success ? (allTimeRes.data || []).filter(r => r['สถานะ'] !== 'ยกเลิก') : [];
+    // กรองตาม role — admin/hr เห็นทุกคน / อื่นๆ เห็นเฉพาะตัวเอง
+    const filterByUser = r => isAdminRole || String(r['รหัสพนักงาน']) === String(empId);
+
+    const allMonth = (allRes.success   ? (allRes.data   || []) : [])
+      .filter(r => r['สถานะ'] !== 'ยกเลิก')
+      .filter(filterByUser);
+
+    const allTime = (allTimeRes.success ? (allTimeRes.data || []) : [])
+      .filter(r => r['สถานะ'] !== 'ยกเลิก')
+      .filter(filterByUser);
+
     const approved = allMonth.filter(r => r['สถานะ'] === 'อนุมัติ').length;
     const rejected = allMonth.filter(r => r['สถานะ'] === 'ไม่อนุมัติ').length;
     const pending  = isAdminRole
       ? (pendingRes.success ? (pendingRes.data || []).length : 0)
-      : all.filter(r => r['สถานะ'] === 'รออนุมัติ').length;
-    const pct = allMonth.length ? Math.round(approved / allMonth.length * 100) : 0;
+      : allMonth.filter(r => r['สถานะ'] === 'รออนุมัติ').length;
+    const pct      = allMonth.length ? Math.round(approved / allMonth.length * 100) : 0;
 
     // อัปเดต stat cards
     document.getElementById('stat-total').textContent    = allMonth.length;
     document.getElementById('stat-pending').textContent  = pending;
     document.getElementById('stat-approved').textContent = approved;
     document.getElementById('stat-rejected').textContent = rejected;
-    document.getElementById('stat-total-sub').textContent   = `เดือน${getThaiMonth()}`;
+    document.getElementById('stat-total-sub').textContent    = `เดือน${getThaiMonth()}`;
     document.getElementById('stat-approved-sub').textContent = allMonth.length ? `${pct}% ของใบลาทั้งหมด` : 'เดือนนี้';
     const otBalEl = document.getElementById('stat-ot-balance');
     if (otBalEl) otBalEl.textContent = otRes?.success ? (otRes.data.balance ?? '—') : '—';
 
-    // badge bottom nav (admin เท่านั้น)
+    // badge bottom nav (admin/hr เท่านั้น)
     const bnavBadge = document.getElementById('bnav-badge');
     const navBadge  = document.getElementById('nav-pending-badge');
     if (isAdminRole && pending > 0) {
@@ -2499,11 +2493,11 @@ async function loadDashboardData() {
       if (navBadge)  navBadge.style.display = 'none';
     }
 
-    // ตารางใบลาล่าสุด — เรียงใหม่จากล่าสุด
-    const recentAll = [...all].sort((a, b) => new Date(b['วันที่ยื่น']) - new Date(a['วันที่ยื่น']));
+    // ตารางใบลาล่าสุด — เรียงล่าสุดก่อน
+    const recentAll = [...allTime].sort((a, b) => new Date(b['วันที่ยื่น']) - new Date(a['วันที่ยื่น']));
     renderRecentTable(recentAll.slice(0, 5));
 
-    // charts — employee ใช้ allTime ของตัวเอง / admin ใช้ทั้งหมด
+    // charts
     updateChartsFromData(allMonth, allTime);
 
   } catch (err) {
