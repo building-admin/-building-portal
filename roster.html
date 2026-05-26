@@ -1856,8 +1856,25 @@ async function saveEmployee() {
   if (res.success) {
     showToast(res.message, 'success');
     closeEmpModal();
-    await loadEmployees();
-    await loadRoster(); // reload ใหม่เพื่อให้ rosterEmployees ถูกต้องตามเดือนที่กำลังดู
+    await loadEmployees(); // refresh master list
+
+    if (editId) {
+      // แก้ไขพนักงานเดิม → อัปเดต in-memory ทันที ไม่ต้อง reload จาก Sheet
+      const updatedEmp = employees.find(e => String(e['รหัสพนักงาน']) === String(editId));
+      if (updatedEmp) {
+        const id = String(editId);
+        // อัปเดต empOffDays ให้แสดงผลถูกต้องทันที
+        empOffDays[id] = updatedEmp['วันหยุดประจำ'] || '';
+        // อัปเดต rosterEmployees
+        const ri = rosterEmployees.findIndex(e => String(e['รหัสพนักงาน']) === id);
+        if (ri >= 0) rosterEmployees[ri] = { ...rosterEmployees[ri], ...updatedEmp };
+      }
+      buildRosterTable();
+      if (isAdmin) buildInputTable();
+    } else {
+      // พนักงานใหม่ → reload roster (จะไม่โผล่ในเดือนเก่าที่มีข้อมูลบันทึกไว้แล้ว)
+      await loadRoster();
+    }
   } else {
     showToast(res.message, 'error');
   }
