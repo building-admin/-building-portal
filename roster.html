@@ -1732,11 +1732,14 @@ async function saveRoster() {
   // แปลง rosterData → array โดยใช้ rosterEmployees (พนักงานของเดือนนั้น)
   const data = rosterEmployees.map(emp => {
     const id = String(emp['รหัสพนักงาน']);
+    // วันหยุดประจำ: ใช้ค่าจาก master ปัจจุบัน (employees) เสมอตอน save
+    // เพื่อให้การแก้ไขใน "จัดการพนักงาน" มีผลเมื่อกด บันทึก
+    const curEmp = employees.find(e => String(e['รหัสพนักงาน']) === id);
     const row = {
       'รหัสพนักงาน':  id,
       'ชื่อ':          emp['ชื่อ-นามสกุล'],
       'ตำแหน่ง':      emp['ตำแหน่ง'],
-      'วันหยุดประจำ': empOffDays[id] || emp['วันหยุดประจำ']  // snapshot ก่อน / fallback current
+      'วันหยุดประจำ': (curEmp && curEmp['วันหยุดประจำ']) || emp['วันหยุดประจำ']
     };
     for (let d = 1; d <= 31; d++) {
       row[String(d)] = (rosterData[id] || {})[d] || '';
