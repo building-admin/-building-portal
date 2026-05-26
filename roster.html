@@ -1411,6 +1411,15 @@ function buildRosterTable() {
   const sub1 = { 'เช้า':[], 'บ่าย':[], 'ดึก':[], 'อื่นๆ':[] };
   group1.forEach(emp => sub1[getShiftLabel(getDominantShift(emp['รหัสพนักงาน']))].push(emp));
 
+  // เรียง "จราจร" ให้อยู่ท้ายสุดในแต่ละกะ (ตาม ลำดับ ปกติ → จราจรสุดท้าย)
+  const isTraffic = emp => (emp['ตำแหน่ง'] || '').includes('จราจร') ? 1 : 0;
+  Object.keys(sub1).forEach(key => {
+    sub1[key].sort((a, b) =>
+      isTraffic(a) - isTraffic(b) ||
+      parseInt(a['ลำดับ'] || 99) - parseInt(b['ลำดับ'] || 99)
+    );
+  });
+
   const SUB_CONFIG = [
     { key:'เช้า',  icon:'🌅', color:'61,186,122' },
     { key:'บ่าย',  icon:'🌇', color:'240,160,48' },
@@ -1508,6 +1517,15 @@ function openPrintView(autoPrint = true) {
 
   const subGroups = { 'เช้า':[], 'บ่าย':[], 'ดึก':[], 'อื่นๆ':[] };
   group1.forEach(emp => subGroups[getShiftLabel(getDominantShift(emp['รหัสพนักงาน']))].push(emp));
+
+  // เรียง "จราจร" ให้อยู่ท้ายสุดในแต่ละกะ
+  const isTrafficEmp = emp => (emp['ตำแหน่ง'] || '').includes('จราจร') ? 1 : 0;
+  Object.keys(subGroups).forEach(key => {
+    subGroups[key].sort((a, b) =>
+      isTrafficEmp(a) - isTrafficEmp(b) ||
+      parseInt(a['ลำดับ'] || 99) - parseInt(b['ลำดับ'] || 99)
+    );
+  });
 
   // สร้าง HTML สำหรับพิมพ์
   let html = `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">
