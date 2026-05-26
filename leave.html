@@ -2443,34 +2443,55 @@ async function loadDashboardData() {
   if (_dashboardLoading) return;
   _dashboardLoading = true;
   try {
+    const role  = currentUser?.type || 'employee';
+    const empId = currentUser?.employeeId || currentUser?.empId || currentUser?.id;
+    const isAdminRole = ['admin','hr','approver'].includes(role);
+
+    // employee เห็นเฉพาะข้อมูลตัวเอง / admin-hr-approver เห็นทั้งหมด
     const [allRes, pendingRes, allTimeRes, otRes] = await Promise.all([
-      callAPI({ action: 'getAllLeaves', month: new Date().getMonth()+1, year: new Date().getFullYear() }),
-      callAPI({ action: 'getPendingLeaves' }),
-      callAPI({ action: 'getAllLeaves' }),
-      callAPI({ action: 'getOTBalance', employeeId: currentUser?.employeeId || currentUser?.empId || currentUser?.id })
+      isAdminRole
+        ? callAPI({ action: 'getAllLeaves', month: new Date().getMonth()+1, year: new Date().getFullYear() })
+        : callAPI({ action: 'getMyLeaves', employeeId: empId }),
+      isAdminRole
+        ? callAPI({ action: 'getPendingLeaves' })
+        : callAPI({ action: 'getMyLeaves', employeeId: empId }),
+      isAdminRole
+        ? callAPI({ action: 'getAllLeaves' })
+        : callAPI({ action: 'getMyLeaves', employeeId: empId }),
+      callAPI({ action: 'getOTBalance', employeeId: empId })
     ]);
 
-    const all      = (allRes.success ? (allRes.data || []) : []).filter(r => r['สถานะ'] !== 'ยกเลิก');
-    const allTime  = allTimeRes.success ? (allTimeRes.data || []) : [];
-    const approved = all.filter(r => r['สถานะ'] === 'อนุมัติ').length;
-    const rejected = all.filter(r => r['สถานะ'] === 'ไม่อนุมัติ').length;
-    const pending  = pendingRes.success ? (pendingRes.data || []).length : 0;
-    const pct      = all.length ? Math.round(approved/all.length*100) : 0;
+    const all     = (allRes.success ? (allRes.data || []) : []).filter(r => r['สถานะ'] !== 'ยกเลิก');
+    // เดือนนี้ (สำหรับ admin ดึงมาครบแล้ว / employee ต้องกรองเอง)
+    const now     = new Date();
+    const allMonth = isAdminRole
+      ? all
+      : all.filter(r => {
+          const d = new Date(r['วันเริ่มลา']);
+          return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+        });
+    const allTime  = allTimeRes.success ? (allTimeRes.data || []).filter(r => r['สถานะ'] !== 'ยกเลิก') : [];
+    const approved = allMonth.filter(r => r['สถานะ'] === 'อนุมัติ').length;
+    const rejected = allMonth.filter(r => r['สถานะ'] === 'ไม่อนุมัติ').length;
+    const pending  = isAdminRole
+      ? (pendingRes.success ? (pendingRes.data || []).length : 0)
+      : all.filter(r => r['สถานะ'] === 'รออนุมัติ').length;
+    const pct = allMonth.length ? Math.round(approved / allMonth.length * 100) : 0;
 
     // อัปเดต stat cards
-    document.getElementById('stat-total').textContent    = all.length;
+    document.getElementById('stat-total').textContent    = allMonth.length;
     document.getElementById('stat-pending').textContent  = pending;
     document.getElementById('stat-approved').textContent = approved;
     document.getElementById('stat-rejected').textContent = rejected;
     document.getElementById('stat-total-sub').textContent   = `เดือน${getThaiMonth()}`;
-    document.getElementById('stat-approved-sub').textContent = all.length ? `${pct}% ของใบลาทั้งหมด` : 'เดือนนี้';
+    document.getElementById('stat-approved-sub').textContent = allMonth.length ? `${pct}% ของใบลาทั้งหมด` : 'เดือนนี้';
     const otBalEl = document.getElementById('stat-ot-balance');
     if (otBalEl) otBalEl.textContent = otRes?.success ? (otRes.data.balance ?? '—') : '—';
 
-    // badge bottom nav
+    // badge bottom nav (admin เท่านั้น)
     const bnavBadge = document.getElementById('bnav-badge');
     const navBadge  = document.getElementById('nav-pending-badge');
-    if (pending > 0) {
+    if (isAdminRole && pending > 0) {
       if (bnavBadge) bnavBadge.textContent = pending;
       if (navBadge)  { navBadge.textContent = pending; navBadge.style.display = ''; }
     } else {
@@ -2478,11 +2499,12 @@ async function loadDashboardData() {
       if (navBadge)  navBadge.style.display = 'none';
     }
 
-    // ตารางใบลาล่าสุด
-    renderRecentTable(all.slice(0, 5));
+    // ตารางใบลาล่าสุด — เรียงใหม่จากล่าสุด
+    const recentAll = [...all].sort((a, b) => new Date(b['วันที่ยื่น']) - new Date(a['วันที่ยื่น']));
+    renderRecentTable(recentAll.slice(0, 5));
 
-    // อัปเดต chart จากข้อมูลจริง (monthly ใช้เดือนนี้, donut/staff ใช้ทั้งหมด)
-    updateChartsFromData(all, allTime);
+    // charts — employee ใช้ allTime ของตัวเอง / admin ใช้ทั้งหมด
+    updateChartsFromData(allMonth, allTime);
 
   } catch (err) {
     console.error('loadDashboardData:', err);
