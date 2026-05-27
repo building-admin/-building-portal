@@ -3469,7 +3469,7 @@ function initOTForm() {
 
   const userType   = currentUser?.type || '';
   const canViewAll = ['admin','hr'].includes(userType) ||
-                     (typeof menuPerms !== 'undefined' && menuPerms['ot-view-all']);
+                     !!(window._menuPerms && window._menuPerms['ot-view-all']);
 
   const selectorEl = document.getElementById('ot-emp-selector');
   const labelEl    = document.getElementById('ot-emp-label');
