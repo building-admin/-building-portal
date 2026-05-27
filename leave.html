@@ -1512,14 +1512,22 @@
           </div>
           <!-- ── ผู้รับแจ้งเตือนใบลาอนุมัติ ── -->
           <div class="settings-card" style="grid-column:1/-1;">
-            <div class="settings-card-title">📣 ผู้รับแจ้งเตือนใบลาอนุมัติ</div>
-            <div class="settings-card-sub">เมื่อใบลาผ่านอนุมัติครบ 2 ขั้น ระบบจะส่ง Telegram ให้คนที่ติ๊กไว้ (ต้องมี Telegram ID ใน Sheet พนักงาน)</div>
-            <div id="notify-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
-              <div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">⏳ กำลังโหลด...</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;"
+                 onclick="toggleNotifyPanel()">
+              <div>
+                <div class="settings-card-title">📣 ผู้รับแจ้งเตือนใบลาอนุมัติ</div>
+                <div class="settings-card-sub" style="margin-bottom:0;">เมื่อใบลาผ่านอนุมัติครบ 2 ขั้น ระบบจะส่ง Telegram ให้คนที่ติ๊กไว้</div>
+              </div>
+              <span id="notify-toggle-icon" style="font-size:18px;color:var(--text-muted);transition:transform .2s;">▲</span>
             </div>
-            <div style="display:flex;gap:10px;justify-content:flex-end;">
-              <button class="btn-cancel" onclick="loadNotifySettings()">↺ รีเซ็ต</button>
-              <button class="btn-submit" onclick="saveNotifySettings()">💾 บันทึกการแจ้งเตือน</button>
+            <div id="notify-panel" style="margin-top:14px;">
+              <div id="notify-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+                <div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">⏳ กำลังโหลด...</div>
+              </div>
+              <div style="display:flex;gap:10px;justify-content:flex-end;">
+                <button class="btn-cancel" onclick="loadNotifySettings()">↺ รีเซ็ต</button>
+                <button class="btn-submit" onclick="saveNotifySettings()">💾 บันทึกการแจ้งเตือน</button>
+              </div>
             </div>
           </div>
 
@@ -2451,6 +2459,13 @@ async function savePermissions() {
 //  NOTIFY SETTINGS — ผู้รับแจ้งเตือนใบลาอนุมัติ
 // ════════════════════════════════════════════════════
 let _notifyCache = [];
+
+let _notifyPanelOpen = true;
+function toggleNotifyPanel() {
+  _notifyPanelOpen = !_notifyPanelOpen;
+  document.getElementById('notify-panel').style.display = _notifyPanelOpen ? 'block' : 'none';
+  document.getElementById('notify-toggle-icon').style.transform = _notifyPanelOpen ? '' : 'rotate(180deg)';
+}
 
 async function loadNotifySettings() {
   const wrap = document.getElementById('notify-list');
