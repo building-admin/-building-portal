@@ -1691,21 +1691,29 @@ function openPrintView(autoPrint = true) {
       </div>
     </div>`;
   }
-  html += `<table class="legend-table"><tr>
-    <td><b>รอบเวลาการทำงาน:</b></td>
-    ${Object.entries(SHIFT_TIME).filter(([k])=>!['W','H','S','PL','VL','C','CH'].includes(k)).map(([c,t])=>
-      `<td><b>${c}</b> = ${t} น.</td>`).join('')}
-  </tr><tr>
-    <td></td>
-    ${[['W','วันหยุดประจำสัปดาห์'],['H','นักขัตฤกษ์'],['S','ลาป่วย'],
-       ['PL','ลากิจ'],['VL','ลาพักร้อน'],['C','เปลี่ยนวันหยุด'],['CH','สะสมวันหยุด']].map(([c,l])=>
-      `<td><b>${c}</b> = ${l}</td>`).join('')}
-  </tr></table>`;
-
-  // ลายเซ็น
-  html += `<div class="sign-area">
-    <div class="sign-box"><div class="sign-line">(รัฐกานต์ ขันทอง)<br>หัวหน้าแผนกกลยุทธ์ฯ<br><small>ผู้จัดทำ</small></div></div>
-    <div class="sign-box"><div class="sign-line">(จาตุรงค์ สุริยาศศิน)<br>ผู้อำนวยการกลุ่มงานบริหาร<br><small>อนุมัติ</small></div></div>
+  // ── รอบเวลาการทำงาน (กรอบเหมือนวันหยุดนักขัตฤกษ์) ──
+  const shiftEntries = Object.entries(SHIFT_TIME).filter(([k]) => !['W','H','S','PL','VL','C','CH'].includes(k));
+  const specialCodes = [['W','วันหยุดประจำสัปดาห์'],['H','นักขัตฤกษ์'],['S','ลาป่วย'],
+                        ['PL','ลากิจ'],['VL','ลาพักร้อน'],['C','เปลี่ยนวันหยุด'],['CH','สะสมวันหยุด']];
+  html += `
+  <div style="margin-top:8px;border:2px solid #1a3460;border-radius:6px;overflow:hidden;">
+    <div style="background:#1a3460;color:#f0f4fa;font-weight:700;font-size:11px;padding:5px 12px;letter-spacing:.05em;">
+      🕐 รอบเวลาการทำงาน
+    </div>
+    <div style="background:#f5f7fc;padding:6px 12px;display:flex;flex-wrap:wrap;gap:4px 20px;">
+      ${shiftEntries.map(([c,t]) => `
+        <span style="font-size:10px;">
+          <b style="background:#1a3460;color:#fff;padding:1px 5px;border-radius:3px;">${c}</b>
+          <span style="color:#333;"> = ${t} น.</span>
+        </span>`).join('')}
+    </div>
+    <div style="background:#eef1f8;padding:5px 12px;display:flex;flex-wrap:wrap;gap:4px 20px;border-top:1px solid #d0d8ec;">
+      ${specialCodes.map(([c,l]) => `
+        <span style="font-size:10px;">
+          <b style="background:#555;color:#fff;padding:1px 5px;border-radius:3px;">${c}</b>
+          <span style="color:#555;"> = ${l}</span>
+        </span>`).join('')}
+    </div>
   </div>`;
 
   html += `</body></html>`;
