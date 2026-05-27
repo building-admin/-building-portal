@@ -1120,6 +1120,8 @@ async function loadRoster() {
         'ชื่อ-นามสกุล': String(row['ชื่อ'] || row['ชื่อ-นามสกุล'] || cur['ชื่อ-นามสกุล'] || ''),
         'ตำแหน่ง':      String(row['ตำแหน่ง'] || cur['ตำแหน่ง'] || ''),
         'วันหยุดประจำ': String(row['วันหยุดประจำ'] || cur['วันหยุดประจำ'] || ''),
+        'กลุ่ม':        cur['กลุ่ม'] || row['กลุ่ม'] || '',  // ดึง กลุ่ม จาก master เสมอ
+        'ลำดับ':        cur['ลำดับ'] || row['ลำดับ'] || 99,
       });
     });
     // เรียงตาม ลำดับ
@@ -2054,7 +2056,7 @@ function applyAutofill() {
 // ── MY SHIFT CARD ────────────────────────────────────
 function renderMyShiftCard() {
   const empId = currentUser.empId;
-  if (!empId || isAdmin) return;
+  if (!empId) return;  // แสดงให้ทุกคนรวม admin
 
   document.getElementById('my-shift-card').style.display = 'block';
 
