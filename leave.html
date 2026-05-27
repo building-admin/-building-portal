@@ -1510,8 +1510,20 @@
               <button class="btn-submit" onclick="savePermissions()">💾 บันทึกสิทธิ์</button>
             </div>
           </div>
-          <div class="settings-card">
-            <div class="settings-card-title">ผู้มีสิทธิ์อนุมัติ</div>
+          <!-- ── ผู้รับแจ้งเตือนใบลาอนุมัติ ── -->
+          <div class="settings-card" style="grid-column:1/-1;">
+            <div class="settings-card-title">📣 ผู้รับแจ้งเตือนใบลาอนุมัติ</div>
+            <div class="settings-card-sub">เมื่อใบลาผ่านอนุมัติครบ 2 ขั้น ระบบจะส่ง Telegram ให้คนที่ติ๊กไว้ (ต้องมี Telegram ID ใน Sheet พนักงาน)</div>
+            <div id="notify-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">
+              <div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">⏳ กำลังโหลด...</div>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+              <button class="btn-cancel" onclick="loadNotifySettings()">↺ รีเซ็ต</button>
+              <button class="btn-submit" onclick="saveNotifySettings()">💾 บันทึกการแจ้งเตือน</button>
+            </div>
+          </div>
+
+          <!-- ── ผู้มีสิทธิ์อนุมัติ ── -->
             <div class="settings-card-sub">ดึงข้อมูลจาก Google Sheets แผ่น "ผู้อนุมัติ"</div>
             <div id="settings-approvers-list">
               <div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">⏳ กำลังโหลด...</div>
@@ -2436,8 +2448,69 @@ async function savePermissions() {
 }
 
 // ════════════════════════════════════════════════════
-//  LOAD DASHBOARD DATA
+//  NOTIFY SETTINGS — ผู้รับแจ้งเตือนใบลาอนุมัติ
 // ════════════════════════════════════════════════════
+let _notifyCache = [];
+
+async function loadNotifySettings() {
+  const wrap = document.getElementById('notify-list');
+  if (!wrap) return;
+  wrap.innerHTML = `<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">⏳ กำลังโหลด...</div>`;
+  try {
+    const res = await callAPI({ action: 'getNotifySettings' });
+    if (!res.success) throw new Error(res.message);
+    _notifyCache = res.data || [];
+    renderNotifyList();
+  } catch(e) {
+    wrap.innerHTML = `<div style="color:var(--danger);font-size:13px;">❌ โหลดไม่ได้: ${e.message}</div>`;
+  }
+}
+
+function renderNotifyList() {
+  const wrap = document.getElementById('notify-list');
+  if (!wrap || !_notifyCache.length) return;
+  wrap.innerHTML = _notifyCache.map((emp, i) => {
+    const hasTid   = emp.telegramId && String(emp.telegramId).trim() !== '';
+    const checked  = emp.notifyLeave ? 'checked' : '';
+    const tidBadge = hasTid
+      ? `<span style="font-size:10px;background:rgba(61,186,122,.15);color:var(--success);
+             padding:2px 8px;border-radius:10px;margin-left:6px;">✅ มี ID</span>`
+      : `<span style="font-size:10px;background:rgba(224,82,82,.1);color:var(--danger);
+             padding:2px 8px;border-radius:10px;margin-left:6px;">⚠️ ไม่มี ID</span>`;
+    return `
+      <label style="display:flex;align-items:center;gap:12px;padding:10px 14px;
+        background:var(--bg-card);border:1px solid var(--border);border-radius:10px;
+        cursor:pointer;transition:border-color .15s;"
+        onmouseover="this.style.borderColor='var(--primary)'"
+        onmouseout="this.style.borderColor='var(--border)'">
+        <input type="checkbox" id="notify-cb-${i}" ${checked}
+          ${hasTid ? '' : 'disabled title="กรุณาเพิ่ม Telegram ID ใน Sheet พนักงานก่อน"'}
+          style="width:16px;height:16px;accent-color:var(--primary);cursor:pointer;">
+        <div style="flex:1;">
+          <div style="font-size:13px;font-weight:600;">${emp.name}${tidBadge}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${emp.position || ''}</div>
+        </div>
+      </label>`;
+  }).join('');
+}
+
+async function saveNotifySettings() {
+  if (!_notifyCache.length) { showToast('ยังไม่ได้โหลดข้อมูล', 'error'); return; }
+  const updated = _notifyCache.map((emp, i) => {
+    const cb = document.getElementById(`notify-cb-${i}`);
+    return { ...emp, notifyLeave: cb ? cb.checked : emp.notifyLeave };
+  });
+  try {
+    const res = await callAPI({ action: 'saveNotifySettings', settings: updated });
+    if (!res.success) throw new Error(res.message);
+    _notifyCache = updated;
+    showToast('✅ บันทึกการแจ้งเตือนเรียบร้อยแล้ว', 'success');
+  } catch(e) {
+    showToast('❌ บันทึกไม่ได้: ' + e.message, 'error');
+  }
+}
+
+
 let _dashboardLoading = false;
 async function loadDashboardData() {
   if (_dashboardLoading) return;
@@ -3243,7 +3316,7 @@ function showPage(page) {
   if (page === 'approval')    loadPendingApproval();
   if (page === 'roster-view') loadRosterView();
   if (page === 'leave-form')  { loadApprovers(); initLeaveForm(); }
-  if (page === 'settings')    { loadSettingsApprovers(); testConnection(); loadPermissions(); }
+  if (page === 'settings')    { loadSettingsApprovers(); testConnection(); loadPermissions(); loadNotifySettings(); }
   if (page === 'report')      { setTimeout(initReportCharts, 100); initReportPeriod(); }
   if (page === 'ot-record')   { initOTForm(); loadOTBalance(); }
 }
