@@ -3128,8 +3128,10 @@ async function loadUserFromPortal() {
       'bm_leave_report':      'report',       'bs_leave_report':      'report',
       'bm_leave_ot_record':   'ot-record',    'bs_leave_ot_record':   'ot-record',
       'bm_leave_ot_balance':  'ot-balance',   'bs_leave_ot_balance':  'ot-balance',
+      'bm_leave_ot_view_all': 'ot-view-all',  'bs_leave_ot_view_all': 'ot-view-all',
       'ot-record':            'ot-record',
       'ot-balance':           'ot-balance',
+      'ot-view-all':          'ot-view-all',
     };
     // รีเซ็ตก่อน แล้วเปิดเฉพาะที่มีสิทธิ์
     Object.values(PORTAL_TO_PAGE).forEach(page => { menuPerms[page] = false; });
