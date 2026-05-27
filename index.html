@@ -1039,13 +1039,16 @@ async function openLeave() {
     }
 
     const deptName = currentDept?.deptName || u.dept || '';
+    // รวม menuId ทุกอันที่ user มีสิทธิ์ (ข้ามทุก dept) เพื่อส่งให้ leave.html กรองเมนู
+    const allMenuIds = (userPermissions?.menus || []).map(m => m.menuId);
     const params = new URLSearchParams({
-      token:    token,
-      name:     u.name       || '',
-      position: u.position   || '',
-      dept:     deptName,
-      division: u.division   || '',
-      empId:    u.employeeId || '',
+      token:          token,
+      name:           u.name       || '',
+      position:       u.position   || '',
+      dept:           deptName,
+      division:       u.division   || '',
+      empId:          u.employeeId || '',
+      allowedMenuIds: allMenuIds.join(','),
     });
     params.set("v", Date.now()); window.location.href = `leave.html?${params.toString()}`;
   } catch(e) {

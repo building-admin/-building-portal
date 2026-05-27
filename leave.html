@@ -3021,7 +3021,14 @@ async function loadUserFromPortal() {
   // ถ้ามี token ใหม่จาก URL → ล้าง savedParams เก่าทิ้งเสมอ
   if (urlToken) {
     sessionStorage.removeItem('leave_params');
-    const saveParams = { name: params.get('name'), position: params.get('position'), dept: params.get('dept'), division: params.get('division'), empId: params.get('empId') };
+    const saveParams = {
+      name:           params.get('name'),
+      position:       params.get('position'),
+      dept:           params.get('dept'),
+      division:       params.get('division'),
+      empId:          params.get('empId'),
+      allowedMenuIds: params.get('allowedMenuIds') || ''
+    };
     sessionStorage.setItem('leave_params', JSON.stringify(saveParams));
     // ล้าง token ออกจาก URL ทันที ป้องกัน bookmark เก็บ token ไว้
     history.replaceState({}, '', window.location.pathname);
@@ -3035,6 +3042,8 @@ async function loadUserFromPortal() {
   const dept     = savedParams.dept     || params.get('dept');
   const division = savedParams.division || params.get('division');
   const empId    = savedParams.empId    || params.get('empId');
+  // allowedMenuIds จาก Portal (บันทึกใน sessionStorage เมื่อเปิดครั้งแรก)
+  const savedMenuIds = savedParams.allowedMenuIds || params.get('allowedMenuIds') || '';
 
   const roleLabel = (role === 'admin')    ? 'ผู้ดูแลระบบ'
                   : (role === 'approver') ? 'ที่ปรึกษา / ผู้อนุมัติ'
@@ -3104,17 +3113,23 @@ async function loadUserFromPortal() {
   perms.forEach(p => { menuPerms[p.menu] = role === 'admin' ? true : !!p[role]; });
 
   // ② override ด้วย per-user allowedMenuIds จาก Portal (ถ้ามี)
-  const allowedMenuIds = tokenRes.allowedMenuIds || null;
-  if (allowedMenuIds && allowedMenuIds.length > 0 && role !== 'admin') {
+  const rawMenuIds = savedMenuIds || tokenRes.allowedMenuIds || '';
+  const allowedMenuIds = typeof rawMenuIds === 'string'
+    ? rawMenuIds.split(',').map(s => s.trim()).filter(Boolean)
+    : (Array.isArray(rawMenuIds) ? rawMenuIds : []);
+  if (allowedMenuIds.length > 0 && role !== 'admin') {
     const PORTAL_TO_PAGE = {
-      'bm_leave_dashboard':  'dashboard',   'bs_leave_dashboard':  'dashboard',
-      'bm_leave_roster_view':'roster-view', 'bs_leave_roster_view':'roster-view',
-      'bm_leave_leave_form': 'leave-form',  'bs_leave_leave_form': 'leave-form',
-      'bm_leave_my_leaves':  'my-leaves',   'bs_leave_my_leaves':  'my-leaves',
-      'bm_leave_approval':   'approval',    'bs_leave_approval':   'approval',
-      'bm_leave_all_leaves': 'all-leaves',  'bs_leave_all_leaves': 'all-leaves',
-      'bm_leave_report':     'report',      'bs_leave_report':     'report',
-      'ot-record':           'ot-record',
+      'bm_leave_dashboard':   'dashboard',    'bs_leave_dashboard':   'dashboard',
+      'bm_leave_roster_view': 'roster-view',  'bs_leave_roster_view': 'roster-view',
+      'bm_leave_leave_form':  'leave-form',   'bs_leave_leave_form':  'leave-form',
+      'bm_leave_my_leaves':   'my-leaves',    'bs_leave_my_leaves':   'my-leaves',
+      'bm_leave_approval':    'approval',     'bs_leave_approval':    'approval',
+      'bm_leave_all_leaves':  'all-leaves',   'bs_leave_all_leaves':  'all-leaves',
+      'bm_leave_report':      'report',       'bs_leave_report':      'report',
+      'bm_leave_ot_record':   'ot-record',    'bs_leave_ot_record':   'ot-record',
+      'bm_leave_ot_balance':  'ot-balance',   'bs_leave_ot_balance':  'ot-balance',
+      'ot-record':            'ot-record',
+      'ot-balance':           'ot-balance',
     };
     // รีเซ็ตก่อน แล้วเปิดเฉพาะที่มีสิทธิ์
     Object.values(PORTAL_TO_PAGE).forEach(page => { menuPerms[page] = false; });
