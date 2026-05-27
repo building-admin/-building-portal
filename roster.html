@@ -2240,7 +2240,12 @@ async function applyRosterPermissions(role) {
     }
   } catch(e) { /* ใช้ default */ }
 
-  const r = role === 'admin' ? 'admin' : role;
+  // map role จาก portal → key ใน perms
+  // portal ส่ง 'user' / 'admin' / 'hr' / 'approver'
+  // perms เก็บ key เป็น 'employee' / 'admin' / 'hr' / 'approver'
+  const r = role === 'admin' ? 'admin'
+          : role === 'user'  ? 'employee'
+          : role || 'employee';
 
   // Tab คีย์ข้อมูล
   const canInput = role === 'admin' || !!perms['roster-tab-input']?.[r];
@@ -2258,7 +2263,8 @@ async function applyRosterPermissions(role) {
   // Tab สรุปตาราง (ถ้าไม่มีสิทธิ์เลย → redirect กลับ portal)
   const canSummary = role === 'admin' || !!perms['roster-tab-summary']?.[r];
   if (!canSummary && !canInput) {
-    document.getElementById('app').innerHTML = `
+    // ใช้ document.body แทน #app ที่ไม่มีใน DOM
+    document.body.innerHTML = `
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
         height:100vh;background:#0a1628;color:#e05252;font-family:Sarabun,sans-serif;gap:16px;">
         <div style="font-size:48px;">🔒</div>
