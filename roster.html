@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BFS Roster System</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji<link href="https://fonts.googleapis.com/css2?family=Sarabundisplay=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -24,7 +25,7 @@
     --card-bg:     rgba(15,32,68,.7);
     --input-bg:    rgba(10,22,40,.6);
     --sidebar-w:   220px;
-    --font-body:   'Sarabun', sans-serif;
+    --font-body:   'Sarabun', 'Noto Color Emoji', sans-serif;
     --font-label:  'Barlow Condensed', sans-serif;
     --font-mono:   'Barlow Condensed', sans-serif;
   }
@@ -723,15 +724,14 @@ function getShiftClass(code) {
 }
 
 // ── STATE ────────────────────────────────────────────
-let currentUser      = null;
-let isAdmin          = false;
-let employees        = [];         // live list จาก getEmployees (master)
-let rosterEmployees  = [];         // list สำหรับเดือนที่กำลังดู (snapshot ถ้ามี / employees ถ้าไม่มี)
-let rosterData       = {};         // { empId: { 1:'02', 2:'W', ... } }
-let empOffDays       = {};         // { empId: วันหยุดประจำ } snapshot ของเดือนนั้น
-let currentMonth     = '';
-let pickerTarget     = null;       // { empId, day }
-let hasChanges       = false;
+let currentUser  = null;
+let isAdmin      = false;
+let employees    = [];
+let rosterData   = {};  // { empId: { 1:'02', 2:'W', ... } }
+let empOffDays   = {};  // { empId: วันหยุดประจำ } จากข้อมูล roster บันทึกของเดือนนั้น
+let currentMonth = '';
+let pickerTarget = null; // { empId, day }
+let hasChanges   = false;
 
 // ── INIT ─────────────
 
@@ -1094,7 +1094,6 @@ async function loadRoster() {
   rosterData = {};
   empOffDays = {};
   if (res.success && res.data.length) {
-    const seen = new Set();
     res.data.forEach(row => {
       const id = String(row['รหัสพนักงาน']);
       if (!rosterData[id]) rosterData[id] = {};
@@ -1106,30 +1105,6 @@ async function loadRoster() {
         rosterData[id][d] = String(val || '').trim();
       }
     });
-
-    // สร้าง rosterEmployees จาก snapshot (เดือนใครเดือนมัน)
-    rosterEmployees = [];
-    res.data.forEach(row => {
-      const id = String(row['รหัสพนักงาน']);
-      if (rosterEmployees.find(e => String(e['รหัสพนักงาน']) === id)) return; // dedup
-      // merge กับ current employee สำหรับ กลุ่ม / ลำดับ ที่ไม่ได้บันทึกใน snapshot
-      const cur = employees.find(e => String(e['รหัสพนักงาน']) === id) || {};
-      rosterEmployees.push({
-        ...cur,
-        'รหัสพนักงาน': id,
-        'ชื่อ-นามสกุล': String(row['ชื่อ'] || row['ชื่อ-นามสกุล'] || cur['ชื่อ-นามสกุล'] || ''),
-        'ตำแหน่ง':      String(row['ตำแหน่ง'] || cur['ตำแหน่ง'] || ''),
-        'วันหยุดประจำ': String(row['วันหยุดประจำ'] || cur['วันหยุดประจำ'] || ''),
-        'กลุ่ม':        cur['กลุ่ม'] || row['กลุ่ม'] || '',  // ดึง กลุ่ม จาก master เสมอ
-        'ลำดับ':        cur['ลำดับ'] || row['ลำดับ'] || 99,
-      });
-    });
-    // เรียงตาม ลำดับ
-    rosterEmployees.sort((a, b) => parseInt(a['ลำดับ'] || 99) - parseInt(b['ลำดับ'] || 99));
-
-  } else {
-    // ไม่มีข้อมูลบันทึกไว้ → ใช้พนักงานปัจจุบันทั้งหมด (เดือนใหม่ / เริ่มกรอกใหม่)
-    rosterEmployees = [...employees];
   }
 
   buildRosterTable();
@@ -1159,7 +1134,7 @@ function buildInputTable() {
   const isThisMonth = todayD.getFullYear() === yearAD && todayD.getMonth() + 1 === monthNum;
   const todayDate   = todayD.getDate();
 
-  if (!rosterEmployees.length) {
+  if (!employees.length) {
     document.getElementById('roster-tbody-input').innerHTML =
       `<tr><td colspan="99" style="text-align:center;padding:40px;color:var(--muted);">ไม่พบข้อมูลพนักงาน</td></tr>`;
     return;
@@ -1192,7 +1167,7 @@ function buildInputTable() {
   }
 
   // ROWS — flat list ตาม ลำดับ (ไม่จัดกลุ่ม)
-  const empRows = rosterEmployees.map(emp => {
+  const empRows = employees.map(emp => {
     const id        = String(emp['รหัสพนักงาน']);
     const empRoster = rosterData[id] || {};
     let cells = '';
@@ -1286,7 +1261,7 @@ function buildRosterTable() {
   const isThisMonth = todayD.getFullYear() === yearAD && todayD.getMonth() + 1 === monthNum;
   const todayDate   = todayD.getDate();
 
-  if (!rosterEmployees.length) {
+  if (!employees.length) {
     document.getElementById('roster-tbody').innerHTML =
       `<tr><td colspan="99" style="text-align:center;padding:40px;color:var(--muted);">ไม่พบข้อมูลพนักงาน</td></tr>`;
     return;
@@ -1404,29 +1379,14 @@ function buildRosterTable() {
   }
 
   // ── จัดกลุ่มพนักงาน ──────────────────────────────
-  const group1  = rosterEmployees.filter(e => String(e['กลุ่ม']) === '1');
-  const group2  = rosterEmployees.filter(e => String(e['กลุ่ม']) === '2');
-  const group3  = rosterEmployees.filter(e => String(e['กลุ่ม']) === '3');
-  const noGroup = rosterEmployees.filter(e => !['1','2','3'].includes(String(e['กลุ่ม'])));
+  const group1 = employees.filter(e => String(e['กลุ่ม']) === '1');
+  const group2 = employees.filter(e => String(e['กลุ่ม']) === '2');
+  const group3 = employees.filter(e => String(e['กลุ่ม']) === '3');
+  const noGroup = employees.filter(e => !['1','2','3'].includes(String(e['กลุ่ม'])));
 
   // group1 แยกกะ
   const sub1 = { 'เช้า':[], 'บ่าย':[], 'ดึก':[], 'อื่นๆ':[] };
   group1.forEach(emp => sub1[getShiftLabel(getDominantShift(emp['รหัสพนักงาน']))].push(emp));
-
-  // เรียง "จราจร" ให้อยู่ท้ายสุดในแต่ละกะ แต่ "หัวหน้า" อยู่อันดับแรกเสมอ
-  const empPriority = emp => {
-    const pos = emp['ตำแหน่ง'] || '';
-    if (pos.includes('หัวหน้า')) return 0;  // หัวหน้าทุกคนอยู่อันดับแรก
-    if (pos.includes('จราจร'))   return 2;  // จราจร (ไม่ใช่หัวหน้า) อยู่ท้ายสุด
-    return 1;                               // อื่นๆ อยู่กลาง
-  };
-  const isTraffic = emp => (emp['ตำแหน่ง'] || '').includes('จราจร') ? 1 : 0;
-  Object.keys(sub1).forEach(key => {
-    sub1[key].sort((a, b) =>
-      empPriority(a) - empPriority(b) ||
-      parseInt(a['ลำดับ'] || 99) - parseInt(b['ลำดับ'] || 99)
-    );
-  });
 
   const SUB_CONFIG = [
     { key:'เช้า',  icon:'🌅', color:'61,186,122' },
@@ -1518,36 +1478,22 @@ function openPrintView(autoPrint = true) {
   const monthNames  = ['','มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
                        'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
-  // จัดกลุ่มตามคอลัมน์ กลุ่ม (ใช้ rosterEmployees = snapshot ของเดือนนั้น)
-  const group1 = rosterEmployees.filter(e => String(e['กลุ่ม']) === '1');
-  const group2 = rosterEmployees.filter(e => String(e['กลุ่ม']) === '2');
-  const group3 = rosterEmployees.filter(e => String(e['กลุ่ม']) === '3');
+  // จัดกลุ่มตามคอลัมน์ กลุ่ม
+  const group1 = employees.filter(e => String(e['กลุ่ม']) === '1');
+  const group2 = employees.filter(e => String(e['กลุ่ม']) === '2');
+  const group3 = employees.filter(e => String(e['กลุ่ม']) === '3');
 
   const subGroups = { 'เช้า':[], 'บ่าย':[], 'ดึก':[], 'อื่นๆ':[] };
   group1.forEach(emp => subGroups[getShiftLabel(getDominantShift(emp['รหัสพนักงาน']))].push(emp));
 
-  // เรียง "จราจร" ให้อยู่ท้ายสุดในแต่ละกะ แต่ "หัวหน้า" อยู่อันดับแรกเสมอ
-  const empPriorityPrint = emp => {
-    const pos = emp['ตำแหน่ง'] || '';
-    if (pos.includes('หัวหน้า')) return 0;
-    if (pos.includes('จราจร'))   return 2;
-    return 1;
-  };
-  const isTrafficEmp = emp => (emp['ตำแหน่ง'] || '').includes('จราจร') ? 1 : 0;
-  Object.keys(subGroups).forEach(key => {
-    subGroups[key].sort((a, b) =>
-      empPriorityPrint(a) - empPriorityPrint(b) ||
-      parseInt(a['ลำดับ'] || 99) - parseInt(b['ลำดับ'] || 99)
-    );
-  });
-
   // สร้าง HTML สำหรับพิมพ์
   let html = `<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8">
     <title>รอบการปฏิบัติงาน ${monthNames[monthNum]} ${yearTH}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji<link href="https://fonts.googleapis.com/css2?family=Sarabundisplay=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
       * { margin:0; padding:0; box-sizing:border-box; }
-      body { font-family:'Sarabun',sans-serif; font-size:10px; background:#fff; color:#000; padding:12px; }
+      body { font-family:'Sarabun','Noto Color Emoji',sans-serif; font-size:10px; background:#fff; color:#000; padding:12px; }
       h1 { font-size:14px; text-align:center; margin-bottom:2px; }
       h2 { font-size:11px; text-align:right; color:#555; margin-bottom:8px; }
       table { width:100%; border-collapse:collapse; margin-bottom:8px; }
@@ -1653,69 +1599,22 @@ function openPrintView(autoPrint = true) {
 
   html += `</tbody></table>`;
 
-  // ── วันหยุดนักขัตฤกษ์ประจำเดือน ──────────────────────
-  const monthHolidays = (_holidays[yearTH] || [])
-    .filter(h => {
-      const [hy, hm] = h.date.split('-').map(Number);
-      return hy === yearTH && hm === monthNum;
-    })
-    .sort((a, b) => a.date.localeCompare(b.date));
+  // Legend
+  html += `<table class="legend-table"><tr>
+    <td><b>รอบเวลาการทำงาน:</b></td>
+    ${Object.entries(SHIFT_TIME).filter(([k])=>!['W','H','S','PL','VL','C','CH'].includes(k)).map(([c,t])=>
+      `<td><b>${c}</b> = ${t} น.</td>`).join('')}
+  </tr><tr>
+    <td></td>
+    ${[['W','วันหยุดประจำสัปดาห์'],['H','นักขัตฤกษ์'],['S','ลาป่วย'],
+       ['PL','ลากิจ'],['VL','ลาพักร้อน'],['C','เปลี่ยนวันหยุด'],['CH','สะสมวันหยุด']].map(([c,l])=>
+      `<td><b>${c}</b> = ${l}</td>`).join('')}
+  </tr></table>`;
 
-  if (monthHolidays.length) {
-    const dayNames7 = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
-    html += `
-    <div style="margin-top:10px;border:2px solid #c8912a;border-radius:6px;overflow:hidden;">
-      <div style="background:#c8912a;color:#fff;font-weight:700;font-size:11px;
-                  padding:5px 12px;letter-spacing:.05em;">
-        📅 วันหยุดนักขัตฤกษ์ประจำเดือน${monthNames[monthNum]} ${yearTH}
-        &nbsp;(${monthHolidays.length} วัน)
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:0;background:#fffdf5;">
-        ${monthHolidays.map((h, i) => {
-          const [hy, hm, hd] = h.date.split('-').map(Number);
-          const jsDate = new Date(hy - 543, hm - 1, hd);
-          const dowName = dayNames7[jsDate.getDay()];
-          return `<div style="
-            display:flex;align-items:center;gap:8px;
-            padding:5px 14px;
-            border-right:${i < monthHolidays.length - 1 ? '1px solid #e8d5a3' : 'none'};
-            border-bottom:1px solid #f0e0b0;
-            min-width:200px;
-          ">
-            <span style="background:#c8912a;color:#fff;font-weight:800;font-size:11px;
-                         padding:2px 7px;border-radius:4px;min-width:28px;text-align:center;">
-              ${hd}
-            </span>
-            <span style="font-size:9px;color:#a07030;font-weight:600;min-width:52px;">${dowName}</span>
-            <span style="font-size:10px;font-weight:700;color:#5a3a00;">${h.name}</span>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`;
-  }
-  // ── รอบเวลาการทำงาน (กรอบเหมือนวันหยุดนักขัตฤกษ์) ──
-  const shiftEntries = Object.entries(SHIFT_TIME).filter(([k]) => !['W','H','S','PL','VL','C','CH'].includes(k));
-  const specialCodes = [['W','วันหยุดประจำสัปดาห์'],['H','นักขัตฤกษ์'],['S','ลาป่วย'],
-                        ['PL','ลากิจ'],['VL','ลาพักร้อน'],['C','เปลี่ยนวันหยุด'],['CH','สะสมวันหยุด']];
-  html += `
-  <div style="margin-top:8px;border:2px solid #1a3460;border-radius:6px;overflow:hidden;">
-    <div style="background:#1a3460;color:#f0f4fa;font-weight:700;font-size:11px;padding:5px 12px;letter-spacing:.05em;">
-      🕐 รอบเวลาการทำงาน
-    </div>
-    <div style="background:#f5f7fc;padding:6px 12px;display:flex;flex-wrap:wrap;gap:4px 20px;">
-      ${shiftEntries.map(([c,t]) => `
-        <span style="font-size:10px;">
-          <b style="background:#1a3460;color:#fff;padding:1px 5px;border-radius:3px;">${c}</b>
-          <span style="color:#333;"> = ${t} น.</span>
-        </span>`).join('')}
-    </div>
-    <div style="background:#eef1f8;padding:5px 12px;display:flex;flex-wrap:wrap;gap:4px 20px;border-top:1px solid #d0d8ec;">
-      ${specialCodes.map(([c,l]) => `
-        <span style="font-size:10px;">
-          <b style="background:#555;color:#fff;padding:1px 5px;border-radius:3px;">${c}</b>
-          <span style="color:#555;"> = ${l}</span>
-        </span>`).join('')}
-    </div>
+  // ลายเซ็น
+  html += `<div class="sign-area">
+    <div class="sign-box"><div class="sign-line">(รัฐกานต์ ขันทอง)<br>หัวหน้าแผนกกลยุทธ์ฯ<br><small>ผู้จัดทำ</small></div></div>
+    <div class="sign-box"><div class="sign-line">(จาตุรงค์ สุริยาศศิน)<br>ผู้อำนวยการกลุ่มงานบริหาร<br><small>อนุมัติ</small></div></div>
   </div>`;
 
   html += `</body></html>`;
@@ -1808,17 +1707,14 @@ async function saveRoster() {
   btn.disabled = true;
   btn.textContent = '⏳ กำลังบันทึก...';
 
-  // แปลง rosterData → array โดยใช้ rosterEmployees (พนักงานของเดือนนั้น)
-  const data = rosterEmployees.map(emp => {
+  // แปลง rosterData → array
+  const data = employees.map(emp => {
     const id = String(emp['รหัสพนักงาน']);
-    // วันหยุดประจำ: ใช้ค่าจาก master ปัจจุบัน (employees) เสมอตอน save
-    // เพื่อให้การแก้ไขใน "จัดการพนักงาน" มีผลเมื่อกด บันทึก
-    const curEmp = employees.find(e => String(e['รหัสพนักงาน']) === id);
     const row = {
       'รหัสพนักงาน':  id,
       'ชื่อ':          emp['ชื่อ-นามสกุล'],
       'ตำแหน่ง':      emp['ตำแหน่ง'],
-      'วันหยุดประจำ': (curEmp && curEmp['วันหยุดประจำ']) || emp['วันหยุดประจำ']
+      'วันหยุดประจำ': emp['วันหยุดประจำ']
     };
     for (let d = 1; d <= 31; d++) {
       row[String(d)] = (rosterData[id] || {})[d] || '';
@@ -1935,26 +1831,9 @@ async function saveEmployee() {
   if (res.success) {
     showToast(res.message, 'success');
     closeEmpModal();
-    await loadEmployees(); // refresh master list
-
-    if (editId) {
-      // แก้ไขพนักงานเดิม → อัปเดต in-memory ทันที ไม่ต้อง reload จาก Sheet
-      const updatedEmp = employees.find(e => String(e['รหัสพนักงาน']) === String(editId));
-      if (updatedEmp) {
-        const id = String(editId);
-        // อัปเดต empOffDays ให้แสดงผลถูกต้องทันที
-        empOffDays[id] = updatedEmp['วันหยุดประจำ'] || '';
-        // อัปเดต rosterEmployees
-        const ri = rosterEmployees.findIndex(e => String(e['รหัสพนักงาน']) === id);
-        if (ri >= 0) rosterEmployees[ri] = { ...rosterEmployees[ri], ...updatedEmp };
-      }
-      renderEmpTable();          // อัปเดตตารางจัดการพนักงานด้วย
-      buildRosterTable();
-      if (isAdmin) buildInputTable();
-    } else {
-      // พนักงานใหม่ → reload roster (จะไม่โผล่ในเดือนเก่าที่มีข้อมูลบันทึกไว้แล้ว)
-      await loadRoster();
-    }
+    await loadEmployees();
+    buildRosterTable();
+    buildInputTable();
   } else {
     showToast(res.message, 'error');
   }
@@ -1970,7 +1849,8 @@ async function deleteEmployee(empId) {
       if (res.success) {
         showToast('ปิดใช้งานเรียบร้อยแล้ว', 'success');
         await loadEmployees();
-        await loadRoster(); // reload ใหม่เพื่อให้ rosterEmployees ถูกต้อง
+        buildRosterTable();
+        buildInputTable();
       } else {
         showToast(res.message, 'error');
       }
@@ -2056,7 +1936,7 @@ function applyAutofill() {
 // ── MY SHIFT CARD ────────────────────────────────────
 function renderMyShiftCard() {
   const empId = currentUser.empId;
-  if (!empId) return;  // แสดงให้ทุกคนรวม admin
+  if (!empId || isAdmin) return;
 
   document.getElementById('my-shift-card').style.display = 'block';
 
@@ -2140,9 +2020,9 @@ function exportCSV() {
   for (let d = 1; d <= daysInMonth; d++) csv += `,${d}`;
   csv += '\n';
 
-  rosterEmployees.forEach(emp => {
+  employees.forEach(emp => {
     const id = String(emp['รหัสพนักงาน']);
-    csv += `${currentMonth},${id},"${emp['ชื่อ-นามสกุล']}","${emp['ตำแหน่ง']}","${empOffDays[id] || emp['วันหยุดประจำ'] || ''}"`;
+    csv += `${currentMonth},${id},"${emp['ชื่อ-นามสกุล']}","${emp['ตำแหน่ง']}","${emp['วันหยุดประจำ'] || ''}"`;
     for (let d = 1; d <= daysInMonth; d++) {
       csv += `,${(rosterData[id] || {})[d] || ''}`;
     }
@@ -2240,12 +2120,7 @@ async function applyRosterPermissions(role) {
     }
   } catch(e) { /* ใช้ default */ }
 
-  // map role จาก portal → key ใน perms
-  // portal ส่ง 'user' / 'admin' / 'hr' / 'approver'
-  // perms เก็บ key เป็น 'employee' / 'admin' / 'hr' / 'approver'
-  const r = role === 'admin' ? 'admin'
-          : role === 'user'  ? 'employee'
-          : role || 'employee';
+  const r = role === 'admin' ? 'admin' : role;
 
   // Tab คีย์ข้อมูล
   const canInput = role === 'admin' || !!perms['roster-tab-input']?.[r];
@@ -2263,8 +2138,7 @@ async function applyRosterPermissions(role) {
   // Tab สรุปตาราง (ถ้าไม่มีสิทธิ์เลย → redirect กลับ portal)
   const canSummary = role === 'admin' || !!perms['roster-tab-summary']?.[r];
   if (!canSummary && !canInput) {
-    // ใช้ document.body แทน #app ที่ไม่มีใน DOM
-    document.body.innerHTML = `
+    document.getElementById('app').innerHTML = `
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
         height:100vh;background:#0a1628;color:#e05252;font-family:Sarabun,sans-serif;gap:16px;">
         <div style="font-size:48px;">🔒</div>

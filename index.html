@@ -8,12 +8,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Building & Facilities Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji<link href="https://fonts.googleapis.com/css2?family=Sarabundisplay=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--navy:#0a1628;--navy-mid:#0f2044;--navy-lt:#1a3460;--steel:#2c4a72;--gold:#c8912a;--gold-lt:#e8b84b;--gold-glow:rgba(200,145,42,.35);--silver:#a8bbd4;--white:#f0f4fa;--muted:#6b849f;--danger:#e05252;--success:#3dba7a;--warn:#f0a030;--card-bg:rgba(15,32,68,.88);--border:rgba(168,187,212,.18)}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{overflow-x:hidden;overflow-y:hidden}
-body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);min-height:100vh;max-width:100vw;overflow:hidden}
+body{font-family:'Sarabun','Noto Color Emoji',sans-serif;background:var(--navy);color:var(--white);min-height:100vh;max-width:100vw;overflow:hidden}
 #bg-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
 .screen{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;display:flex;align-items:center;justify-content:center;z-index:10;opacity:0;pointer-events:none;transition:opacity .45s,transform .45s;transform:translateY(14px);overflow-y:auto}
 .screen.active{opacity:1;pointer-events:all;transform:translateY(0)}
@@ -23,7 +24,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
 .brand-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--gold-lt));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 .brand-text{min-width:0}
 .brand-text .org{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.1em;color:var(--silver);text-transform:uppercase;white-space:nowrap}
-.brand-text .dept{font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-text .dept{font-family:'Sarabun','Noto Color Emoji',sans-serif;font-size:15px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .topbar-right{display:flex;align-items:center;gap:10px}
 #api-status{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);font-family:'Barlow Condensed',sans-serif;letter-spacing:.06em}
 .api-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);transition:background .3s}
@@ -39,7 +40,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
 .emp-id-tag{color:var(--muted);font-size:11px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.06em}
 #dept-badge{background:var(--steel);border:1px solid var(--gold);color:var(--gold-lt);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;font-family:'Barlow Condensed',sans-serif;letter-spacing:.07em;text-transform:uppercase;display:none}
 #dept-badge.show{display:block}
-.tb-btn{background:transparent;border:1px solid var(--border);color:var(--silver);padding:5px 14px;border-radius:6px;font-family:'Sarabun',sans-serif;font-size:12px;cursor:pointer;transition:all .2s;display:none;align-items:center;gap:6px;white-space:nowrap}
+.tb-btn{background:transparent;border:1px solid var(--border);color:var(--silver);padding:5px 14px;border-radius:6px;font-family:'Sarabun','Noto Color Emoji',sans-serif;font-size:12px;cursor:pointer;transition:all .2s;display:none;align-items:center;gap:6px;white-space:nowrap}
 .tb-btn.show{display:flex}
 #admin-btn{border-color:rgba(200,145,42,.4);color:var(--gold-lt)}
 #admin-btn:hover{border-color:var(--gold);background:rgba(200,145,42,.1)}
@@ -54,7 +55,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
 .req{color:var(--danger)}
 .input-wrap{position:relative}
 .input-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--muted);pointer-events:none}
-.form-group input,.form-group select,.form-group textarea{width:100%;background:rgba(10,22,40,.6);border:1px solid var(--border);border-radius:9px;padding:12px 12px 12px 42px;color:var(--white);font-family:'Sarabun',sans-serif;font-size:14px;outline:none;transition:border-color .25s,box-shadow .25s;-webkit-appearance:none;appearance:none}
+.form-group input,.form-group select,.form-group textarea{width:100%;background:rgba(10,22,40,.6);border:1px solid var(--border);border-radius:9px;padding:12px 12px 12px 42px;color:var(--white);font-family:'Sarabun','Noto Color Emoji',sans-serif;font-size:14px;outline:none;transition:border-color .25s,box-shadow .25s;-webkit-appearance:none;appearance:none}
 .form-group textarea{padding:12px;min-height:80px;resize:vertical}
 .form-group input::placeholder,.form-group textarea::placeholder{color:var(--muted)}
 .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-glow)}
@@ -64,14 +65,14 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
 .alert-error{background:rgba(224,82,82,.12);border:1px solid rgba(224,82,82,.35);color:#f08080}
 .alert-success{background:rgba(61,186,122,.12);border:1px solid rgba(61,186,122,.35);color:#6fe0a8}
 .alert-warn{background:rgba(240,160,48,.12);border:1px solid rgba(240,160,48,.35);color:#f0c060}
-.btn-primary{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-lt));border:none;border-radius:9px;padding:13px;color:var(--navy);font-family:'Sarabun',sans-serif;font-size:15px;font-weight:700;letter-spacing:.04em;cursor:pointer;transition:transform .15s,box-shadow .25s,opacity .2s;box-shadow:0 4px 18px rgba(200,145,42,.35);margin-top:6px}
+.btn-primary{width:100%;background:linear-gradient(135deg,var(--gold),var(--gold-lt));border:none;border-radius:9px;padding:13px;color:var(--navy);font-family:'Sarabun','Noto Color Emoji',sans-serif;font-size:15px;font-weight:700;letter-spacing:.04em;cursor:pointer;transition:transform .15s,box-shadow .25s,opacity .2s;box-shadow:0 4px 18px rgba(200,145,42,.35);margin-top:6px}
 .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 26px rgba(200,145,42,.5)}
 .btn-primary:disabled{opacity:.55;cursor:not-allowed;transform:none}
 /* LOGIN */
 .login-wrap{width:400px;margin-top:62px}
 .login-wrap .card{padding:44px 40px}
 .login-icon{width:68px;height:68px;background:linear-gradient(135deg,var(--navy-mid),var(--navy-lt));border:2px solid var(--gold);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 20px;box-shadow:0 0 22px var(--gold-glow)}
-.card h2{font-family:'Sarabun',sans-serif;font-size:24px;font-weight:700;text-align:center;margin-bottom:4px}
+.card h2{font-family:'Sarabun','Noto Color Emoji',sans-serif;font-size:24px;font-weight:700;text-align:center;margin-bottom:4px}
 .card .subtitle{color:var(--muted);font-size:13px;text-align:center;margin-bottom:32px}
 .login-footer{text-align:center;margin-top:18px;font-size:11px;color:var(--muted)}
 .live-dot{display:inline-block;width:7px;height:7px;background:var(--success);border-radius:50%;margin-right:5px;animation:pulse2 2s infinite}
@@ -87,7 +88,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
 .dept-wrap{width:860px;margin-top:62px;padding:20px;max-height:calc(100vh - 62px);overflow-y:auto}
 .dept-header{text-align:center;margin-bottom:36px}
 .dept-header .greeting{font-size:14px;color:var(--gold-lt);font-weight:500;margin-bottom:5px}
-.dept-header h2{font-family:'Sarabun',sans-serif;font-size:28px;font-weight:700;margin-bottom:6px}
+.dept-header h2{font-family:'Sarabun','Noto Color Emoji',sans-serif;font-size:28px;font-weight:700;margin-bottom:6px}
 .dept-header p{color:var(--muted);font-size:14px}
 .dept-grid{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;align-items:stretch}
 .dept-card{background:var(--card-bg);border:1px solid var(--border);border-radius:18px;padding:32px 26px;cursor:pointer;transition:transform .25s,border-color .25s,box-shadow .25s;-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);position:relative;overflow:hidden;text-align:center;width:260px;min-width:200px;flex-shrink:0}
@@ -96,7 +97,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
 .dept-card:hover::after{opacity:1}
 .dept-card-icon{width:72px;height:72px;border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 16px;position:relative;z-index:1;transition:transform .25s;background:linear-gradient(135deg,#1a3460,#0f2044);border:2px solid var(--gold);box-shadow:0 0 18px var(--gold-glow)}
 .dept-card:hover .dept-card-icon{transform:scale(1.08)}
-.dept-card h3{font-family:'Sarabun',sans-serif;font-size:18px;font-weight:700;margin-bottom:4px;position:relative;z-index:1}
+.dept-card h3{font-family:'Sarabun','Noto Color Emoji',sans-serif;font-size:18px;font-weight:700;margin-bottom:4px;position:relative;z-index:1}
 .dept-card .dept-name-en{font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.1em;color:var(--gold-lt);text-transform:uppercase;margin-bottom:8px;position:relative;z-index:1}
 .dept-card .dept-desc{font-size:12px;color:var(--muted);line-height:1.5;position:relative;z-index:1}
 .dept-arrow{margin-top:14px;color:var(--gold-lt);font-size:20px;position:relative;z-index:1;opacity:0;transform:translateX(-8px);transition:opacity .25s,transform .25s}
@@ -106,9 +107,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
 /* DASHBOARD — Dynamic */
 .dashboard-wrap{width:100%;max-width:1200px;padding:22px 28px;margin-top:62px;max-height:calc(100vh - 62px);overflow-y:auto}
 .dash-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:14px}
-.dash-title h2{font-family:'Sarabun',sans-serif;font-size:26px;font-weight:800;margin-bottom:3px}
+.dash-title h2{font-family:'Sarabun','Noto Color Emoji',sans-serif;font-size:26px;font-weight:800;margin-bottom:3px}
 .dash-title .en-sub{font-family:'Barlow Condensed',sans-serif;font-size:13px;color:var(--gold-lt);letter-spacing:.12em;text-transform:uppercase}
-.back-btn{background:rgba(15,32,68,.8);border:1px solid var(--border);color:var(--silver);padding:7px 16px;border-radius:7px;font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:7px}
+.back-btn{background:rgba(15,32,68,.8);border:1px solid var(--border);color:var(--silver);padding:7px 16px;border-radius:7px;font-family:'Sarabun','Noto Color Emoji',sans-serif;font-size:13px;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:7px}
 .back-btn:hover{border-color:var(--silver);color:var(--white)}
 .section-title{font-family:'Barlow',sans-serif;font-size:14px;font-weight:700;color:var(--silver);letter-spacing:.07em;text-transform:uppercase;margin-bottom:14px;display:flex;align-items:center;gap:10px}
 .section-title::after{content:'';flex:1;height:1px;background:var(--border)}
@@ -121,7 +122,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
 /* ADMIN PANEL */
 .admin-wrap{width:100%;max-width:1160px;padding:22px 28px;margin-top:62px;max-height:calc(100vh - 62px);overflow-y:auto}
 .admin-tabs{display:flex;gap:4px;margin-bottom:24px;background:rgba(10,22,40,.5);padding:4px;border-radius:10px;border:1px solid var(--border);flex-wrap:wrap}
-.admin-tab{padding:9px 14px;border-radius:7px;border:none;background:transparent;color:var(--muted);font-family:'Sarabun',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
+.admin-tab{padding:9px 14px;border-radius:7px;border:none;background:transparent;color:var(--muted);font-family:'Sarabun','Noto Color Emoji',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap}
 .admin-tab.active{background:var(--navy-lt);color:var(--white);border:1px solid var(--border)}
 .admin-tab:hover:not(.active){color:var(--silver)}
 .tab-content{display:none}
@@ -129,9 +130,9 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
 .table-toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap}
 .search-wrap{position:relative}
 .search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--muted)}
-.search-input{background:rgba(10,22,40,.6);border:1px solid var(--border);border-radius:8px;padding:9px 14px 9px 36px;color:var(--white);font-family:'Sarabun',sans-serif;font-size:13px;outline:none;transition:border-color .25s;width:280px}
+.search-input{background:rgba(10,22,40,.6);border:1px solid var(--border);border-radius:8px;padding:9px 14px 9px 36px;color:var(--white);font-family:'Sarabun','Noto Color Emoji',sans-serif;font-size:13px;outline:none;transition:border-color .25s;width:280px}
 .search-input:focus{border-color:var(--gold)}
-.btn-add{background:linear-gradient(135deg,var(--gold),var(--gold-lt));border:none;border-radius:8px;padding:9px 18px;color:var(--navy);font-family:'Sarabun',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:opacity .2s,transform .15s;white-space:nowrap}
+.btn-add{background:linear-gradient(135deg,var(--gold),var(--gold-lt));border:none;border-radius:8px;padding:9px 18px;color:var(--navy);font-family:'Sarabun','Noto Color Emoji',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;transition:opacity .2s,transform .15s;white-space:nowrap}
 .btn-add:hover{opacity:.85;transform:translateY(-1px)}
 .table-card{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;overflow:hidden;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
 .data-table{width:100%;border-collapse:collapse;font-size:13px}
@@ -146,7 +147,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
 .badge-inactive{background:rgba(224,82,82,.12);color:#f08080;border:1px solid rgba(224,82,82,.3)}
 .badge-firstlogin{background:rgba(240,160,48,.15);color:#f0c060;border:1px solid rgba(240,160,48,.3)}
 .action-btns{display:flex;gap:5px;flex-wrap:wrap}
-.btn-sm{padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;transition:all .2s;font-family:'Sarabun',sans-serif;white-space:nowrap}
+.btn-sm{padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid;transition:all .2s;font-family:'Sarabun','Noto Color Emoji',sans-serif;white-space:nowrap}
 .btn-edit{background:transparent;border-color:rgba(74,144,217,.4);color:#7ab8f5}
 .btn-edit:hover{background:rgba(74,144,217,.15)}
 .btn-perm{background:transparent;border-color:rgba(200,145,42,.4);color:var(--gold-lt)}
@@ -160,18 +161,18 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
 .modal-overlay.show{opacity:1;pointer-events:all}
 .modal-box{background:var(--navy-mid);border:1px solid var(--border);border-radius:18px;padding:32px;width:92%;max-width:520px;max-height:90vh;overflow-y:auto;position:relative}
 .modal-box.modal-lg{max-width:700px}
-.modal-box h3{font-family:'Sarabun',sans-serif;font-size:20px;font-weight:700;margin-bottom:4px}
+.modal-box h3{font-family:'Sarabun','Noto Color Emoji',sans-serif;font-size:20px;font-weight:700;margin-bottom:4px}
 .modal-sub{color:var(--muted);font-size:13px;margin-bottom:22px}
 .close-modal{position:absolute;top:14px;right:18px;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;transition:color .2s}
 .close-modal:hover{color:var(--white)}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .modal-footer{display:flex;gap:10px;margin-top:22px;justify-content:flex-end}
-.btn-cancel{background:transparent;border:1px solid var(--border);color:var(--silver);padding:10px 20px;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;cursor:pointer;transition:all .2s}
+.btn-cancel{background:transparent;border:1px solid var(--border);color:var(--silver);padding:10px 20px;border-radius:8px;font-family:'Sarabun','Noto Color Emoji',sans-serif;font-size:14px;cursor:pointer;transition:all .2s}
 .btn-cancel:hover{border-color:var(--silver)}
-.btn-save{background:linear-gradient(135deg,var(--gold),var(--gold-lt));border:none;border-radius:8px;padding:10px 24px;color:var(--navy);font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.btn-save{background:linear-gradient(135deg,var(--gold),var(--gold-lt));border:none;border-radius:8px;padding:10px 24px;color:var(--navy);font-family:'Sarabun','Noto Color Emoji',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s}
 .btn-save:hover{opacity:.85}
 .btn-save:disabled{opacity:.5;cursor:not-allowed}
-.btn-danger{background:linear-gradient(135deg,var(--danger),#c03030);border:none;border-radius:8px;padding:10px 24px;color:var(--white);font-family:'Sarabun',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.btn-danger{background:linear-gradient(135deg,var(--danger),#c03030);border:none;border-radius:8px;padding:10px 24px;color:var(--white);font-family:'Sarabun','Noto Color Emoji',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s}
 .btn-danger:hover{opacity:.85}
 .rand-pw{background:transparent;border:1px solid var(--border);color:var(--silver);padding:8px 12px;border-radius:7px;font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap;align-self:flex-end}
 .rand-pw:hover{border-color:var(--gold);color:var(--gold-lt)}
@@ -379,7 +380,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
 .sc-cancel .sc-num{color:#f08080}.sc-cancel.sc-active,.sc-cancel:hover{border-color:var(--danger)}
 .job-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
 .job-toolbar .search-wrap{flex:1;min-width:180px}
-.filter-select{background:rgba(10,22,40,.6);border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:var(--white);font-family:'Sarabun',sans-serif;font-size:13px;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;transition:border-color .2s;min-width:130px}
+.filter-select{background:rgba(10,22,40,.6);border:1px solid var(--border);border-radius:8px;padding:9px 14px;color:var(--white);font-family:'Sarabun','Noto Color Emoji',sans-serif;font-size:13px;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;transition:border-color .2s;min-width:130px}
 .filter-select:focus{border-color:var(--gold)}
 .badge-wait{background:rgba(240,160,48,.15);color:#f0c060;border:1px solid rgba(240,160,48,.3)}
 .badge-prog{background:rgba(74,144,217,.15);color:#7ab8f5;border:1px solid rgba(74,144,217,.3)}
@@ -391,7 +392,7 @@ body{font-family:'Sarabun',sans-serif;background:var(--navy);color:var(--white);
 .job-id{font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--gold-lt);letter-spacing:.05em}
 .job-title-cell .jtitle{font-size:13px;font-weight:600}
 .job-title-cell .jsub{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
-.status-sel{background:rgba(10,22,40,.8);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--white);font-family:'Sarabun',sans-serif;font-size:11px;cursor:pointer;outline:none;-webkit-appearance:none;appearance:none;transition:border-color .2s}
+.status-sel{background:rgba(10,22,40,.8);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--white);font-family:'Sarabun','Noto Color Emoji',sans-serif;font-size:11px;cursor:pointer;outline:none;-webkit-appearance:none;appearance:none;transition:border-color .2s}
 .status-sel:focus{border-color:var(--gold)}
 .empty-jobs{text-align:center;padding:48px;color:var(--muted)}
 .empty-jobs .ej-icon{font-size:44px;margin-bottom:14px}
@@ -1314,7 +1315,7 @@ async function saveJob() {
 function goBack() {
   document.getElementById('dept-badge').classList.remove('show');
   currentDept = null;
-  try { sessionStorage.removeItem('bp_dept'); } catch(e) {}
+  try { localStorage.removeItem('bp_dept'); } catch(e) {}
   renderDeptGrid();
   showScreen('dept');
 }
@@ -2219,31 +2220,25 @@ function showAlert(msg, icon) {
 
 function saveSession() {
   try {
-    sessionStorage.setItem('bp_user', JSON.stringify(currentUser));
-    sessionStorage.setItem('bp_perms', JSON.stringify(userPermissions));
-    if (currentDept) sessionStorage.setItem('bp_dept', JSON.stringify(currentDept));
+    localStorage.setItem('bp_user', JSON.stringify(currentUser));
+    localStorage.setItem('bp_perms', JSON.stringify(userPermissions));
+    if (currentDept) localStorage.setItem('bp_dept', JSON.stringify(currentDept));
   } catch(e) {}
 }
 
 function clearSession() {
   try {
-    sessionStorage.removeItem('bp_user');
-    sessionStorage.removeItem('bp_perms');
-    sessionStorage.removeItem('bp_dept');
-  } catch(e) {}
-}
-
-function restoreSession() {
-  // ล้าง localStorage เก่าที่อาจค้างอยู่
-  try {
     localStorage.removeItem('bp_user');
     localStorage.removeItem('bp_perms');
     localStorage.removeItem('bp_dept');
   } catch(e) {}
+}
+
+function restoreSession() {
   try {
-    const u = sessionStorage.getItem('bp_user');
-    const p = sessionStorage.getItem('bp_perms');
-    const d = sessionStorage.getItem('bp_dept');
+    const u = localStorage.getItem('bp_user');
+    const p = localStorage.getItem('bp_perms');
+    const d = localStorage.getItem('bp_dept');
     if (u && p) {
       currentUser     = JSON.parse(u);
       userPermissions = JSON.parse(p);
