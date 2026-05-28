@@ -1039,16 +1039,13 @@ async function openLeave() {
     }
 
     const deptName = currentDept?.deptName || u.dept || '';
-    // รวม menuId ทุกอันที่ user มีสิทธิ์ (ข้ามทุก dept) เพื่อส่งให้ leave.html กรองเมนู
-    const allMenuIds = (userPermissions?.menus || []).map(m => m.menuId);
     const params = new URLSearchParams({
-      token:          token,
-      name:           u.name       || '',
-      position:       u.position   || '',
-      dept:           deptName,
-      division:       u.division   || '',
-      empId:          u.employeeId || '',
-      allowedMenuIds: allMenuIds.join(','),
+      token:    token,
+      name:     u.name       || '',
+      position: u.position   || '',
+      dept:     deptName,
+      division: u.division   || '',
+      empId:    u.employeeId || '',
     });
     params.set("v", Date.now()); window.location.href = `leave.html?${params.toString()}`;
   } catch(e) {
@@ -1317,7 +1314,7 @@ async function saveJob() {
 function goBack() {
   document.getElementById('dept-badge').classList.remove('show');
   currentDept = null;
-  try { localStorage.removeItem('bp_dept'); } catch(e) {}
+  try { sessionStorage.removeItem('bp_dept'); } catch(e) {}
   renderDeptGrid();
   showScreen('dept');
 }
@@ -2222,25 +2219,31 @@ function showAlert(msg, icon) {
 
 function saveSession() {
   try {
-    localStorage.setItem('bp_user', JSON.stringify(currentUser));
-    localStorage.setItem('bp_perms', JSON.stringify(userPermissions));
-    if (currentDept) localStorage.setItem('bp_dept', JSON.stringify(currentDept));
+    sessionStorage.setItem('bp_user', JSON.stringify(currentUser));
+    sessionStorage.setItem('bp_perms', JSON.stringify(userPermissions));
+    if (currentDept) sessionStorage.setItem('bp_dept', JSON.stringify(currentDept));
   } catch(e) {}
 }
 
 function clearSession() {
   try {
-    localStorage.removeItem('bp_user');
-    localStorage.removeItem('bp_perms');
-    localStorage.removeItem('bp_dept');
+    sessionStorage.removeItem('bp_user');
+    sessionStorage.removeItem('bp_perms');
+    sessionStorage.removeItem('bp_dept');
   } catch(e) {}
 }
 
 function restoreSession() {
+  // ล้าง localStorage เก่าที่อาจค้างอยู่
   try {
-    const u = localStorage.getItem('bp_user');
-    const p = localStorage.getItem('bp_perms');
-    const d = localStorage.getItem('bp_dept');
+    localStorage.removeItem('bp_user');
+    localStorage.removeItem('bp_perms');
+    localStorage.removeItem('bp_dept');
+  } catch(e) {}
+  try {
+    const u = sessionStorage.getItem('bp_user');
+    const p = sessionStorage.getItem('bp_perms');
+    const d = sessionStorage.getItem('bp_dept');
     if (u && p) {
       currentUser     = JSON.parse(u);
       userPermissions = JSON.parse(p);
