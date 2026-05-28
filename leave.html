@@ -3486,15 +3486,21 @@ async function checkOTBalance() {
 }
 
 async function submitLeave() {
+  const btn = document.querySelector('#section-leave-form .btn-submit');
+  if (btn?.disabled) return; // ป้องกัน double submit
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังตรวจสอบ...'; }
+
   const selectedBtn = document.querySelector('.leave-type-btn.selected');
   const leaveType   = selectedBtn ? (selectedBtn.getAttribute('data-selected') || '') : '';
   const reason      = document.getElementById('leave-reason')?.value || '';
   const remark      = document.getElementById('leave-remark')?.value || '';
   const validDates  = _leaveDates.filter(d => d.date);
 
-  if (!leaveType)           { showToast('กรุณาเลือกประเภทการลา');  return; }
-  if (!validDates.length)   { showToast('กรุณาเพิ่มวันที่ลา');     return; }
-  if (!reason)              { showToast('กรุณาระบุเหตุผลการลา');   return; }
+  const resetBtn = () => { if (btn) { btn.disabled = false; btn.textContent = '📤 ส่งใบลา'; } };
+
+  if (!leaveType)           { showToast('กรุณาเลือกประเภทการลา');  resetBtn(); return; }
+  if (!validDates.length)   { showToast('กรุณาเพิ่มวันที่ลา');     resetBtn(); return; }
+  if (!reason)              { showToast('กรุณาระบุเหตุผลการลา');   resetBtn(); return; }
 
   // เช็ควันซ้ำ
   const empId = currentUser?.employeeId || currentUser?.empId || currentUser?.id;
@@ -3502,11 +3508,10 @@ async function submitLeave() {
   if (dupRes.success && dupRes.duplicates?.length) {
     const dupDates = dupRes.duplicates.map(d => new Date(d.date).toLocaleDateString('th-TH',{day:'numeric',month:'short'})).join(', ');
     showToast(`⚠️ วันซ้ำกับใบลาเดิม: ${dupDates}`);
-    return;
+    resetBtn(); return;
   }
 
-  const btn = document.querySelector('#section-leave-form .btn-submit');
-  btn.disabled = true; btn.textContent = '⏳ กำลังส่ง...';
+  if (btn) btn.textContent = '⏳ กำลังส่ง...';
 
   const totalDays = validDates.reduce((s,d) => s + (d.hours >= 8 ? 1 : 0.5), 0);
   const res = await callAPI({
@@ -3520,6 +3525,7 @@ async function submitLeave() {
   });
 
   btn.disabled = false; btn.textContent = '📤 ส่งใบลา';
+  resetBtn();
   if (res.success) {
     showToast(`✅ ${res.message}`);
     // เคลียฟอร์มทั้งหมด
