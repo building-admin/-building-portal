@@ -1955,10 +1955,16 @@ async function loadRosterView() {
     ? Promise.resolve({ success: true, data: JSON.parse(cachedHolidays) })
     : callRosterAPI({ action: 'getHolidays' }).catch(() => null);
 
+  // employees ใช้ cache sessionStorage เช่นกัน
+  const cachedEmps = sessionStorage.getItem('bfs_rv_employees');
+  const empPromise = cachedEmps
+    ? Promise.resolve({ success: true, data: JSON.parse(cachedEmps) })
+    : callRosterAPI({ action: 'getEmployees' });
+
   const [empRes, rosterRes, leaveAllRes, attendanceRes, holidayRes] = await Promise.all([
-    callRosterAPI({ action: 'getEmployees' }),
+    empPromise,
     callRosterAPI({ action: 'getRoster', month: rvCurrentMonth }),
-    callAPI({ action: 'getAllLeaves' }),
+    callAPI({ action: 'getAllLeaves', month: monthNum, year: yearAD }),
     callAPI({ action: 'getTodayAttendance' }).catch(() => null),
     holidayPromise,
   ]);
@@ -1967,6 +1973,10 @@ async function loadRosterView() {
   window._rvHolidays = (holidayRes?.success && holidayRes.data) ? holidayRes.data : {};
   if (!cachedHolidays && holidayRes?.success) {
     sessionStorage.setItem('bfs_rv_holidays', JSON.stringify(window._rvHolidays));
+  }
+  // cache employees
+  if (!cachedEmps && empRes?.success) {
+    sessionStorage.setItem('bfs_rv_employees', JSON.stringify(empRes.data));
   }
 
   // Build attendance lookup วันนี้: { empId: {status, type} }
