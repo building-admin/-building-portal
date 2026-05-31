@@ -2020,7 +2020,7 @@ function applyAutofill() {
 // ── MY SHIFT CARD ────────────────────────────────────
 function renderMyShiftCard() {
   const empId = currentUser.empId;
-  if (!empId || isAdmin) return;
+  if (!empId) return;  // แสดงให้ทุกคนรวม admin
 
   document.getElementById('my-shift-card').style.display = 'block';
 
