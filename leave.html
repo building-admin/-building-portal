@@ -1922,9 +1922,8 @@ function rvGetLeaveDays(leave, yearAD, monthNum) {
 function rvGetHolidayName(yearAD, monthNum, day) {
   try {
     const yearTH = yearAD + 543;
-    const saved  = localStorage.getItem('bfs_roster_holidays');
-    const data   = saved ? JSON.parse(saved) : {};
-    const list   = data[yearTH] || [];
+    const data   = window._rvHolidays || {};
+    const list   = data[yearTH] || data[yearAD] || [];
     const mm = String(monthNum).padStart(2,'0');
     const dd = String(day).padStart(2,'0');
     const dateStr = `${yearTH}-${mm}-${dd}`;
@@ -1949,13 +1948,17 @@ async function loadRosterView() {
   const yearAD = yearTH - 543;
   const daysInMonth = new Date(yearAD, monthNum, 0).getDate();
 
-  // ดึงข้อมูลพร้อมกัน (รวม Attendance วันนี้)
-  const [empRes, rosterRes, leaveAllRes, attendanceRes] = await Promise.all([
+  // ดึงข้อมูลพร้อมกัน (รวม Attendance วันนี้ + วันหยุดนักขัตฤกษ์)
+  const [empRes, rosterRes, leaveAllRes, attendanceRes, holidayRes] = await Promise.all([
     callRosterAPI({ action: 'getEmployees' }),
     callRosterAPI({ action: 'getRoster', month: rvCurrentMonth }),
     callAPI({ action: 'getAllLeaves' }),
     callAPI({ action: 'getTodayAttendance' }).catch(() => null),
+    callRosterAPI({ action: 'getHolidays' }).catch(() => null),
   ]);
+
+  // เก็บ holidays ใน memory สำหรับ rvGetHolidayName
+  window._rvHolidays = (holidayRes?.success && holidayRes.data) ? holidayRes.data : {};
 
   // Build attendance lookup วันนี้: { empId: {status, type} }
   const attendanceLookup = {};
@@ -2087,17 +2090,6 @@ async function loadRosterView() {
     const id        = String(emp['รหัสพนักงาน']);
     const empRoster = rvRosterData[id] || {};
     const empLeave  = leaveLookup[id] || {};
-
-    // แปลงวันหยุดประจำ → set ของ day of week numbers
-    const offDayStr = String(emp['วันหยุดประจำ'] || '');
-    const offDowSet = new Set();
-    offDayStr.split('/').forEach(part => {
-      const key = part.trim();
-      if (key in RV_DAY_OFF_MAP) {
-        String(RV_DAY_OFF_MAP[key]).split('/').forEach(d => offDowSet.add(Number(d)));
-      }
-    });
-
     let cells = '';
 
     for (let d = 1; d <= daysInMonth; d++) {
@@ -2133,7 +2125,6 @@ async function loadRosterView() {
       cells += `<td style="padding:1px;text-align:center;
         ${isWE ? 'background:rgba(200,145,42,.04);' : ''}
         ${isToday ? 'background:rgba(61,186,122,.04);' : ''}
-        ${isEmpOffDay ? 'box-shadow:inset 0 0 0 1px rgba(200,145,42,.5);' : ''}
         position:relative;">
         <div class="rv-cell ${cls} ${borderClass}" title="${tip}">${rvPad(code)}</div>
       </td>`;
