@@ -820,7 +820,7 @@ function thaiDateToCEInput(thaiDate) {
 
 // ดึงวันหยุดของปี พ.ศ.
 function getHolidaysForYear(yearTH) {
-  return (_holidays[yearTH] || []).slice().sort((a,b) => a.date.localeCompare(b.date));
+  return (_holidays[yearTH] || []).slice().sort((a,b) => _holidayEditMode ? 0 : a.date.localeCompare(b.date));
 }
 
 // เช็คว่าวันที่ในตาราง (CE) เป็นวันหยุดนักขัตฤกษ์ไหม
