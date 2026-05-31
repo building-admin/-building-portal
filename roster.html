@@ -875,11 +875,23 @@ function renderHolidayModal() {
     </div>
     <div id="holiday-edit-list">`;
     holidays.forEach((h, i) => {
+      const [ty, tm, td] = h.date.split('-');
+      const inputStyle = `background:var(--navy-light);border:1px solid var(--border);color:var(--white);border-radius:8px;padding:7px 10px;font-size:13px;font-family:var(--font-body);text-align:center;`;
       html += `<div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(44,74,114,.25);">
-        <input type="date" value="${thaiDateToCEInput(h.date)}"
-          data-idx="${i}" data-year="${yearTH}" class="holiday-date-input"
-          style="background:var(--navy-light);border:1px solid var(--border);color:var(--white);border-radius:8px;padding:7px 10px;font-size:13px;font-family:var(--font-body);width:160px;"
-          onchange="updateHolidayDate(${yearTH},${i},this.value)">
+        <div style="display:flex;gap:4px;align-items:center;">
+          <input type="number" value="${parseInt(td)}" min="1" max="31"
+            style="${inputStyle}width:52px;" placeholder="วัน"
+            onchange="updateHolidayDateParts(${yearTH},${i},null,null,this.value)">
+          <select onchange="updateHolidayDateParts(${yearTH},${i},null,this.value,null)"
+            style="${inputStyle}width:90px;cursor:pointer;">
+            ${['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'].map((mn,mi) =>
+              `<option value="${String(mi+1).padStart(2,'0')}" ${String(mi+1).padStart(2,'0')===tm?'selected':''}>${mn}</option>`
+            ).join('')}
+          </select>
+          <input type="number" value="${ty}" min="2500" max="2600"
+            style="${inputStyle}width:72px;" placeholder="ปีพ.ศ."
+            onchange="updateHolidayDateParts(${yearTH},${i},this.value,null,null)">
+        </div>
         <input type="text" value="${h.name}" data-idx="${i}" data-year="${yearTH}"
           class="holiday-name-input"
           style="background:var(--navy-light);border:1px solid var(--border);color:var(--white);border-radius:8px;padding:7px 10px;font-size:13px;font-family:var(--font-body);flex:1;"
@@ -960,6 +972,15 @@ function addHolidayRow(yearTH) {
 function removeHoliday(yearTH, idx) {
   _holidays[yearTH].splice(idx, 1);
   renderHolidayModal();
+}
+
+function updateHolidayDateParts(yearTH, idx, y, m, d) {
+  if (!_holidays[yearTH] || !_holidays[yearTH][idx]) return;
+  const cur = _holidays[yearTH][idx].date.split('-');
+  const newY = y ? String(y).padStart(4,'0') : cur[0];
+  const newM = m ? String(m).padStart(2,'0') : cur[1];
+  const newD = d ? String(parseInt(d)).padStart(2,'0') : cur[2];
+  _holidays[yearTH][idx].date = `${newY}-${newM}-${newD}`;
 }
 
 function updateHolidayDate(yearTH, idx, ceDate) {
