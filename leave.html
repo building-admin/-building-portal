@@ -2712,39 +2712,38 @@ function updatePendingBadge(count) {
 //  CANCEL LEAVE — พนักงานยกเลิกใบลาของตัวเอง
 // ════════════════════════════════════════════════════
 function canCancelByEmployee(leave) {
-  const role = currentUser?.type || currentUser?.role || '';
-  const isAdmin = role === 'admin';
-  // admin ยกเลิกได้ทุกกรณี ยกเว้นที่ยกเลิกไปแล้ว
-  if (isAdmin) return leave['สถานะ'] !== 'ยกเลิก';
-  // พนักงานทั่วไป ยกเลิกได้เฉพาะ รออนุมัติ หรือ CS อนุมัติแล้วแต่ HR ยังไม่ได้
-  if (leave['สถานะ'] === 'อนุมัติ' || leave['สถานะ'] === 'ไม่อนุมัติ' || leave['สถานะ'] === 'ยกเลิก') return false;
-  if (leave['ผู้อนุมัติ2-สถานะ'] === 'อนุมัติ') return false;
-  return true;
+  // ยกเลิกได้ทุก status ยกเว้นที่ยกเลิกหรือไม่อนุมัติไปแล้ว
+  return leave['สถานะ'] !== 'ยกเลิก' && leave['สถานะ'] !== 'ไม่อนุมัติ';
 }
 
 function cancelMyLeave(leaveId) {
-  showConfirmModal(
-    '🚫 ยกเลิกใบลา',
-    `ยืนยันยกเลิกใบลา <b>${leaveId}</b> ?<br><small style="color:var(--text-muted);">หลังยกเลิกสามารถยื่นใบลาใหม่ได้เลย</small>`,
-    async () => {
-      const empId   = currentUser?.employeeId || currentUser?.empId || currentUser?.id;
-      const empName = currentUser?.name || '';
-      const res = await callAPI({
-        action: 'cancelLeaveByEmployee', leaveId,
-        employeeId: empId, employeeName: empName
-      });
-      if (res.success) {
-        showToast('🚫 ยกเลิกใบลาเรียบร้อยแล้ว');
-        loadMyLeaves();
-        // refresh badge — ใบที่ยกเลิกไปแล้วไม่ควรนับ pending
-        callAPI({ action: 'getPendingLeaves' }).then(r => {
-          updatePendingBadge(r.success ? (r.data || []).length : 0);
-        });
-      } else {
-        showToast('❌ ' + res.message);
-      }
-    }
-  );
+  // ใช้ modal เดียวกับ revoke — เปิด modal กรอกเหตุผล
+  _revokeLeaveId     = leaveId;
+  _revokeApproverIdx = null; // null = employee cancel (ไม่ใช่ revoke approval)
+  document.getElementById('revoke-reason').value = '';
+  const modal = document.getElementById('modal-revoke');
+  modal.querySelector('h3').textContent = '🚫 ยกเลิกใบลา';
+  modal.style.display = 'flex';
+}
+
+async function confirmCancelMyLeave(reason) {
+  const leaveId = _revokeLeaveId;
+  const empId   = currentUser?.employeeId || currentUser?.empId || currentUser?.id;
+  const empName = currentUser?.name || '';
+  const res = await callAPI({
+    action: 'cancelLeaveByEmployee', leaveId,
+    employeeId: empId, employeeName: empName,
+    cancelReason: reason
+  });
+  if (res.success) {
+    showToast('🚫 ยกเลิกใบลาเรียบร้อยแล้ว');
+    loadMyLeaves();
+    callAPI({ action: 'getPendingLeaves' }).then(r => {
+      updatePendingBadge(r.success ? (r.data || []).length : 0);
+    });
+  } else {
+    showToast('❌ ' + res.message);
+  }
 }
 
 async function loadMyLeaves() {
@@ -2784,7 +2783,7 @@ async function loadMyLeaves() {
         <div class="approver-row"><div class="dot ${s1}"></div><span>ท่านที่ 1: ${r['ผู้อนุมัติ1-สถานะ'] || 'รอ'}</span></div>
         <div class="approver-row"><div class="dot ${s2}"></div><span>ท่านที่ 2: ${r['ผู้อนุมัติ2-สถานะ'] || 'รอ'}</span></div>
       </div></td>
-      <td>${canCancelByEmployee(r) ? `<button onclick="cancelMyLeave('${r['รหัสใบลา']}')" style="padding:4px 10px;font-size:11px;background:rgba(224,82,82,0.12);border:1px solid rgba(224,82,82,0.3);border-radius:6px;color:#e05252;cursor:pointer;">🚫 ยกเลิก</button>` : ''}</td>
+      <td>${canCancelByEmployee(r) ? `<button onclick="event.stopPropagation();cancelMyLeave('${r['รหัสใบลา']}')" style="padding:3px 10px;font-size:11px;background:rgba(224,82,82,0.15);border:1px solid rgba(224,82,82,0.3);border-radius:6px;color:#e05252;cursor:pointer;white-space:nowrap;">🚫 ยกเลิก</button>` : ''}</td>
     </tr>`;
   }).join('');
 
@@ -4211,6 +4210,7 @@ function openRevokeModal(leaveId, approverIdx) {
 
 function closeRevokeModal() {
   document.getElementById('modal-revoke').style.display = 'none';
+  document.getElementById('modal-revoke').querySelector('h3').textContent = 'ยกเลิกอนุมัติ';
   _revokeLeaveId    = null;
   _revokeApproverIdx = null;
 }
@@ -4222,6 +4222,15 @@ async function confirmRevoke() {
   const btn = document.querySelector('#modal-revoke button:last-child');
   btn.disabled = true;
   btn.textContent = '⏳ กำลังบันทึก...';
+
+  // _revokeApproverIdx === null = employee cancel (จากหน้าประวัติการลา)
+  if (_revokeApproverIdx === null) {
+    closeRevokeModal();
+    btn.disabled = false;
+    btn.textContent = '✓ ยืนยันยกเลิก';
+    await confirmCancelMyLeave(reason);
+    return;
+  }
 
   const res = await callAPI({
     action:        'revokeApproval',
