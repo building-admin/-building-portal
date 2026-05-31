@@ -1842,6 +1842,12 @@ const RV_SHIFTS = {
   afternoon: ['16'],
   night:     ['20'],
 };
+
+const RV_DAY_OFF_MAP = {
+  'จันทร์':1,'อังคาร':2,'พุธ':3,'พฤหัสบดี':4,
+  'ศุกร์':5,'เสาร์':6,'อาทิตย์':0,
+  'เสาร์/อาทิตย์':'6/0'
+};
 const RV_MONTHS_TH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
                        'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 
@@ -2081,6 +2087,17 @@ async function loadRosterView() {
     const id        = String(emp['รหัสพนักงาน']);
     const empRoster = rvRosterData[id] || {};
     const empLeave  = leaveLookup[id] || {};
+
+    // แปลงวันหยุดประจำ → set ของ day of week numbers
+    const offDayStr = String(emp['วันหยุดประจำ'] || '');
+    const offDowSet = new Set();
+    offDayStr.split('/').forEach(part => {
+      const key = part.trim();
+      if (key in RV_DAY_OFF_MAP) {
+        String(RV_DAY_OFF_MAP[key]).split('/').forEach(d => offDowSet.add(Number(d)));
+      }
+    });
+
     let cells = '';
 
     for (let d = 1; d <= daysInMonth; d++) {
@@ -2097,6 +2114,7 @@ async function loadRosterView() {
                         : leaveStatus === 'pending'   ? '⏳ รออนุมัติ' : '';
       const hasBorder   = !!leaveStatus;
       const borderClass = hasBorder ? 'rv-leave-border' : '';
+      const isEmpOffDay = offDowSet.has(dow);
       const tip         = leaveType && statusLabel
                         ? `${leaveType} ${statusLabel}`
                         : (SHIFT_TIME_RV[code] || code || '—');
@@ -2115,6 +2133,7 @@ async function loadRosterView() {
       cells += `<td style="padding:1px;text-align:center;
         ${isWE ? 'background:rgba(200,145,42,.04);' : ''}
         ${isToday ? 'background:rgba(61,186,122,.04);' : ''}
+        ${isEmpOffDay ? 'box-shadow:inset 0 0 0 1px rgba(200,145,42,.5);' : ''}
         position:relative;">
         <div class="rv-cell ${cls} ${borderClass}" title="${tip}">${rvPad(code)}</div>
       </td>`;
