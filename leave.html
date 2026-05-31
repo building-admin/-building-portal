@@ -2726,8 +2726,8 @@ function cancelMyLeave(leaveId) {
   modal.style.display = 'flex';
 }
 
-async function confirmCancelMyLeave(reason) {
-  const leaveId = _revokeLeaveId;
+async function confirmCancelMyLeave(reason, leaveId) {
+  leaveId = leaveId || _revokeLeaveId;
   const empId   = currentUser?.employeeId || currentUser?.empId || currentUser?.id;
   const empName = currentUser?.name || '';
   const res = await callAPI({
@@ -4225,10 +4225,12 @@ async function confirmRevoke() {
 
   // _revokeApproverIdx === null = employee cancel (จากหน้าประวัติการลา)
   if (_revokeApproverIdx === null) {
-    closeRevokeModal();
+    const savedLeaveId = _revokeLeaveId; // save ก่อน closeRevokeModal reset เป็น null
+    const savedReason  = reason;
     btn.disabled = false;
     btn.textContent = '✓ ยืนยันยกเลิก';
-    await confirmCancelMyLeave(reason);
+    closeRevokeModal();
+    await confirmCancelMyLeave(savedReason, savedLeaveId);
     return;
   }
 
