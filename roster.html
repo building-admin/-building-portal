@@ -776,30 +776,31 @@ const DEFAULT_HOLIDAYS = {
 };
 
 // โหลดจาก LocalStorage ถ้ามี ไม่งั้นใช้ Default
-function loadHolidaysFromStorage() {
+async function loadHolidaysFromAPI() {
   try {
-    const saved = localStorage.getItem('bfs_roster_holidays');
-    if (saved) {
-      const data = JSON.parse(saved);
+    const res = await callAPI({ action: 'getHolidays' });
+    if (res.success && res.data && Object.keys(res.data).length > 0) {
       // merge ปีที่ขาดจาก DEFAULT เข้าไป
+      const data = res.data;
       Object.keys(DEFAULT_HOLIDAYS).forEach(year => {
         if (!data[year]) data[year] = JSON.parse(JSON.stringify(DEFAULT_HOLIDAYS[year]));
       });
       return data;
     }
-  } catch(e) {}
+  } catch(e) { console.warn('loadHolidaysFromAPI error:', e); }
   return JSON.parse(JSON.stringify(DEFAULT_HOLIDAYS));
 }
 
-function saveHolidaysToStorage() {
+async function saveHolidaysToAPI() {
   try {
-    localStorage.setItem('bfs_roster_holidays', JSON.stringify(_holidays));
+    const res = await callAPI({ action: 'saveHolidays', holidays: _holidays });
+    if (!res.success) console.warn('saveHolidays failed:', res.message);
   } catch(e) {
-    console.warn('LocalStorage ไม่พร้อมใช้งาน');
+    console.warn('saveHolidaysToAPI error:', e);
   }
 }
 
-let _holidays = loadHolidaysFromStorage();
+let _holidays = JSON.parse(JSON.stringify(DEFAULT_HOLIDAYS)); // default ก่อน โหลดจาก API ทีหลัง
 let _holidayEditMode = false;
 const DAY_NAMES_TH = ['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
 const MONTH_NAMES_TH = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
@@ -924,7 +925,7 @@ function resetHolidays() {
       } else {
         _holidays[yearTH] = [];
       }
-      saveHolidaysToStorage();
+      saveHolidaysToAPI();
       renderHolidayModal();
       buildRosterTable();
       if (isAdmin) buildInputTable();
@@ -994,7 +995,7 @@ function saveHolidays() {
     _holidays[yearTH].sort((a,b) => a.date.localeCompare(b.date));
   }
   // บันทึกลง LocalStorage
-  saveHolidaysToStorage();
+  saveHolidaysToAPI();
   cancelHolidayEdit();
   renderHolidayModal();
   // rebuild ตารางเพื่อ highlight ใหม่
@@ -1043,6 +1044,9 @@ async function loadUserFromPortal() {
 
   // ดึง permissions จาก Leave API แล้ว apply
   await applyRosterPermissions(role);
+
+  // โหลดวันหยุดจาก Sheet (ใช้ร่วมกันทุก user)
+  _holidays = await loadHolidaysFromAPI();
 
   await loadEmployees();
   loadRoster();
