@@ -2125,7 +2125,7 @@ async function loadRosterView() {
                         : leaveStatus === 'pending'   ? '⏳ รออนุมัติ' : '';
       const hasBorder   = !!leaveStatus;
       const borderClass = hasBorder ? 'rv-leave-border' : '';
-      const isEmpOffDay = offDowSet.has(dow);
+
       const tip         = leaveType && statusLabel
                         ? `${leaveType} ${statusLabel}`
                         : (SHIFT_TIME_RV[code] || code || '—');
