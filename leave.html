@@ -1949,16 +1949,25 @@ async function loadRosterView() {
   const daysInMonth = new Date(yearAD, monthNum, 0).getDate();
 
   // ดึงข้อมูลพร้อมกัน (รวม Attendance วันนี้ + วันหยุดนักขัตฤกษ์)
+  // holidays ใช้ cache sessionStorage เพื่อลด API call
+  const cachedHolidays = sessionStorage.getItem('bfs_rv_holidays');
+  const holidayPromise = cachedHolidays
+    ? Promise.resolve({ success: true, data: JSON.parse(cachedHolidays) })
+    : callRosterAPI({ action: 'getHolidays' }).catch(() => null);
+
   const [empRes, rosterRes, leaveAllRes, attendanceRes, holidayRes] = await Promise.all([
     callRosterAPI({ action: 'getEmployees' }),
     callRosterAPI({ action: 'getRoster', month: rvCurrentMonth }),
     callAPI({ action: 'getAllLeaves' }),
     callAPI({ action: 'getTodayAttendance' }).catch(() => null),
-    callRosterAPI({ action: 'getHolidays' }).catch(() => null),
+    holidayPromise,
   ]);
 
-  // เก็บ holidays ใน memory สำหรับ rvGetHolidayName
+  // เก็บ holidays ใน memory และ cache
   window._rvHolidays = (holidayRes?.success && holidayRes.data) ? holidayRes.data : {};
+  if (!cachedHolidays && holidayRes?.success) {
+    sessionStorage.setItem('bfs_rv_holidays', JSON.stringify(window._rvHolidays));
+  }
 
   // Build attendance lookup วันนี้: { empId: {status, type} }
   const attendanceLookup = {};
